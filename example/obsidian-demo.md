@@ -30,3 +30,11 @@ Before %%this comment must not render%% after.
 ## Highlight
 
 ==highlighted text== should render via the Mark plugin.
+
+## Mermaid with comments
+
+```mermaid
+graph TD
+%% layout comment
+A --> B
+```
