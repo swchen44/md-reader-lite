@@ -87,6 +87,87 @@ body.md-reader {
       }
     }
 
+    &__side-tabs {
+      position: fixed;
+      top: 0;
+      left: 0;
+      display: flex;
+      width: @side-width;
+      border-right: 1px solid var(--color-side-border);
+      border-bottom: 1px solid var(--color-side-border);
+      background: var(--color-side-bg);
+      transition: transform 0.3s;
+      will-change: transform;
+      z-index: 2;
+      .md-reader__side-tab {
+        flex: 1;
+        padding: 10px 0;
+        border: none;
+        font-size: 13px;
+        text-align: center;
+        cursor: pointer;
+        color: var(--color-side);
+        background: transparent;
+        &.md-reader__side-tab--active {
+          font-weight: bolder;
+          color: var(--color-primary);
+          box-shadow: inset 0 -2px 0 var(--color-primary);
+        }
+      }
+    }
+
+    &__file-tree {
+      overflow: auto;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: @side-width;
+      padding: 58px 0 22px 1.2em;
+      border-right: 1px solid var(--color-side-border);
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--color-side);
+      background: var(--color-side-bg);
+      transition: transform 0.3s, box-shadow 0.5s;
+      will-change: transform, box-shadow;
+      z-index: 1;
+      ul {
+        margin: 0;
+        padding-left: 1em;
+        list-style: none;
+      }
+      a {
+        text-decoration: none;
+        color: inherit;
+        &:hover {
+          color: var(--color-primary);
+        }
+      }
+      .md-reader__tree-dir {
+        > span {
+          cursor: pointer;
+          &::before {
+            content: '▸ ';
+          }
+          &:hover {
+            color: var(--color-primary);
+          }
+        }
+        &.md-reader__tree-dir--open > span::before {
+          content: '▾ ';
+        }
+      }
+      .md-reader__tree-file--active > a {
+        font-weight: bolder;
+        color: var(--color-primary);
+      }
+      .md-reader__tree-msg {
+        opacity: 0.6;
+        padding: 0.3em 0;
+      }
+    }
+
     &__body {
       min-height: 100vh;
       padding-left: @side-width;
@@ -202,7 +283,9 @@ body.md-reader {
     }
 
     @media screen and (max-width: 960px) {
-      &__side {
+      &__side,
+      &__side-tabs,
+      &__file-tree {
         transform: translateX(-100%);
         border-color: transparent;
       }
@@ -243,7 +326,9 @@ body.md-reader {
 
   &.side-collapsed {
     .md-reader {
-      &__side {
+      &__side,
+      &__side-tabs,
+      &__file-tree {
         transform: translateX(-100%);
         border-color: transparent;
       }
@@ -257,7 +342,8 @@ body.md-reader {
   }
   &.side-expanded {
     .md-reader {
-      &__side {
+      &__side,
+      &__file-tree {
         box-shadow: var(--color-side-shadow);
         transform: translateX(0);
       }
