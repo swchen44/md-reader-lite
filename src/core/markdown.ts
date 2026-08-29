@@ -116,13 +116,17 @@ function removeFrontmatter(content: string): string {
 interface MdRender {
   (code: string, options: MdOptions): string
   md?: MarkdownIt
+  obsidian?: boolean
 }
 export const mdRender: MdRender = (code, options): string => {
   if (!mdRender.md || options) {
     mdRender.md = initRender(options)
+    mdRender.obsidian = (options?.plugins ?? [...MD_PLUGINS]).includes(
+      'Obsidian',
+    )
   }
-  // filter frontmatter
-  const filteredCode = removeFrontmatter(code)
+  // Obsidian 插件自行將 frontmatter 渲染為表格；未啟用時維持原本剝除行為
+  const filteredCode = mdRender.obsidian ? code : removeFrontmatter(code)
   return mdRender.md.render(filteredCode)
 }
 

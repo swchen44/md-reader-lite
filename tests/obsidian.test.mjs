@@ -48,3 +48,28 @@ test('escapes html in wikilink text', async () => {
   assert.ok(!html.includes('<b]]'))
   assert.match(html, /a&lt;b/)
 })
+
+test('normalizes obsidian callouts to alert-compatible form', async () => {
+  const { default: ObsidianPlugin } = await import('../src/plugins/obsidian.ts')
+  const m = new MarkdownIt({ html: true }).use(ObsidianPlugin)
+  // 未知型別 → NOTE；摺疊記號去除；自訂標題移到粗體行
+  const html = m.render('> [!hint]- My Title\n> body')
+  assert.match(html, /\[!TIP\]|markdown-alert|blockquote/i)
+  assert.match(html, /<strong>My Title<\/strong>/)
+})
+
+test('renders front matter as collapsed details table', async () => {
+  const { default: ObsidianPlugin } = await import('../src/plugins/obsidian.ts')
+  const m = new MarkdownIt({ html: true }).use(ObsidianPlugin)
+  const html = m.render('---\ntitle: Hello\ntags: a, b\n---\n\n# Doc')
+  assert.match(html, /<details class="md-reader__frontmatter">/)
+  assert.match(html, /<td>title<\/td>\s*<td>Hello<\/td>/)
+  assert.match(html, /<h1[^>]*>Doc<\/h1>/)
+})
+
+test('front matter requires document start', async () => {
+  const { default: ObsidianPlugin } = await import('../src/plugins/obsidian.ts')
+  const m = new MarkdownIt({ html: true }).use(ObsidianPlugin)
+  const html = m.render('# Doc\n\n---\nnot: frontmatter\n---')
+  assert.ok(!html.includes('md-reader__frontmatter'))
+})
