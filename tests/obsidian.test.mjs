@@ -42,6 +42,29 @@ test('strips %% comments %%', async () => {
   assert.match(html, /before\s+after/)
 })
 
+test('comments inside mermaid fences are preserved', async () => {
+  const m = await md()
+  const src =
+    '```mermaid\ngraph TD\n%% first comment\nA --> B\n%% second comment\n```\n'
+  const html = m.render(src)
+  assert.ok(html.includes('A --&gt; B') || html.includes('A --> B'))
+  assert.ok(html.includes('first comment'))
+})
+
+test('comments inside inline code are preserved', async () => {
+  const m = await md()
+  const html = m.render('Use `a %% b` and `c %% d` here.')
+  assert.ok(html.includes('a %% b'))
+  assert.ok(html.includes('c %% d'))
+})
+
+test('multi-line comments outside fences are stripped', async () => {
+  const m = await md()
+  const html = m.render('before\n\n%%\nhidden line\n%%\n\nafter')
+  assert.ok(!html.includes('hidden line'))
+  assert.ok(html.includes('before') && html.includes('after'))
+})
+
 test('escapes html in wikilink text', async () => {
   const m = await md()
   const html = m.render('[[a<b]]')
