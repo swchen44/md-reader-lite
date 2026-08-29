@@ -12,4 +12,5 @@ export default [
   'Footnote',
   'TaskLists',
   'Alert',
+  'Obsidian',
 ] as string[]

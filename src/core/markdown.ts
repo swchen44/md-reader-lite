@@ -13,6 +13,7 @@ import mToc from 'markdown-it-table-of-contents'
 import mKatex from '@traptitech/markdown-it-katex'
 import mMermaid from '@md-reader/markdown-it-mermaid'
 import mAlert from '@/plugins/alert'
+import mObsidian from '@/plugins/obsidian'
 import mGraphvizBlock from '@/plugins/graphviz-block'
 import mMultimdTable from 'markdown-it-multimd-table'
 import MD_PLUGINS from '@/config/md-plugins'
@@ -40,6 +41,7 @@ const PLUGINS: Plugins = {
   TaskLists: [mTaskLists],
   TOC: [mToc],
   Alert: [mAlert],
+  Obsidian: [mObsidian],
 }
 
 export interface MdOptions {

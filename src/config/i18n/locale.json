@@ -37,6 +37,8 @@
     "TaskLists": "TaskList",
     "TOC": "TOC",
     "Alert": "Alert",
+    "Obsidian": "Obsidian",
+    "Obsidian": "Obsidian",
     "warning_message": "Open the details page of extension \"md-reader\" and active \"allow access to file URLs\"."
   },
   "zh-CN": {
@@ -66,6 +68,7 @@
     "Footnote": "注解",
     "TaskLists": "复选框",
     "TOC": "目录",
+    "Obsidian": "Obsidian 语法",
     "Alert": "警告框",
     "warning_message": "请在 “md-reader” 扩展程序的 “详情” 中开启 “允许访问文件网址” 权限。"
   },
@@ -97,6 +100,7 @@
     "TaskLists": "任務列表",
     "TOC": "目錄",
     "Alert": "警告框",
+    "Obsidian": "Obsidian 語法",
     "warning_message": "請在 “md-reader” 扩展程序的 “詳情” 中開啟 “允許訪問文件網址” 權限。"
   },
   "ko": {
