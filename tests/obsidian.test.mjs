@@ -73,3 +73,38 @@ test('front matter requires document start', async () => {
   const html = m.render('# Doc\n\n---\nnot: frontmatter\n---')
   assert.ok(!html.includes('md-reader__frontmatter'))
 })
+
+test('does not leak frontmatterHtml across renders when env is reused', async () => {
+  const { default: ObsidianPlugin } = await import('../src/plugins/obsidian.ts')
+  const m = new MarkdownIt({ html: true }).use(ObsidianPlugin)
+  const env = {}
+  const html1 = m.render('---\ntitle: Hello\n---\n\n# Doc', env)
+  assert.match(html1, /md-reader__frontmatter/)
+  const html2 = m.render('# Doc2', env)
+  assert.ok(!html2.includes('md-reader__frontmatter'))
+})
+
+test('applying the plugin twice does not double-render front matter', async () => {
+  const { default: ObsidianPlugin } = await import('../src/plugins/obsidian.ts')
+  const m = new MarkdownIt({ html: true })
+    .use(ObsidianPlugin)
+    .use(ObsidianPlugin)
+  const html = m.render('---\ntitle: Hello\n---\n\n# Doc')
+  assert.equal(html.split('md-reader__frontmatter').length, 2)
+})
+
+test('callout normalization does not touch fenced code blocks', async () => {
+  const { default: ObsidianPlugin } = await import('../src/plugins/obsidian.ts')
+  const m = new MarkdownIt({ html: true }).use(ObsidianPlugin)
+  const html = m.render('```\n> [!note] Title\n```')
+  assert.match(html, /<code>[\s\S]*\[!note\][\s\S]*<\/code>/)
+  assert.ok(!html.includes('[!NOTE]'))
+})
+
+test('normalizes nested blockquote callouts', async () => {
+  const { default: ObsidianPlugin } = await import('../src/plugins/obsidian.ts')
+  const m = new MarkdownIt({ html: true }).use(ObsidianPlugin)
+  const html = m.render('> > [!hint] Deep\n> > body')
+  assert.match(html, /<strong>Deep<\/strong>/)
+  assert.ok(!html.includes('[!hint]'))
+})

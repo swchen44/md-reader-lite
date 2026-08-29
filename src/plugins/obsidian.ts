@@ -86,21 +86,34 @@ const CALLOUT_TYPE_MAP: Record<string, string> = {
   missing: 'CAUTION',
 }
 const GITHUB_TYPES = ['NOTE', 'TIP', 'IMPORTANT', 'WARNING', 'CAUTION']
-const CALLOUT_LINE_RE = /^(\s*>\s*)\[!(\w+)\]([+-]?)(?:[ \t]+(.+))?$/gm
+const CALLOUT_LINE_RE = /^((?:\s*>)+\s*)\[!(\w+)\]([+-]?)(?:[ \t]+(.+))?$/
+const FENCE_RE = /^\s*(?:```|~~~)/
 
-/** Obsidian callout → GitHub alert 語法（Alert 插件可接手渲染） */
+function normalizeCalloutLine(line: string): string {
+  const m = line.match(CALLOUT_LINE_RE)
+  if (!m) return line
+  const [, prefix, rawType, , title] = m
+  const upper = rawType.toUpperCase()
+  const mapped = GITHUB_TYPES.includes(upper)
+    ? upper
+    : CALLOUT_TYPE_MAP[rawType.toLowerCase()] || 'NOTE'
+  const head = `${prefix}[!${mapped}]`
+  return title ? `${head}\n${prefix}**${title.trim()}**` : head
+}
+
+/** Obsidian callout → GitHub alert 語法（Alert 插件可接手渲染），跳過 fenced code block 內容 */
 function normalizeCallouts(state: StateCore): void {
-  state.src = state.src.replace(
-    CALLOUT_LINE_RE,
-    (_, prefix, rawType, _fold, title) => {
-      const upper = rawType.toUpperCase()
-      const mapped = GITHUB_TYPES.includes(upper)
-        ? upper
-        : CALLOUT_TYPE_MAP[rawType.toLowerCase()] || 'NOTE'
-      const head = `${prefix}[!${mapped}]`
-      return title ? `${head}\n${prefix}**${title.trim()}**` : head
-    },
-  )
+  let inFence = false
+  state.src = state.src
+    .split('\n')
+    .map(line => {
+      if (FENCE_RE.test(line)) {
+        inFence = !inFence
+        return line
+      }
+      return inFence ? line : normalizeCalloutLine(line)
+    })
+    .join('\n')
 }
 
 const FRONTMATTER_RE = /^---\r?\n([\s\S]+?)\r?\n---\r?\n/
@@ -127,6 +140,9 @@ function renderFrontmatter(md: MarkdownIt, state: StateCore): void {
 }
 
 export default function ObsidianPlugin(md: MarkdownIt): void {
+  if ((md as unknown as { __obsidianPlugin?: boolean }).__obsidianPlugin) return
+  ;(md as unknown as { __obsidianPlugin?: boolean }).__obsidianPlugin = true
+
   md.core.ruler.after('normalize', 'obsidian_comments', stripComments)
   md.core.ruler.after(
     'obsidian_comments',
@@ -141,6 +157,7 @@ export default function ObsidianPlugin(md: MarkdownIt): void {
   const render = md.render.bind(md)
   md.render = (src, env) => {
     const e = env || {}
+    delete e.frontmatterHtml
     const html = render(src, e)
     return e.frontmatterHtml ? e.frontmatterHtml + html : html
   }
