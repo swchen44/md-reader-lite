@@ -29,11 +29,14 @@ function parseChromeListing(html: string, baseUrl: string): DirEntry[] {
     const isDir = match[3] === '1'
     if (name === '..' || name === '.') continue
     if (!isDir && !isMarkdownFile(name)) continue
-    entries.push({
-      name,
-      isDir,
-      url: new URL(encoded + (isDir ? '/' : ''), baseUrl).href,
-    })
+    let u: URL
+    try {
+      u = new URL(encoded + (isDir ? '/' : ''), baseUrl)
+    } catch {
+      continue
+    }
+    if (!/^(https?|file):$/.test(u.protocol)) continue
+    entries.push({ name, isDir, url: u.href })
   }
   return entries
 }
@@ -117,6 +120,9 @@ export function fetchDirListing(dirUrl: string): Promise<DirEntry[]> {
     chrome.runtime.sendMessage(
       { action: 'fetchDir', data: { url: dirUrl } },
       async (res: { html?: string; error?: string } | undefined) => {
+        // 讀取 lastError 以避免瀏覽器主控台出現
+        // "Unchecked runtime.lastError" 雜訊；沒有 fallback 可用時併入錯誤訊息。
+        const lastError = chrome.runtime.lastError
         if (res?.html) {
           resolve(parseDirListing(res.html, dirUrl))
           return
@@ -131,7 +137,7 @@ export function fetchDirListing(dirUrl: string): Promise<DirEntry[]> {
             return
           }
         }
-        reject(new Error(res?.error || 'fetchDir failed'))
+        reject(new Error(res?.error || lastError?.message || 'fetchDir failed'))
       },
     )
   })

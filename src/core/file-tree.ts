@@ -24,7 +24,10 @@ export function createFileTree({
   currentUrl,
   localize,
 }: FileTreeOptions): Ele<HTMLElement> {
-  const rootDir = dirOf(currentUrl)
+  // currentUrl 可能帶 #hash 或 ?query（例如錨點跳轉後的頁面網址），
+  // 兩者都與檔案樹的目錄／作用中檔案判斷無關，先去除再使用。
+  const cleanUrl = currentUrl.replace(/[?#].*$/, '')
+  const rootDir = dirOf(cleanUrl)
   const container = new Ele<HTMLElement>('div', {
     className: className.FILE_TREE,
   })
@@ -61,7 +64,7 @@ export function createFileTree({
     link.textContent = entry.name
     const li = new Ele<HTMLElement>('li', {
       className:
-        entry.url === currentUrl
+        entry.url === cleanUrl
           ? `${className.TREE_FILE} ${className.TREE_FILE_ACTIVE}`
           : className.TREE_FILE,
     })

@@ -16,6 +16,7 @@ export default {
   COPY_BTN: p`btn--copy`,
   SIDE_COLLAPSED: 'side-collapsed',
   SIDE_EXPANDED: 'side-expanded',
+  HAS_TABS: 'md-reader-has-tabs',
   SIDE_TABS: p`side-tabs`,
   SIDE_TAB: p`side-tab`,
   SIDE_TAB_ACTIVE: p`side-tab--active`,

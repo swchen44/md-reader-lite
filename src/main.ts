@@ -141,6 +141,8 @@ function main(data: Data) {
   /* render folder tree tab */
   const localize = i18n(configData.language)
   let fileTree: ReturnType<typeof createFileTree> | null = null
+  let activeTab: 'outline' | 'files' = 'outline'
+  let rawShown = false
 
   function tabButton(labelKey: string, active: boolean) {
     const btn = new Ele<HTMLElement>('button', {
@@ -161,6 +163,7 @@ function main(data: Data) {
   )
 
   function activateTab(tab: 'outline' | 'files') {
+    activeTab = tab
     const isFiles = tab === 'files'
     outlineTabBtn.ele.classList.toggle(className.SIDE_TAB_ACTIVE, !isFiles)
     filesTabBtn.ele.classList.toggle(className.SIDE_TAB_ACTIVE, isFiles)
@@ -178,8 +181,12 @@ function main(data: Data) {
   filesTabBtn.on('click', () => activateTab('files'))
 
   function setFolderTree(enabled: boolean) {
+    // While raw view is showing, defer the visual toggles: forcing
+    // sideTabs/mdSide/fileTree visible here would show them over the raw
+    // text. They get re-applied via activateTab() when raw view restores.
+    if (rawShown) return
     sideTabs.toggle(enabled)
-    document.body.classList.toggle('md-reader-has-tabs', enabled)
+    document.body.classList.toggle(className.HAS_TABS, enabled)
     if (!enabled) activateTab('outline')
   }
 
@@ -202,6 +209,14 @@ function main(data: Data) {
       if (fileTree) eles.push(fileTree)
     }
     lifecycle.toggleRaw(eles)
+    rawShown = !rawShown
+    if (!rawShown) {
+      // lifecycle.toggleRaw() unconditionally re-shows every panel it was
+      // given, so leaving raw view can make mdSide and fileTree visible at
+      // once. Re-run the tab/folder-tree wiring to restore exclusivity.
+      setFolderTree(configData.folderTree !== false)
+      activateTab(activeTab)
+    }
   })
 
   /* render side expand button */

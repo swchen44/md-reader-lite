@@ -22,7 +22,7 @@ async function messageHandler(
       fetchData(sender.url).then(callback)
       break
     case 'fetchDir':
-      fetchDirHtml(data.url).then(callback)
+      fetchDirHtml(data.url, sender.url).then(callback)
       break
   }
 }
@@ -44,9 +44,34 @@ async function fetchData(url?: string) {
 
 const FETCH_DIR_TIMEOUT = 5000
 
-async function fetchDirHtml(url?: string) {
+/**
+ * fetchDir 只允許抓取與請求頁面同一個目錄樹的資源，避免任意頁面的 content
+ * script 透過 background 的 host_permissions 繞過 CORS 抓取任意網址。
+ * 最小判斷：http(s) 需 origin 相同；file: 僅在請求頁面本身也是 file: 時允許。
+ */
+function isSameDirTree(url: string, senderUrl?: string): boolean {
+  if (!senderUrl) return false
+  try {
+    const target = new URL(url)
+    const sender = new URL(senderUrl)
+    if (target.protocol === 'file:') {
+      return sender.protocol === 'file:'
+    }
+    if (target.protocol === 'http:' || target.protocol === 'https:') {
+      return target.origin === sender.origin
+    }
+    return false
+  } catch {
+    return false
+  }
+}
+
+async function fetchDirHtml(url?: string, senderUrl?: string) {
   if (!url) {
     return { error: 'Fetch error: URL is undefined.' }
+  }
+  if (!isSameDirTree(url, senderUrl)) {
+    return { error: 'forbidden' }
   }
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), FETCH_DIR_TIMEOUT)
