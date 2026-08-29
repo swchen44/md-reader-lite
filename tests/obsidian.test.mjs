@@ -108,3 +108,26 @@ test('normalizes nested blockquote callouts', async () => {
   assert.match(html, /<strong>Deep<\/strong>/)
   assert.ok(!html.includes('[!hint]'))
 })
+
+test('same-line pseudo-fence does not desync fence tracking', async () => {
+  const { default: ObsidianPlugin } = await import('../src/plugins/obsidian.ts')
+  const m = new MarkdownIt({ html: true }).use(ObsidianPlugin)
+  // ```js``` is not a real fence opener (backtick info strings may not
+  // contain a backtick); normalization must still apply afterwards.
+  const html = m.render('```js```\n\n> [!note] After\n> body')
+  assert.ok(!html.includes('[!note]'))
+})
+
+test('shorter marker nested inside a longer fence is not a closer', async () => {
+  const { default: ObsidianPlugin } = await import('../src/plugins/obsidian.ts')
+  const m = new MarkdownIt({ html: true }).use(ObsidianPlugin)
+  const html = m.render('````\n```\n> [!note] Trapped\n````')
+  assert.ok(html.includes('[!note] Trapped'))
+})
+
+test('fences hidden behind blockquote markers are tracked', async () => {
+  const { default: ObsidianPlugin } = await import('../src/plugins/obsidian.ts')
+  const m = new MarkdownIt({ html: true }).use(ObsidianPlugin)
+  const html = m.render('> ```\n> [!note] QuotedInFence\n> ```')
+  assert.ok(html.includes('[!note] QuotedInFence'))
+})

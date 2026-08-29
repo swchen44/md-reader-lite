@@ -87,7 +87,9 @@ const CALLOUT_TYPE_MAP: Record<string, string> = {
 }
 const GITHUB_TYPES = ['NOTE', 'TIP', 'IMPORTANT', 'WARNING', 'CAUTION']
 const CALLOUT_LINE_RE = /^((?:\s*>)+\s*)\[!(\w+)\]([+-]?)(?:[ \t]+(.+))?$/
-const FENCE_RE = /^\s*(?:```|~~~)/
+const BLOCKQUOTE_MARKER_RE = /^\s{0,3}>\s?/
+const FENCE_OPEN_RE = /^(\s{0,3})(`{3,}|~{3,})(.*)$/
+const FENCE_CLOSE_RE = /^(\s{0,3})(`{3,}|~{3,})\s*$/
 
 function normalizeCalloutLine(line: string): string {
   const m = line.match(CALLOUT_LINE_RE)
@@ -101,17 +103,76 @@ function normalizeCalloutLine(line: string): string {
   return title ? `${head}\n${prefix}**${title.trim()}**` : head
 }
 
-/** Obsidian callout → GitHub alert 語法（Alert 插件可接手渲染），跳過 fenced code block 內容 */
+type FenceState = { char: string; len: number; quoteDepth: number } | null
+
+/** 剝除行首的 blockquote 標記（可重複巢狀），回傳深度與剩餘內容 */
+function stripBlockquoteMarkers(line: string): {
+  quoteDepth: number
+  remainder: string
+} {
+  let quoteDepth = 0
+  let remainder = line
+  let m: RegExpMatchArray | null
+  while ((m = remainder.match(BLOCKQUOTE_MARKER_RE))) {
+    quoteDepth++
+    remainder = remainder.slice(m[0].length)
+  }
+  return { quoteDepth, remainder }
+}
+
+/**
+ * Obsidian callout → GitHub alert 語法（Alert 插件可接手渲染），跳過 fenced code block 內容。
+ *
+ * This is a line-based preprocessor, not a full CommonMark parser. It tracks
+ * the opening fence's character (` or ~), marker length, and blockquote
+ * depth so it can tell a genuine fence from:
+ *   - a same-line pseudo-fence like ```js``` (backtick info strings may not
+ *     contain a backtick, so this never opens a fence at all);
+ *   - a shorter marker nested inside a longer fence (a closer must match the
+ *     opener's character and be at least as long);
+ *   - a fence hidden behind blockquote markers (`> ` `` ` ``).
+ * Indented (4-space) code blocks and fences nested inside list items are
+ * NOT fence-tracked — that residual is an accepted, deliberate scope bound
+ * for this preprocessor, not a bug.
+ */
 function normalizeCallouts(state: StateCore): void {
-  let inFence = false
+  let fence: FenceState = null
   state.src = state.src
     .split('\n')
     .map(line => {
-      if (FENCE_RE.test(line)) {
-        inFence = !inFence
+      const { quoteDepth, remainder } = stripBlockquoteMarkers(line)
+
+      if (fence) {
+        const close = remainder.match(FENCE_CLOSE_RE)
+        if (
+          close &&
+          close[2][0] === fence.char &&
+          close[2].length >= fence.len &&
+          // Closer must sit at the same blockquote depth as the opener.
+          // Using strict equality (rather than "same-or-shallower") is a
+          // documented residual: deeper-nesting mismatches are not
+          // precisely tracked by this line-based scanner.
+          quoteDepth === fence.quoteDepth
+        ) {
+          fence = null
+        }
         return line
       }
-      return inFence ? line : normalizeCalloutLine(line)
+
+      const open = remainder.match(FENCE_OPEN_RE)
+      if (open) {
+        const marker = open[2]
+        const info = open[3]
+        const isBacktickFence = marker[0] === '`'
+        // CommonMark: a backtick fence's info string may not itself contain
+        // a backtick (e.g. ```js``` is not a fence opener at all).
+        if (!isBacktickFence || !info.includes('`')) {
+          fence = { char: marker[0], len: marker.length, quoteDepth }
+          return line
+        }
+      }
+
+      return normalizeCalloutLine(line)
     })
     .join('\n')
 }
