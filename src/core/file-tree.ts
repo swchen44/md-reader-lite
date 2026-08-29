@@ -97,9 +97,14 @@ export function createFileTree({
           renderMessage(childBox, localize('dir_empty'))
         }
       } catch {
-        childBox.innerHTML = null
-        renderMessage(childBox, localize('dir_error'))
-        childBox = null // 下次點擊重試
+        childBox.remove()
+        childBox = null
+        const errMsg = new Ele<HTMLElement>('div', {
+          className: className.TREE_MSG,
+        })
+        errMsg.textContent = localize('dir_error')
+        li.append(errMsg)
+        label.on('click', () => errMsg.remove(), { once: true })
         li.classList.remove(className.TREE_DIR_OPEN)
       }
     })
