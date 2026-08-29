@@ -75,6 +75,7 @@ const actionMap = {
   mdPlugins: 'updateMdPlugins',
   pageTheme: 'updatePageTheme',
   hiddenSide: 'toggleSide',
+  folderTree: 'toggleFolderTree',
 }
 
 function updatePage(key: keyof typeof actionMap, value?: any) {

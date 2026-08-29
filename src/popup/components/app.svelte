@@ -87,6 +87,18 @@
       </FormField>
     </div>
 
+    <div class="form-item inline">
+      <span class="label-item">{localize('label_folder-tree')}:</span>
+      <FormField align="end">
+        <Switch
+          disabled={!data.enable}
+          bind:checked={data.folderTree}
+          color="primary"
+          on:change={() => updateConfig('folderTree', data.folderTree)}
+        />
+      </FormField>
+    </div>
+
     <div class="form-item">
       <div class="label-item">{localize('label_md-plugins')}:</div>
       <Set

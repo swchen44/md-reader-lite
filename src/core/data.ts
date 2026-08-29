@@ -19,6 +19,7 @@ export function getDefaultData(mergeData: Data = {}): Data {
     refresh: false,
     centered: true,
     hiddenSide: false,
+    folderTree: true,
     language: i18n().locale,
     mdPlugins: [...MD_PLUGINS],
     pageTheme: PAGE_THEMES[0],

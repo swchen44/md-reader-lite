@@ -196,11 +196,12 @@ function main(data: Data) {
     svg(codeIcon),
   )
   rawToggleBtn.on('click', () => {
-    lifecycle.toggleRaw(
-      fileTree
-        ? [mdBody, mdSide, sideTabs, fileTree]
-        : [mdBody, mdSide, sideTabs],
-    )
+    const eles: Ele<HTMLElement>[] = [mdBody, mdSide]
+    if (configData.folderTree !== false) {
+      eles.push(sideTabs)
+      if (fileTree) eles.push(fileTree)
+    }
+    lifecycle.toggleRaw(eles)
   })
 
   /* render side expand button */

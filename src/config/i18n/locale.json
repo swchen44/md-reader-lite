@@ -12,6 +12,7 @@
 
     "label_enable": "Enable",
     "label_auto-refresh": "Auto Refresh",
+    "label_folder-tree": "Folder Tree",
     "label_centered": "Centered",
     "label_theme": "Theme",
     "label_language": "Language",
@@ -41,6 +42,7 @@
   "zh-CN": {
     "label_enable": "启用",
     "label_auto-refresh": "自动刷新",
+    "label_folder-tree": "文件夹目录",
     "label_centered": "内容居中",
     "label_theme": "主题",
     "label_language": "语言",
@@ -70,6 +72,7 @@
   "zh-TW": {
     "label_enable": "啟用",
     "label_auto-refresh": "自動刷新",
+    "label_folder-tree": "資料夾目錄",
     "label_centered": "內容居中",
     "label_theme": "主題",
     "label_language": "語言",
