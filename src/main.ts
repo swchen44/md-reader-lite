@@ -5,6 +5,8 @@ import Ele, { svg } from '@/core/ele'
 import { initPlugins } from '@/plugins'
 import lifecycle from '@/core/lifecycle'
 import className from '@/config/class-name'
+import i18n from '@/config/i18n'
+import { createFileTree } from '@/core/file-tree'
 import type { Theme } from '@/config/page-themes'
 import { getDefaultData, type Data } from '@/core/data'
 import { mdRender, type MdOptions } from '@/core/markdown'
@@ -51,6 +53,9 @@ function main(data: Data) {
     },
     toggleSide() {
       onToggleSide()
+    },
+    toggleFolderTree(value) {
+      setFolderTree(value)
     },
   }
   chrome.runtime.onMessage.addListener(({ action, data: { key, value } }) => {
@@ -132,6 +137,51 @@ function main(data: Data) {
   mdSide.on('mouseleave', () => {
     isSideHover = false
   })
+
+  /* render folder tree tab */
+  const localize = i18n(configData.language)
+  let fileTree: ReturnType<typeof createFileTree> | null = null
+
+  function tabButton(labelKey: string, active: boolean) {
+    const btn = new Ele<HTMLElement>('button', {
+      className: active
+        ? `${className.SIDE_TAB} ${className.SIDE_TAB_ACTIVE}`
+        : className.SIDE_TAB,
+    })
+    btn.textContent = localize(labelKey)
+    return btn
+  }
+
+  const outlineTabBtn = tabButton('label_outline', true)
+  const filesTabBtn = tabButton('label_files', false)
+  const sideTabs = new Ele<HTMLElement>(
+    'div',
+    { className: className.SIDE_TABS },
+    [outlineTabBtn, filesTabBtn],
+  )
+
+  function activateTab(tab: 'outline' | 'files') {
+    const isFiles = tab === 'files'
+    outlineTabBtn.ele.classList.toggle(className.SIDE_TAB_ACTIVE, !isFiles)
+    filesTabBtn.ele.classList.toggle(className.SIDE_TAB_ACTIVE, isFiles)
+    mdSide.toggle(!isFiles)
+    if (isFiles && !fileTree) {
+      fileTree = createFileTree({
+        currentUrl: window.location.href,
+        localize,
+      })
+      lifecycle.mount([fileTree])
+    }
+    fileTree?.toggle(isFiles)
+  }
+  outlineTabBtn.on('click', () => activateTab('outline'))
+  filesTabBtn.on('click', () => activateTab('files'))
+
+  function setFolderTree(enabled: boolean) {
+    sideTabs.toggle(enabled)
+    document.body.classList.toggle('md-reader-has-tabs', enabled)
+    if (!enabled) activateTab('outline')
+  }
 
   renderSide()
   document.addEventListener('scroll', throttle(onScroll, 100))
@@ -217,7 +267,8 @@ function main(data: Data) {
   )
 
   /* mount elements */
-  lifecycle.mount([buttonWrap, mdBody, mdSide])
+  lifecycle.mount([buttonWrap, mdBody, mdSide, sideTabs])
+  setFolderTree(configData.folderTree !== false)
   updateAnchorPosition()
 
   darkMediaQuery.addEventListener('change', (e: MediaQueryListEvent) => {

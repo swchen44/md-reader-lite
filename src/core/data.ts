@@ -10,6 +10,7 @@ export interface Data {
   mdPlugins?: typeof MD_PLUGINS
   pageTheme?: typeof PAGE_THEMES[0]
   hiddenSide?: boolean
+  folderTree?: boolean
 }
 
 export function getDefaultData(mergeData: Data = {}): Data {
