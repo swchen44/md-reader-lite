@@ -84,3 +84,33 @@ export function parseDirListing(html: string, baseUrl: string): DirEntry[] {
   }
   return parseAutoindex(html, baseUrl)
 }
+
+/**
+ * 抓取並解析目錄清單。優先走 background（有 host_permissions），
+ * 失敗且為 file:// 時退回 content script 直接 fetch（spike fallback，
+ * 需「允許存取檔案網址」權限）。
+ */
+export function fetchDirListing(dirUrl: string): Promise<DirEntry[]> {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(
+      { action: 'fetchDir', data: { url: dirUrl } },
+      async (res: { html?: string; error?: string } | undefined) => {
+        if (res?.html) {
+          resolve(parseDirListing(res.html, dirUrl))
+          return
+        }
+        if (dirUrl.startsWith('file:')) {
+          try {
+            const direct = await fetch(dirUrl)
+            resolve(parseDirListing(await direct.text(), dirUrl))
+            return
+          } catch (err) {
+            reject(err instanceof Error ? err : new Error(String(err)))
+            return
+          }
+        }
+        reject(new Error(res?.error || 'fetchDir failed'))
+      },
+    )
+  })
+}

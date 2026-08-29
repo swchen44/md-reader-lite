@@ -21,6 +21,9 @@ async function messageHandler(
     case 'fetch':
       fetchData(sender.url).then(callback)
       break
+    case 'fetchDir':
+      fetchDirHtml(data.url).then(callback)
+      break
   }
 }
 
@@ -37,6 +40,27 @@ async function fetchData(url?: string) {
       console.error(err)
       return err.message
     })
+}
+
+const FETCH_DIR_TIMEOUT = 5000
+
+async function fetchDirHtml(url?: string) {
+  if (!url) {
+    return { error: 'Fetch error: URL is undefined.' }
+  }
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), FETCH_DIR_TIMEOUT)
+  try {
+    const res = await fetch(url, { signal: controller.signal })
+    if (!res.ok) {
+      return { error: `HTTP ${res.status}` }
+    }
+    return { html: await res.text() }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : String(err) }
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 // Chrome extension shortcuts
