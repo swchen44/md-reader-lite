@@ -7,6 +7,7 @@ import lifecycle from '@/core/lifecycle'
 import className from '@/config/class-name'
 import i18n from '@/config/i18n'
 import { createFileTree } from '@/core/file-tree'
+import { createSearchPanel } from '@/core/search-panel'
 import type { Theme } from '@/config/page-themes'
 import { getDefaultData, type Data } from '@/core/data'
 import { mdRender, type MdOptions } from '@/core/markdown'
@@ -156,10 +157,58 @@ function main(data: Data) {
 
   const outlineTabBtn = tabButton('label_outline', true)
   const filesTabBtn = tabButton('label_files', false)
+
+  let searchOpen = false
+  let searchMounted = false
+  const searchPanel = createSearchPanel({
+    getArticle: () => mdContent.ele,
+    getHeads: () => headElements,
+    localize,
+    onRequestClose: () => closeSearch(),
+  })
+  searchPanel.button.on('click', () => openSearch())
+  // Registered here (after searchPanel exists), not right after
+  // initPlugins(): the initial contentRender(mdRaw) call above already
+  // emits 'contentRendered' synchronously, before this point in the
+  // function runs. Wiring this listener any earlier would fire on that
+  // first render while `searchPanel` is still in its TDZ.
+  globalEvent.on('contentRendered', () => {
+    searchPanel.rebuild()
+  })
+
+  function openSearch() {
+    if (searchOpen || rawShown) return
+    searchOpen = true
+    if (!searchMounted) {
+      lifecycle.mount([searchPanel.panel])
+      searchMounted = true
+    }
+    outlineTabBtn.hide()
+    filesTabBtn.hide()
+    searchPanel.button.hide()
+    searchPanel.bar.show()
+    mdSide.hide()
+    fileTree?.hide()
+    searchPanel.panel.show()
+    searchPanel.focus()
+  }
+
+  function closeSearch() {
+    if (!searchOpen) return
+    searchOpen = false
+    searchPanel.clear()
+    searchPanel.bar.hide()
+    searchPanel.panel.hide()
+    outlineTabBtn.show()
+    filesTabBtn.show()
+    searchPanel.button.show()
+    activateTab(activeTab)
+  }
+
   const sideTabs = new Ele<HTMLElement>(
     'div',
     { className: className.SIDE_TABS },
-    [outlineTabBtn, filesTabBtn],
+    [outlineTabBtn, filesTabBtn, searchPanel.button, searchPanel.bar],
   )
 
   function activateTab(tab: 'outline' | 'files') {
@@ -203,6 +252,7 @@ function main(data: Data) {
     svg(codeIcon),
   )
   rawToggleBtn.on('click', () => {
+    if (searchOpen) closeSearch()
     const eles: Ele<HTMLElement>[] = [mdBody, mdSide]
     if (configData.folderTree !== false) {
       eles.push(sideTabs)

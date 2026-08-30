@@ -38,7 +38,13 @@
     "TOC": "TOC",
     "Alert": "Alert",
     "Obsidian": "Obsidian",
-    "warning_message": "Open the details page of extension \"MD Reader Lite\" and active \"allow access to file URLs\"."
+    "warning_message": "Open the details page of extension \"MD Reader Lite\" and active \"allow access to file URLs\".",
+    "search_placeholder": "Search headings & content",
+    "search_headings": "Heading hits",
+    "search_blocks": "Content hits",
+    "search_empty_hint": "Type to search headings and content",
+    "search_no_results": "No matches",
+    "search_truncated": "Showing first 100 content hits"
   },
   "zh-CN": {
     "label_enable": "启用",
@@ -69,7 +75,13 @@
     "TOC": "目录",
     "Obsidian": "Obsidian 语法",
     "Alert": "警告框",
-    "warning_message": "请在 “MD Reader Lite” 扩展程序的 “详情” 中开启 “允许访问文件网址” 权限。"
+    "warning_message": "请在 “MD Reader Lite” 扩展程序的 “详情” 中开启 “允许访问文件网址” 权限。",
+    "search_placeholder": "搜索标题与内文",
+    "search_headings": "标题命中",
+    "search_blocks": "内文命中",
+    "search_empty_hint": "输入关键字搜索标题与内文",
+    "search_no_results": "无符合结果",
+    "search_truncated": "仅列出前 100 笔内文命中"
   },
   "zh-TW": {
     "label_enable": "啟用",
@@ -100,7 +112,13 @@
     "TOC": "目錄",
     "Alert": "警告框",
     "Obsidian": "Obsidian 語法",
-    "warning_message": "請在「MD Reader Lite」擴充功能的「詳細資料」頁面開啟「允許存取檔案網址」。"
+    "warning_message": "請在「MD Reader Lite」擴充功能的「詳細資料」頁面開啟「允許存取檔案網址」。",
+    "search_placeholder": "搜尋標題與內文",
+    "search_headings": "標題命中",
+    "search_blocks": "內文命中",
+    "search_empty_hint": "輸入關鍵字搜尋標題與內文",
+    "search_no_results": "無符合結果",
+    "search_truncated": "僅列出前 100 筆內文命中"
   },
   "ko": {
     "label_enable": "활성화",
