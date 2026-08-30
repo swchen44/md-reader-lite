@@ -27,7 +27,6 @@
     "default_popup": "popup.html"
   },
   "permissions": ["activeTab", "storage"],
-  "host_permissions": ["*://*/*"],
   "content_scripts": [
     {
       "js": ["js/content.js"],

@@ -26,33 +26,21 @@ function xhrGet(url: string): Promise<string> {
 }
 
 /**
- * 抓取並解析目錄清單。優先走 background（有 host_permissions），
- * 失敗且為 file:// 時退回 content script 直接 XHR（需「允許存取檔案網址」權限）。
+ * 抓取並解析目錄清單。content script 在頁面 origin 內直接同源 fetch 即可，
+ * 不需要任何 host 權限；file:// 則維持走 XHR（需「允許存取檔案網址」權限）。
  */
-export function fetchDirListing(dirUrl: string): Promise<DirEntry[]> {
-  return new Promise((resolve, reject) => {
-    chrome.runtime.sendMessage(
-      { action: 'fetchDir', data: { url: dirUrl } },
-      async (res: { html?: string; error?: string } | undefined) => {
-        // 讀取 lastError 以避免瀏覽器主控台出現
-        // "Unchecked runtime.lastError" 雜訊；沒有 fallback 可用時併入錯誤訊息。
-        const lastError = chrome.runtime.lastError
-        if (res?.html) {
-          resolve(parseDirListing(res.html, dirUrl))
-          return
-        }
-        if (dirUrl.startsWith('file:')) {
-          try {
-            const html = await xhrGet(dirUrl)
-            resolve(parseDirListing(html, dirUrl))
-            return
-          } catch (err) {
-            reject(err instanceof Error ? err : new Error(String(err)))
-            return
-          }
-        }
-        reject(new Error(res?.error || lastError?.message || 'fetchDir failed'))
-      },
-    )
+export async function fetchDirListing(dirUrl: string): Promise<DirEntry[]> {
+  if (dirUrl.startsWith('file:')) {
+    const html = await xhrGet(dirUrl)
+    return parseDirListing(html, dirUrl)
+  }
+  const res = await fetch(dirUrl, {
+    signal: (AbortSignal as any).timeout(5000),
+    cache: 'no-store',
   })
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`)
+  }
+  const html = await res.text()
+  return parseDirListing(html, dirUrl)
 }

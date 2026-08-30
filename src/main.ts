@@ -308,25 +308,28 @@ function main(data: Data) {
   function polling() {
     void (function watch() {
       clearTimeout(pollingTimer)
-      chrome.runtime.sendMessage({ action: 'fetch' }, res => {
-        if (res !== undefined) {
-          if (mdRaw === undefined || mdRaw === null) {
-            if (res) {
-              window.location.reload()
-              return
+      fetch(window.location.href, { cache: 'no-store' })
+        .then(r => (r.ok ? r.text() : undefined))
+        .catch(() => undefined)
+        .then(res => {
+          if (res !== undefined) {
+            if (mdRaw === undefined || mdRaw === null) {
+              if (res) {
+                window.location.reload()
+                return
+              }
+            } else if (mdRaw !== res) {
+              mdRaw = res
+              contentRender(res)
+              renderSide()
+              /* update raw content */
+              setTimeout(() => {
+                rawContainer.textContent = res
+              }, 0)
             }
-          } else if (mdRaw !== res) {
-            mdRaw = res
-            contentRender(res)
-            renderSide()
-            /* update raw content */
-            setTimeout(() => {
-              rawContainer.textContent = res
-            }, 0)
           }
-        }
-        pollingTimer = setTimeout(watch, 500)
-      })
+          pollingTimer = setTimeout(watch, 500)
+        })
     })()
   }
 
