@@ -4,7 +4,9 @@ import { url, log, newVersion } from './utils.mjs'
 
 const entryDir = url('../extension/')
 const outputDir = url('../dist/')
-const extName = `md-reader-${newVersion}.zip`
+const extName = `${
+  process.env.npm_package_name || 'md-reader-lite'
+}-${newVersion}.zip`
 
 try {
   await fs.access(entryDir)

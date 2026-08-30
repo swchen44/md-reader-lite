@@ -1,10 +1,10 @@
 {
   "ext_name": {
-    "message": "MD Reader",
+    "message": "MD Reader Lite",
     "description": "Розширення для читання markdown для Chrome."
   },
   "ext_desc": {
-    "message": "Розширення для читання markdown для Chrome.",
+    "message": "Легке розширення для читання markdown для Chrome.",
     "description": "Підтримка перегляду file://, http://, https:// посилань та файлів розширення *.md, *.mkd, *.markdown."
   },
   "command_toggle_side": {

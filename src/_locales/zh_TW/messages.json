@@ -1,10 +1,10 @@
 {
   "ext_name": {
-    "message": "MD Reader",
+    "message": "MD Reader Lite",
     "description": "一個可以使 Chrome 預覽 markdown 文件的瀏覽器擴展。"
   },
   "ext_desc": {
-    "message": "一個可以使 Chrome 預覽 markdown 文件的瀏覽器擴展。"
+    "message": "輕量級 Markdown 閱讀器擴充，本地與線上 .md 檔案即開即讀。"
   },
   "command_toggle_side": {
     "message": "切換側邊欄"
