@@ -111,7 +111,3 @@ function updatePage(key: keyof typeof actionMap, value?: any) {
         chrome.tabs.sendMessage(tabs[0].id, { action, data: { key, value } })
     })
 }
-
-chrome.runtime.setUninstallURL(
-  'https://github.com/orgs/md-reader/discussions/51',
-)
