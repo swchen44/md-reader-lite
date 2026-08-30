@@ -6,6 +6,7 @@
 | 1.1  | B   | 規格對齊：GitHub/Obsidian markers 補齊（wikilink #標題/#^block、行內腳註、#tag、可摺疊 callout、自訂任務狀態…以案 B spec 定案）＋ CommonMark/GFM spec.txt conformance harness ＋ Obsidian fixture 對照                                                                              | 規劃中 |
 | 1.2  | C   | file:// 完整目錄樹（File System Access API；先 spike：file:// 頁 showDirectoryPicker 可用性、handle 持久化/重授權）                                                                                                                                                                 | 規劃中 |
 | 1.3  | D   | GitHub 目錄樹：偵測 github.com / raw.githubusercontent.com 網址時改用 GitHub API（`api.github.com/repos/<o>/<r>/contents/<path>`）列出檔案；manifest 僅加窄範圍 host 權限 `https://api.github.com/*`（單一網域，不觸發廣泛權限深審）；未登入 API 60 req/hr 限流，樹的懶加載天然節流 | 規劃中 |
+| 1.4  | E   | 側邊欄搜尋：側欄新增搜尋框（第三個頁籤或大綱頁籤上方），即時過濾大綱標題並高亮命中字串、點擊跳轉至該標題；進階為當前文件全文搜尋（命中段落列表 + 跳轉 + 內文高亮）。純前端、無新權限（參考商店 3.x 版的 outline search 形態）                                                       | 規劃中 |
 | 2.x  | —   | PWA/Web 衍生專案：免安裝閱讀器，複用 core 層（產品形態參考 TriptoAfsin/md-viewer-pwa：drop zone、多分頁、離線 PWA）；技術棧屆時另定                                                                                                                                                 | 願景   |
 
 ## 維護策略
