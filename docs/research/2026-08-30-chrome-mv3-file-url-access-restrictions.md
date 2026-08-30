@@ -27,3 +27,7 @@
 ## 現行降級行為
 
 file:// 頁的檔案頁籤顯示「無法取得目錄列表」；`../` 仍可導覽到 Chrome 原生目錄頁。XHR fallback 保留（老版本 Chromium 分支仍可用）。
+
+## 更正（2026-08-31）
+
+在 default-src 'none' 的 raw.githubusercontent 頁上實測：content script 同源 fetch 8/8 成功、跨域（CORS 允許的）API fetch 也通——narrow-permissions 案「嚴格 CSP 網站失去自動刷新/目錄樹」的推定錯誤；背景代理唯一不可替代的用途只剩需要 host 權限的非 CORS 端點。詳見 lesson_learn.md 第 10 條。
