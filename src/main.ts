@@ -200,7 +200,7 @@ function main(data: Data) {
     searchPanel.bar.hide()
     searchPanel.panel.hide()
     outlineTabBtn.show()
-    filesTabBtn.show()
+    filesTabBtn.toggle(configData.folderTree !== false)
     searchPanel.button.show()
     activateTab(activeTab)
   }
@@ -234,7 +234,7 @@ function main(data: Data) {
     // activateTab() when raw view restores).
     if (rawShown) return
     if (!enabled && searchOpen) closeSearch()
-    filesTabBtn.toggle(enabled)
+    if (!searchOpen) filesTabBtn.toggle(enabled)
     if (!enabled) activateTab('outline')
   }
 

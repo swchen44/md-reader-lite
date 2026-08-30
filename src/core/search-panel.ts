@@ -271,7 +271,7 @@ export function createSearchPanel(opts: Options): SearchPanel {
     debounceTimer = window.setTimeout(() => run(input.ele.value), DEBOUNCE_MS)
   })
   input.on('keydown', (e: KeyboardEvent) => {
-    if (e.code === 'Escape') {
+    if (e.code === 'Escape' && !e.isComposing) {
       e.stopPropagation()
       onRequestClose()
     }
