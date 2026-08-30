@@ -49,6 +49,7 @@ export function createFileTree({
   const records: NodeRecord[] = []
   let currentQuery = ''
   let hintEle: Ele<HTMLElement> | null = null
+  let emptyEle: Ele<HTMLElement> | null = null
 
   const loadDir = (dirUrl: string) => {
     if (!cache.has(dirUrl)) {
@@ -59,10 +60,14 @@ export function createFileTree({
     return cache.get(dirUrl)
   }
 
-  function renderMessage(target: Ele<HTMLElement>, text: string) {
+  function renderMessage(
+    target: Ele<HTMLElement>,
+    text: string,
+  ): Ele<HTMLElement> {
     const msg = new Ele<HTMLElement>('div', { className: className.TREE_MSG })
     msg.textContent = text
     target.append(msg)
+    return msg
   }
 
   function renderEntries(target: Ele<HTMLElement>, entries: DirEntry[]) {
@@ -125,6 +130,7 @@ export function createFileTree({
         childBox.innerHTML = null
         if (entries.length) {
           renderEntries(childBox, entries)
+          pinFooterRows()
           if (currentQuery) applyFilter(currentQuery)
         } else {
           renderMessage(childBox, localize('dir_empty'))
@@ -205,7 +211,10 @@ export function createFileTree({
         rec.li.querySelector(`[${HIT_ATTR}="1"]`) !== null
       rec.li.classList.toggle(className.TREE_FILTERED_HIDDEN, !show)
     }
-    /* 提示列 */
+    const anyVisible = live.some(
+      r => !r.li.classList.contains(className.TREE_FILTERED_HIDDEN),
+    )
+    /* 提示列 + 無符合結果訊息 */
     if (q) {
       if (!hintEle) {
         hintEle = new Ele<HTMLElement>('div', {
@@ -215,13 +224,32 @@ export function createFileTree({
         container.append(hintEle)
       }
       hintEle.show()
+      if (!anyVisible) {
+        if (!emptyEle) {
+          emptyEle = new Ele<HTMLElement>('div', {
+            className: className.TREE_MSG,
+          })
+          emptyEle.textContent = localize('search_no_results')
+          container.append(emptyEle)
+        }
+        emptyEle.show()
+      } else {
+        emptyEle?.hide()
+      }
     } else {
       hintEle?.hide()
+      emptyEle?.hide()
     }
   }
 
   function clearFilter() {
     applyFilter('')
+  }
+
+  /** 讓提示列／無符合結果訊息永遠固定在樹狀清單最下方 */
+  function pinFooterRows() {
+    if (hintEle) container.append(hintEle)
+    if (emptyEle) container.append(emptyEle)
   }
 
   /* 首層：../ + 目前資料夾內容 */
@@ -233,19 +261,20 @@ export function createFileTree({
     up.append(upLink)
     container.append(up)
   }
-  renderMessage(container, '…')
+  const rootMsgEle = renderMessage(container, '…')
   loadDir(rootDir)
     .then(entries => {
-      container.query(`.${className.TREE_MSG}`)?.remove()
+      rootMsgEle.remove()
       if (entries.length) {
         renderEntries(container, entries)
+        pinFooterRows()
         if (currentQuery) applyFilter(currentQuery)
       } else {
         renderMessage(container, localize('dir_error'))
       }
     })
     .catch(() => {
-      container.query(`.${className.TREE_MSG}`)?.remove()
+      rootMsgEle.remove()
       renderMessage(container, localize('dir_error'))
     })
 
