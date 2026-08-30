@@ -28,7 +28,7 @@ jobs:
 
       - name: Test
         run: |
-          node --test tests/obsidian.test.mjs tests/dir-listing.test.mjs tests/graphviz.test.mjs
+          node --test tests/fsa-path.test.mjs tests/doc-search.test.mjs tests/obsidian.test.mjs tests/dir-listing.test.mjs tests/graphviz.test.mjs
           node_modules/.bin/tsc --noEmit
 
       - name: Resolve version
