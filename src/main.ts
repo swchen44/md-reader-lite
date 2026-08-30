@@ -230,12 +230,11 @@ function main(data: Data) {
   filesTabBtn.on('click', () => activateTab('files'))
 
   function setFolderTree(enabled: boolean) {
-    // While raw view is showing, defer the visual toggles: forcing
-    // sideTabs/mdSide/fileTree visible here would show them over the raw
-    // text. They get re-applied via activateTab() when raw view restores.
+    // While raw view is showing, defer the visual toggles (re-applied via
+    // activateTab() when raw view restores).
     if (rawShown) return
-    sideTabs.toggle(enabled)
-    document.body.classList.toggle(className.HAS_TABS, enabled)
+    if (!enabled && searchOpen) closeSearch()
+    filesTabBtn.toggle(enabled)
     if (!enabled) activateTab('outline')
   }
 
@@ -253,11 +252,8 @@ function main(data: Data) {
   )
   rawToggleBtn.on('click', () => {
     if (searchOpen) closeSearch()
-    const eles: Ele<HTMLElement>[] = [mdBody, mdSide]
-    if (configData.folderTree !== false) {
-      eles.push(sideTabs)
-      if (fileTree) eles.push(fileTree)
-    }
+    const eles: Ele<HTMLElement>[] = [mdBody, mdSide, sideTabs]
+    if (fileTree) eles.push(fileTree)
     lifecycle.toggleRaw(eles)
     rawShown = !rawShown
     if (!rawShown) {
@@ -338,6 +334,7 @@ function main(data: Data) {
 
   /* mount elements */
   lifecycle.mount([buttonWrap, mdBody, mdSide, sideTabs])
+  document.body.classList.add(className.HAS_TABS)
   setFolderTree(configData.folderTree !== false)
   updateAnchorPosition()
 
