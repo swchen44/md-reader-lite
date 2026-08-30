@@ -99,3 +99,57 @@ test('makeSnippet: in-window secondary hits kept, out-of-window dropped', async 
   assert.equal(s.ranges.length, 2)
   for (const [st, en] of s.ranges) assert.equal(s.text.slice(st, en), 'ab')
 })
+
+test('withAncestors: nested hit pulls full ancestor chain as context', async () => {
+  const { withAncestors } = await load()
+  // h1 h2 h3，命中 h3
+  assert.deepEqual(
+    withAncestors([{ level: 1 }, { level: 2 }, { level: 3 }], [2]),
+    [
+      { index: 0, isContext: true },
+      { index: 1, isContext: true },
+      { index: 2, isContext: false },
+    ],
+  )
+})
+
+test('withAncestors: shared ancestors dedupe across hits', async () => {
+  const { withAncestors } = await load()
+  // h1 h2 h3 h3，命中兩個 h3 → h1/h2 各一次
+  assert.deepEqual(
+    withAncestors(
+      [{ level: 1 }, { level: 2 }, { level: 3 }, { level: 3 }],
+      [2, 3],
+    ),
+    [
+      { index: 0, isContext: true },
+      { index: 1, isContext: true },
+      { index: 2, isContext: false },
+      { index: 3, isContext: false },
+    ],
+  )
+})
+
+test('withAncestors: h1 hit has no ancestors', async () => {
+  const { withAncestors } = await load()
+  assert.deepEqual(withAncestors([{ level: 1 }, { level: 2 }], [0]), [
+    { index: 0, isContext: false },
+  ])
+})
+
+test('withAncestors: skip-level headings still chain (h1 -> h3)', async () => {
+  const { withAncestors } = await load()
+  assert.deepEqual(withAncestors([{ level: 1 }, { level: 3 }], [1]), [
+    { index: 0, isContext: true },
+    { index: 1, isContext: false },
+  ])
+})
+
+test('withAncestors: a hit that is also an ancestor stays a hit', async () => {
+  const { withAncestors } = await load()
+  // h1(hit) h2(hit)：h1 是 h2 的祖先但本身命中 → isContext=false
+  assert.deepEqual(withAncestors([{ level: 1 }, { level: 2 }], [0, 1]), [
+    { index: 0, isContext: false },
+    { index: 1, isContext: false },
+  ])
+})

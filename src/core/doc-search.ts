@@ -89,3 +89,37 @@ export function makeSnippet(
   }
   return { text: prefix + text.slice(start, end) + suffix, ranges: remapped }
 }
+
+export interface HeadingLevelEntry {
+  level: number
+}
+
+export interface AncestorItem {
+  index: number
+  isContext: boolean
+}
+
+/**
+ * 命中標題 + 其未命中祖先（提供層級脈絡）。
+ * 祖先 = 該標題前方最近且 level 更小者，遞迴至無。輸出依文件順序。
+ */
+export function withAncestors(
+  headings: HeadingLevelEntry[],
+  hitIndexes: number[],
+): AncestorItem[] {
+  const hits = new Set(hitIndexes)
+  if (!hits.size) return []
+  const visible = new Set<number>(hits)
+  for (const hit of hitIndexes) {
+    let level = headings[hit]?.level ?? 0
+    for (let i = hit - 1; i >= 0 && level > 1; i--) {
+      if (headings[i].level < level) {
+        visible.add(i)
+        level = headings[i].level
+      }
+    }
+  }
+  return Array.from(visible)
+    .sort((a, b) => a - b)
+    .map(index => ({ index, isContext: !hits.has(index) }))
+}
