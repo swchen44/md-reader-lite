@@ -1,6 +1,6 @@
 import Ele from '@/core/ele'
 import className from '@/config/class-name'
-import { fetchDirListing, type DirEntry } from '@/core/dir-listing'
+import { fetchDirListing, type DirEntry } from '@/core/dir-fetch'
 
 interface FileTreeOptions {
   currentUrl: string
