@@ -6,6 +6,8 @@ import { findRanges } from '@/core/doc-search'
 interface FileTreeOptions {
   currentUrl: string
   localize: (key: string) => string
+  listDir?: (dirUrl: string) => Promise<DirEntry[]>
+  onRootStatus?: (status: 'ok' | 'error') => void
 }
 
 export interface FileTreeHandle {
@@ -37,11 +39,14 @@ export function parentOf(dirUrl: string): string | null {
 export function createFileTree({
   currentUrl,
   localize,
+  listDir: listDirOpt,
+  onRootStatus,
 }: FileTreeOptions): FileTreeHandle {
   // currentUrl 可能帶 #hash 或 ?query（例如錨點跳轉後的頁面網址），
   // 兩者都與檔案樹的目錄／作用中檔案判斷無關，先去除再使用。
   const cleanUrl = currentUrl.replace(/[?#].*$/, '')
   const rootDir = dirOf(cleanUrl)
+  const listDir = listDirOpt ?? fetchDirListing
   const container = new Ele<HTMLElement>('div', {
     className: className.FILE_TREE,
   })
@@ -53,7 +58,7 @@ export function createFileTree({
 
   const loadDir = (dirUrl: string) => {
     if (!cache.has(dirUrl)) {
-      const p = fetchDirListing(dirUrl)
+      const p = listDir(dirUrl)
       p.catch(() => cache.delete(dirUrl)) // 失敗不快取，允許重試
       cache.set(dirUrl, p)
     }
@@ -269,13 +274,16 @@ export function createFileTree({
         renderEntries(container, entries)
         pinFooterRows()
         if (currentQuery) applyFilter(currentQuery)
+        onRootStatus?.('ok')
       } else {
         renderMessage(container, localize('dir_error'))
+        onRootStatus?.('error')
       }
     })
     .catch(() => {
       rootMsgEle.remove()
       renderMessage(container, localize('dir_error'))
+      onRootStatus?.('error')
     })
 
   return { tree: container, applyFilter, clearFilter }
