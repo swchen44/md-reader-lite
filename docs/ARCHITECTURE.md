@@ -16,13 +16,13 @@
 
 ## shell（extension 專屬）
 
-| 模組                                 | 職責                                             |
-| ------------------------------------ | ------------------------------------------------ |
-| src/manifest.json、src/background.ts | MV3 宣告與訊息代理（fetch/fetchDir/actionMap）   |
-| src/main.ts                          | content script 掛載、側邊欄/頁籤/raw 狀態機      |
-| src/core/dir-fetch.ts                | fetchDirListing（chrome.runtime + XHR fallback） |
-| src/core/file-tree.ts                | 樹 UI（DOM/Ele）                                 |
-| src/popup/\* 、src/core/storage.ts   | 設定 UI 與持久化                                 |
+| 模組                                 | 職責                                                                  |
+| ------------------------------------ | --------------------------------------------------------------------- |
+| src/manifest.json、src/background.ts | MV3 宣告；background 僅轉發 storage 訊息與 actionMap（無 fetch 代理） |
+| src/main.ts                          | content script 掛載、側邊欄/頁籤/raw 狀態機                           |
+| src/core/dir-fetch.ts                | fetchDirListing（頁面情境同源 fetch + file:// XHR fallback）          |
+| src/core/file-tree.ts                | 樹 UI（DOM/Ele）                                                      |
+| src/popup/\* 、src/core/storage.ts   | 設定 UI 與持久化                                                      |
 
 ## 驗收檢查
 
