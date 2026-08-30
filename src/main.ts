@@ -7,6 +7,8 @@ import lifecycle from '@/core/lifecycle'
 import className from '@/config/class-name'
 import i18n from '@/config/i18n'
 import { createFileTree, dirOf } from '@/core/file-tree'
+import { createGithubLister } from '@/core/github-listing'
+import { parseRawUrl, parentTreeUrl } from '@/core/github-url'
 import { createSearchPanel } from '@/core/search-panel'
 import type { Theme } from '@/config/page-themes'
 import { getDefaultData, type Data } from '@/core/data'
@@ -177,6 +179,11 @@ function main(data: Data) {
   async function initFilesContent() {
     const rootDir = dirOf(window.location.href.replace(/[?#].*$/, ''))
     const isFile = rootDir.startsWith('file:')
+    const gh = parseRawUrl(window.location.href.replace(/[?#].*$/, ''))
+    if (gh) {
+      buildTree(createGithubLister(gh, rootDir), 'github', parentTreeUrl(gh))
+      return
+    }
     try {
       await fetchDirListing(rootDir) // 探測：http 及老 Chromium 成功
       buildTree(undefined)
@@ -194,7 +201,7 @@ function main(data: Data) {
     if (grant && rootDir.startsWith(grant.rootDirUrl)) {
       const state = await verifyPermission(grant.handle).catch(() => 'denied')
       if (state === 'granted') {
-        buildTree(createFsaLister(grant.handle, grant.rootDirUrl))
+        buildTree(createFsaLister(grant.handle, grant.rootDirUrl), 'fsa')
         return
       }
       if (state === 'prompt') {
@@ -206,15 +213,20 @@ function main(data: Data) {
     showFsaPanel('guide', null)
   }
 
-  function buildTree(listDir?: (u: string) => Promise<DirEntry[]>) {
+  function buildTree(
+    listDir?: (u: string) => Promise<DirEntry[]>,
+    kind: 'default' | 'fsa' | 'github' = 'default',
+    parentHref?: string | null,
+  ) {
     const panel = filesPanel!
     panel.innerHTML = null
     fileTree = createFileTree({
       currentUrl: window.location.href,
       localize,
       listDir,
+      parentHref,
       onRootStatus: status => {
-        if (status === 'error' && listDir) {
+        if (status === 'error' && kind === 'fsa') {
           // FSA root 失效：清授權、回引導面板
           void clearGrant()
           fileTree = null
@@ -252,7 +264,7 @@ function main(data: Data) {
           () => 'denied',
         )
         if (state === 'granted') {
-          buildTree(createFsaLister(grant.handle, grant.rootDirUrl))
+          buildTree(createFsaLister(grant.handle, grant.rootDirUrl), 'fsa')
         } else {
           await clearGrant()
           showFsaPanel('guide', null)
@@ -275,7 +287,7 @@ function main(data: Data) {
           resolved.rootDir.map(encodePathSegment).join('/') +
           (resolved.rootDir.length ? '/' : '')
         await saveGrant({ handle, rootDirUrl })
-        buildTree(createFsaLister(handle, rootDirUrl))
+        buildTree(createFsaLister(handle, rootDirUrl), 'fsa')
       } catch (err) {
         if ((err as Error)?.name === 'AbortError') return // 取消：靜默
         showFsaPanel('guide', null, String((err as Error)?.message || err))

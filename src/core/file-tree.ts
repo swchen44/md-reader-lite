@@ -8,6 +8,7 @@ interface FileTreeOptions {
   localize: (key: string) => string
   listDir?: (dirUrl: string) => Promise<DirEntry[]>
   onRootStatus?: (status: 'ok' | 'error') => void
+  parentHref?: string | null
 }
 
 export interface FileTreeHandle {
@@ -41,6 +42,7 @@ export function createFileTree({
   localize,
   listDir: listDirOpt,
   onRootStatus,
+  parentHref,
 }: FileTreeOptions): FileTreeHandle {
   // currentUrl 可能帶 #hash 或 ?query（例如錨點跳轉後的頁面網址），
   // 兩者都與檔案樹的目錄／作用中檔案判斷無關，先去除再使用。
@@ -140,13 +142,16 @@ export function createFileTree({
         } else {
           renderMessage(childBox, localize('dir_empty'))
         }
-      } catch {
+      } catch (err) {
         childBox.remove()
         childBox = null
         const errMsg = new Ele<HTMLElement>('div', {
           className: className.TREE_MSG,
         })
-        errMsg.textContent = localize('dir_error')
+        errMsg.textContent =
+          (err as Error)?.name === 'RateLimitError'
+            ? localize('github_ratelimit')
+            : localize('dir_error')
         li.append(errMsg)
         label.on('click', () => errMsg.remove(), { once: true })
         li.classList.remove(className.TREE_DIR_OPEN)
@@ -258,7 +263,7 @@ export function createFileTree({
   }
 
   /* 首層：../ + 目前資料夾內容 */
-  const parent = parentOf(rootDir)
+  const parent = parentHref !== undefined ? parentHref : parentOf(rootDir)
   if (parent) {
     const upLink = new Ele<HTMLElement>('a', { href: parent })
     upLink.textContent = '../'
@@ -280,9 +285,14 @@ export function createFileTree({
         onRootStatus?.('error')
       }
     })
-    .catch(() => {
+    .catch(err => {
       rootMsgEle.remove()
-      renderMessage(container, localize('dir_error'))
+      renderMessage(
+        container,
+        err?.name === 'RateLimitError'
+          ? localize('github_ratelimit')
+          : localize('dir_error'),
+      )
       onRootStatus?.('error')
     })
 
