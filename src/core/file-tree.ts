@@ -1,10 +1,24 @@
 import Ele from '@/core/ele'
 import className from '@/config/class-name'
 import { fetchDirListing, type DirEntry } from '@/core/dir-fetch'
+import { findRanges } from '@/core/doc-search'
 
 interface FileTreeOptions {
   currentUrl: string
   localize: (key: string) => string
+}
+
+export interface FileTreeHandle {
+  tree: Ele<HTMLElement>
+  applyFilter(query: string): void
+  clearFilter(): void
+}
+
+interface NodeRecord {
+  plainName: string
+  label: HTMLElement // 檔案節點為 <a>、資料夾節點為 <span>
+  li: HTMLElement
+  isDir: boolean
 }
 
 /** 目前檔案所在資料夾（含尾斜線） */
@@ -23,7 +37,7 @@ export function parentOf(dirUrl: string): string | null {
 export function createFileTree({
   currentUrl,
   localize,
-}: FileTreeOptions): Ele<HTMLElement> {
+}: FileTreeOptions): FileTreeHandle {
   // currentUrl 可能帶 #hash 或 ?query（例如錨點跳轉後的頁面網址），
   // 兩者都與檔案樹的目錄／作用中檔案判斷無關，先去除再使用。
   const cleanUrl = currentUrl.replace(/[?#].*$/, '')
@@ -32,6 +46,9 @@ export function createFileTree({
     className: className.FILE_TREE,
   })
   const cache = new Map<string, Promise<DirEntry[]>>()
+  const records: NodeRecord[] = []
+  let currentQuery = ''
+  let hintEle: Ele<HTMLElement> | null = null
 
   const loadDir = (dirUrl: string) => {
     if (!cache.has(dirUrl)) {
@@ -68,6 +85,12 @@ export function createFileTree({
           ? `${className.TREE_FILE} ${className.TREE_FILE_ACTIVE}`
           : className.TREE_FILE,
     })
+    records.push({
+      plainName: entry.name,
+      label: link.ele,
+      li: li.ele,
+      isDir: false,
+    })
     li.append(link)
     return li
   }
@@ -76,6 +99,12 @@ export function createFileTree({
     const li = new Ele<HTMLElement>('li', { className: className.TREE_DIR })
     const label = new Ele<HTMLElement>('span', { title: entry.name })
     label.textContent = entry.name
+    records.push({
+      plainName: entry.name,
+      label: label.ele,
+      li: li.ele,
+      isDir: true,
+    })
     li.append(label)
     let childBox: Ele<HTMLElement> | null = null
     label.on('click', async () => {
@@ -96,6 +125,7 @@ export function createFileTree({
         childBox.innerHTML = null
         if (entries.length) {
           renderEntries(childBox, entries)
+          if (currentQuery) applyFilter(currentQuery)
         } else {
           renderMessage(childBox, localize('dir_empty'))
         }
@@ -114,6 +144,86 @@ export function createFileTree({
     return li
   }
 
+  const HIT_ATTR = 'data-md-filter-hit'
+
+  function rebuildLabel(rec: NodeRecord, ranges: Array<[number, number]>) {
+    rec.label.textContent = ''
+    let cursor = 0
+    for (const [s, e] of ranges) {
+      if (s > cursor) {
+        rec.label.append(
+          document.createTextNode(rec.plainName.slice(cursor, s)),
+        )
+      }
+      const mark = document.createElement('span')
+      mark.className = className.TREE_NAME_HIT
+      mark.textContent = rec.plainName.slice(s, e)
+      rec.label.append(mark)
+      cursor = e
+    }
+    if (cursor < rec.plainName.length) {
+      rec.label.append(document.createTextNode(rec.plainName.slice(cursor)))
+    }
+  }
+
+  function hasMatchedAncestorDir(li: HTMLElement): boolean {
+    let node: HTMLElement | null = li.parentElement
+    while (node && node !== container.ele) {
+      if (
+        node.tagName === 'LI' &&
+        node.classList.contains(className.TREE_DIR) &&
+        node.getAttribute(HIT_ATTR) === '1'
+      ) {
+        return true
+      }
+      node = node.parentElement
+    }
+    return false
+  }
+
+  function applyFilter(query: string) {
+    const q = query.trim()
+    currentQuery = q
+    const live = records.filter(r => r.li.isConnected)
+    /* phase 1：比對 + label 重建（每次都從 plainName 重建，避免巢狀 span） */
+    for (const rec of live) {
+      const ranges = q ? findRanges(rec.plainName, q) : []
+      if (ranges.length) {
+        rec.li.setAttribute(HIT_ATTR, '1')
+        rebuildLabel(rec, ranges)
+      } else {
+        rec.li.removeAttribute(HIT_ATTR)
+        rec.label.textContent = rec.plainName
+      }
+    }
+    /* phase 2：可見性（自己命中 ∨ 祖先資料夾命中 ∨ 有命中後代） */
+    for (const rec of live) {
+      const show =
+        !q ||
+        rec.li.getAttribute(HIT_ATTR) === '1' ||
+        hasMatchedAncestorDir(rec.li) ||
+        rec.li.querySelector(`[${HIT_ATTR}="1"]`) !== null
+      rec.li.classList.toggle(className.TREE_FILTERED_HIDDEN, !show)
+    }
+    /* 提示列 */
+    if (q) {
+      if (!hintEle) {
+        hintEle = new Ele<HTMLElement>('div', {
+          className: `${className.TREE_MSG} ${className.TREE_FILTER_HINT}`,
+        })
+        hintEle.textContent = localize('search_filter_loaded_only')
+        container.append(hintEle)
+      }
+      hintEle.show()
+    } else {
+      hintEle?.hide()
+    }
+  }
+
+  function clearFilter() {
+    applyFilter('')
+  }
+
   /* 首層：../ + 目前資料夾內容 */
   const parent = parentOf(rootDir)
   if (parent) {
@@ -129,6 +239,7 @@ export function createFileTree({
       container.query(`.${className.TREE_MSG}`)?.remove()
       if (entries.length) {
         renderEntries(container, entries)
+        if (currentQuery) applyFilter(currentQuery)
       } else {
         renderMessage(container, localize('dir_error'))
       }
@@ -138,5 +249,5 @@ export function createFileTree({
       renderMessage(container, localize('dir_error'))
     })
 
-  return container
+  return { tree: container, applyFilter, clearFilter }
 }

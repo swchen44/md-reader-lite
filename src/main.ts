@@ -188,7 +188,7 @@ function main(data: Data) {
     searchPanel.button.hide()
     searchPanel.bar.show()
     mdSide.hide()
-    fileTree?.hide()
+    fileTree?.tree.hide()
     searchPanel.panel.show()
     searchPanel.focus()
   }
@@ -222,9 +222,9 @@ function main(data: Data) {
         currentUrl: window.location.href,
         localize,
       })
-      lifecycle.mount([fileTree])
+      lifecycle.mount([fileTree.tree])
     }
-    fileTree?.toggle(isFiles)
+    fileTree?.tree.toggle(isFiles)
   }
   outlineTabBtn.on('click', () => activateTab('outline'))
   filesTabBtn.on('click', () => activateTab('files'))
@@ -253,7 +253,7 @@ function main(data: Data) {
   rawToggleBtn.on('click', () => {
     if (searchOpen) closeSearch()
     const eles: Ele<HTMLElement>[] = [mdBody, mdSide, sideTabs]
-    if (fileTree) eles.push(fileTree)
+    if (fileTree) eles.push(fileTree.tree)
     lifecycle.toggleRaw(eles)
     rawShown = !rawShown
     if (!rawShown) {

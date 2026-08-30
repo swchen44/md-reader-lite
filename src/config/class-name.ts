@@ -37,6 +37,9 @@ export default {
   TREE_FILE: p`tree-file`,
   TREE_FILE_ACTIVE: p`tree-file--active`,
   TREE_MSG: p`tree-msg`,
+  TREE_FILTERED_HIDDEN: p`tree-filtered-hidden`,
+  TREE_NAME_HIT: p`tree-name-hit`,
+  TREE_FILTER_HINT: p`tree-filter-hint`,
   MODAL: p`modal`,
   ZOOM_IMAGE: p`zoom-image`,
 }

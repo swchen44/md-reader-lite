@@ -9,7 +9,6 @@
     "zh-TW": "繁體中文",
     "ko": "한국어",
     "uk": "Українська",
-
     "label_enable": "Enable",
     "label_auto-refresh": "Auto Refresh",
     "label_folder-tree": "Folder Tree",
@@ -44,7 +43,8 @@
     "search_blocks": "Content hits",
     "search_empty_hint": "Type to search headings and content",
     "search_no_results": "No matches",
-    "search_truncated": "Showing first 100 content hits"
+    "search_truncated": "Showing first 100 content hits",
+    "search_filter_loaded_only": "Filtering loaded items only"
   },
   "zh-CN": {
     "label_enable": "启用",
@@ -81,7 +81,8 @@
     "search_blocks": "内文命中",
     "search_empty_hint": "输入关键字搜索标题与内文",
     "search_no_results": "无符合结果",
-    "search_truncated": "仅列出前 100 笔内文命中"
+    "search_truncated": "仅列出前 100 笔内文命中",
+    "search_filter_loaded_only": "仅过滤已加载项目"
   },
   "zh-TW": {
     "label_enable": "啟用",
@@ -118,7 +119,8 @@
     "search_blocks": "內文命中",
     "search_empty_hint": "輸入關鍵字搜尋標題與內文",
     "search_no_results": "無符合結果",
-    "search_truncated": "僅列出前 100 筆內文命中"
+    "search_truncated": "僅列出前 100 筆內文命中",
+    "search_filter_loaded_only": "僅過濾已載入項目"
   },
   "ko": {
     "label_enable": "활성화",
