@@ -10,3 +10,4 @@
 6. node --test 目錄模式在本 repo 誤判失敗（2026-08-29）：一律指定測試檔案清單。
 7. 單執行緒 HTTPServer 驗收假象（2026-08-30）：Chrome keep-alive 佔住唯一執行緒，之後所有請求逾時，看起來像功能壞掉 → 測試伺服器一律 ThreadingHTTPServer。
 8. host_permissions 濫用（2026-08-30）：同源請求（重抓當前檔、同目錄 listing）由 content script 直接 fetch 即可，完全不需要 host 權限；background 代理的唯一價值是繞過頁面 CSP（如 raw.githubusercontent.com `default-src 'none'`），代價是要申請全站權限——除非產品必須支援嚴格 CSP 網站，否則不值得。
+   8.5 補充（2026-08-30，第三次踩）：Markdown 表格儲存格內的原始 `|`（如 TS 聯集型別）會被 prettier 連鎖破壞表格結構 → 表格內一律用 code span 包裹或改寫成「或」；spec/計畫寫完 commit 後要回看 prettier 產物。
