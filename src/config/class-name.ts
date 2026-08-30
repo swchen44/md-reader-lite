@@ -28,6 +28,7 @@ export default {
   SEARCH_GROUP_TITLE: p`search-group-title`,
   SEARCH_ITEM: p`search-item`,
   SEARCH_ITEM_HEADING: p`search-item--heading`,
+  SEARCH_ITEM_CONTEXT: p`search-item--context`,
   SEARCH_HIT: p`search-hit`,
   SEARCH_MSG: p`search-msg`,
   SEARCH_FLASH: p`search-flash`,

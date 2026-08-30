@@ -165,6 +165,8 @@ function main(data: Data) {
     getHeads: () => headElements,
     localize,
     onRequestClose: () => closeSearch(),
+    getMode: () => activeTab,
+    onFilesQuery: q => fileTree?.applyFilter(q),
   })
   searchPanel.button.on('click', () => openSearch())
   // Registered here (after searchPanel exists), not right after
@@ -179,17 +181,20 @@ function main(data: Data) {
   function openSearch() {
     if (searchOpen || rawShown) return
     searchOpen = true
-    if (!searchMounted) {
-      lifecycle.mount([searchPanel.panel])
-      searchMounted = true
+    const filesMode = activeTab === 'files'
+    if (!filesMode) {
+      if (!searchMounted) {
+        lifecycle.mount([searchPanel.panel])
+        searchMounted = true
+      }
+      mdSide.hide()
+      fileTree?.tree.hide()
+      searchPanel.panel.show()
     }
     outlineTabBtn.hide()
     filesTabBtn.hide()
     searchPanel.button.hide()
     searchPanel.bar.show()
-    mdSide.hide()
-    fileTree?.tree.hide()
-    searchPanel.panel.show()
     searchPanel.focus()
   }
 
@@ -197,6 +202,7 @@ function main(data: Data) {
     if (!searchOpen) return
     searchOpen = false
     searchPanel.clear()
+    fileTree?.clearFilter()
     searchPanel.bar.hide()
     searchPanel.panel.hide()
     outlineTabBtn.show()

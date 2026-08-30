@@ -4,8 +4,10 @@ import {
   buildIndex,
   makeSnippet,
   search,
+  withAncestors,
   type SearchEntry,
   type SearchHit,
+  type HeadingLevelEntry,
 } from '@/core/doc-search'
 
 /* TS 4.8 lib 無 CSS Custom Highlight API 型別；最小 ambient 宣告 */
@@ -39,6 +41,8 @@ interface Options {
   getHeads: () => HTMLElement[]
   localize: (k: string) => string
   onRequestClose: () => void
+  getMode: () => 'outline' | 'files'
+  onFilesQuery: (q: string) => void
 }
 
 export interface SearchPanel {
@@ -51,7 +55,14 @@ export interface SearchPanel {
 }
 
 export function createSearchPanel(opts: Options): SearchPanel {
-  const { getArticle, getHeads, localize, onRequestClose } = opts
+  const {
+    getArticle,
+    getHeads,
+    localize,
+    onRequestClose,
+    getMode,
+    onFilesQuery,
+  } = opts
 
   const button = new Ele<HTMLElement>('button', {
     className: className.SIDE_SEARCH_BTN,
@@ -79,16 +90,25 @@ export function createSearchPanel(opts: Options): SearchPanel {
   panel.hide()
 
   let entries: SearchEntry[] | null = null
+  /* 完整標題序列（含層級），供祖先脈絡推導；buildIndex() 會過濾掉空白標
+   * 題，但 headingSeq 保留原序不濾——命中映射靠物件同一性比對，空白標
+   * 題本身不會被搜到、也極少被當祖先；萬一恰好是祖先鏈斷點，屬可接受
+   * 的近似（脈絡鏈少一層，不影響正確性）。*/
+  let headingSeq: Array<{ entry: SearchEntry; level: number }> = []
   let debounceTimer = 0
   let flashTimer = 0
 
   function collect(): SearchEntry[] {
     const heads = getHeads()
-    const collected: SearchEntry[] = heads.map(h => ({
-      kind: 'heading',
-      text: headingText(h),
-      ref: h,
+    headingSeq = heads.map(h => ({
+      entry: {
+        kind: 'heading' as const,
+        text: headingText(h),
+        ref: h,
+      },
+      level: Number(h.tagName.slice(1)) || 6,
     }))
+    const collected: SearchEntry[] = headingSeq.map(x => x.entry)
     const article = getArticle()
     article.querySelectorAll<HTMLElement>(BLOCK_SELECTOR).forEach(el => {
       if (el.closest('h1,h2,h3,h4,h5,h6')) return
@@ -118,6 +138,15 @@ export function createSearchPanel(opts: Options): SearchPanel {
     return entries
   }
 
+  /* files 模式下輸入只轉發給檔案樹過濾，絕不執行 search()/文件高亮/面板渲染 */
+  function route(value: string) {
+    if (getMode() === 'files') {
+      onFilesQuery(value)
+      return
+    }
+    run(value)
+  }
+
   function run(query: string) {
     const result = search(ensureEntries(), query.trim())
     renderResults(query.trim(), result)
@@ -139,7 +168,25 @@ export function createSearchPanel(opts: Options): SearchPanel {
     }
     if (result.headings.length) {
       groupTitle(`${localize('search_headings')} ${result.headings.length}`)
-      result.headings.forEach(hit => panel.append(headingItem(hit)))
+      const hitIndexes = result.headings
+        .map(h => headingSeq.findIndex(x => x.entry === h.entry))
+        .filter(i => i >= 0)
+      const hitByIndex = new Map<number, SearchHit>()
+      result.headings.forEach(h => {
+        const i = headingSeq.findIndex(x => x.entry === h.entry)
+        if (i >= 0) hitByIndex.set(i, h)
+      })
+      withAncestors(
+        headingSeq.map((x): HeadingLevelEntry => ({ level: x.level })),
+        hitIndexes,
+      ).forEach(item => {
+        const seq = headingSeq[item.index]
+        if (item.isContext) {
+          panel.append(contextItem(seq.entry))
+        } else {
+          panel.append(headingItem(hitByIndex.get(item.index)!))
+        }
+      })
     }
     if (result.blocks.length) {
       groupTitle(`${localize('search_blocks')} ${result.blocks.length}`)
@@ -188,6 +235,18 @@ export function createSearchPanel(opts: Options): SearchPanel {
       }-${el.tagName.toLowerCase()}`,
     })
     item.append(highlightedFragment(hit.entry.text, hit.ranges))
+    item.on('click', () => jumpTo(el))
+    return item
+  }
+
+  function contextItem(entry: SearchEntry): Ele<HTMLElement> {
+    const el = entry.ref as HTMLElement
+    const item = new Ele<HTMLElement>('div', {
+      className: `${className.SEARCH_ITEM} ${className.SEARCH_ITEM_HEADING} ${
+        className.SEARCH_ITEM_CONTEXT
+      } ${className.MD_SIDE}-${el.tagName.toLowerCase()}`,
+    })
+    item.textContent = entry.text
     item.on('click', () => jumpTo(el))
     return item
   }
@@ -268,7 +327,7 @@ export function createSearchPanel(opts: Options): SearchPanel {
 
   input.on('input', () => {
     clearTimeout(debounceTimer)
-    debounceTimer = window.setTimeout(() => run(input.ele.value), DEBOUNCE_MS)
+    debounceTimer = window.setTimeout(() => route(input.ele.value), DEBOUNCE_MS)
   })
   input.on('keydown', (e: KeyboardEvent) => {
     if (e.code === 'Escape' && !e.isComposing) {
@@ -284,9 +343,10 @@ export function createSearchPanel(opts: Options): SearchPanel {
     panel,
     focus() {
       input.ele.focus()
-      run(input.ele.value)
+      route(input.ele.value)
     },
     clear() {
+      if (getMode() === 'files') onFilesQuery('')
       clearTimeout(debounceTimer)
       input.ele.value = ''
       panel.innerHTML = null
