@@ -38,7 +38,7 @@
     "TOC": "TOC",
     "Alert": "Alert",
     "Obsidian": "Obsidian",
-    "warning_message": "Open the details page of extension \"md-reader\" and active \"allow access to file URLs\"."
+    "warning_message": "Open the details page of extension \"MD Reader Lite\" and active \"allow access to file URLs\"."
   },
   "zh-CN": {
     "label_enable": "启用",
@@ -69,7 +69,7 @@
     "TOC": "目录",
     "Obsidian": "Obsidian 语法",
     "Alert": "警告框",
-    "warning_message": "请在 “md-reader” 扩展程序的 “详情” 中开启 “允许访问文件网址” 权限。"
+    "warning_message": "请在 “MD Reader Lite” 扩展程序的 “详情” 中开启 “允许访问文件网址” 权限。"
   },
   "zh-TW": {
     "label_enable": "啟用",
@@ -100,7 +100,7 @@
     "TOC": "目錄",
     "Alert": "警告框",
     "Obsidian": "Obsidian 語法",
-    "warning_message": "請在 “md-reader” 扩展程序的 “詳情” 中開啟 “允許訪問文件網址” 權限。"
+    "warning_message": "請在「MD Reader Lite」擴充功能的「詳細資料」頁面開啟「允許存取檔案網址」。"
   },
   "ko": {
     "label_enable": "활성화",
@@ -125,7 +125,7 @@
     "TaskLists": "작업 목록",
     "TOC": "카테고리",
     "Alert": "알림 블록",
-    "warning_message": "확장 프로그램 \"md-reader\" 의 세부 정보 페이지를 열고 \"파일 URL에 대한 액세스 허용\"을 활성화 하세요."
+    "warning_message": "확장 프로그램 \"MD Reader Lite\" 의 세부 정보 페이지를 열고 \"파일 URL에 대한 액세스 허용\"을 활성화 하세요."
   },
   "uk": {
     "label_enable": "Увімкнути",
@@ -150,6 +150,6 @@
     "TaskLists": "Списки завдань",
     "TOC": "Зміст",
     "Alert": "Блок сповіщень",
-    "warning_message": "Відкрийте сторінку керування розширенням «md-reader» та активуйте «Надавати доступ до URL-адрес файлу»."
+    "warning_message": "Відкрийте сторінку керування розширенням «MD Reader Lite» та активуйте «Надавати доступ до URL-адрес файлу»."
   }
 }
