@@ -70,29 +70,27 @@ export async function resolveByCandidates(
  * 大很多，導致以它組出的 URL 和 `window.location.href`（由瀏覽器原生編碼）
  * 不一致 —— grant 範圍比對用 `startsWith` 比對兩者，一旦不一致就永久失敗。
  *
- * 經以 Node 的 WHATWG URL（與瀏覽器同一套演算法）實測：對 pathname setter
- * 逐字元探測 `u.pathname = '/kb/' + ('x' + ch + 'y')`，取得瀏覽器實際會跳脫
- * 的字元集為：空白 " # < > ? \ ` { }（以及會被轉成 `/` 的反斜線）。
- * 其餘可列印 ASCII（含 `$ % & + , : ; = @ [ ] |`）瀏覽器一律保留原樣。
+ * 先前版本以 Node 的 WHATWG URL pathname setter 逐字元探測還原字元集，但
+ * 這只驗證了字串正規化演算法，不是瀏覽器實際開檔（打開真實檔案、讀 tab
+ * URL）時的 OS path → file:// 轉換路徑，兩者不保證一致。改以 Chrome 151
+ * 對真實檔案的 live 導覽實測：`; | [ ] %` 被 Chrome 跳脫為
+ * `%3B %7C %5B %5D %25`，僅 `$ & + , = @` 六個字元被 live 驗證為保留原樣。
+ * `:` 在 macOS 檔名中非法、無法測試，保守起見維持跳脫（其他平台可能不同，
+ * 屬已知殘留風險，見 final-review-fixes-fsa.md）。
  *
- * 因此在 `encodeURIComponent` 之上，將這些「瀏覽器保留但 encodeURIComponent
- * 會跳脫」的字元還原成原字元即可對齊。`/` 刻意排除在還原清單之外 ——
- * 檔名理論上不會含有 `/`，若真的出現，寧可跳脫成 %2F 避免意外多出路徑片段。
+ * 因此在 `encodeURIComponent` 之上，只將這六個 live 驗證過的字元還原成
+ * 原字元。`encodeURIComponent` 本來就不會跳脫的 `! ' ( ) * ~ - _ .` 無需
+ * 處理。`/` 刻意排除在還原清單之外 —— 檔名理論上不會含有 `/`，若真的
+ * 出現，寧可跳脫成 %2F 避免意外多出路徑片段。
  */
 export function encodePathSegment(name: string): string {
   return encodeURIComponent(name)
     .replace(/%24/g, '$')
-    .replace(/%25/g, '%')
     .replace(/%26/g, '&')
     .replace(/%2B/g, '+')
     .replace(/%2C/g, ',')
-    .replace(/%3A/g, ':')
-    .replace(/%3B/g, ';')
     .replace(/%3D/g, '=')
     .replace(/%40/g, '@')
-    .replace(/%5B/g, '[')
-    .replace(/%5D/g, ']')
-    .replace(/%7C/g, '|')
 }
 
 /** FSA entries → DirEntry（過濾 md/資料夾、資料夾先、字典序、URL 編碼） */

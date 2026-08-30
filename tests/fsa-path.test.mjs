@@ -108,35 +108,30 @@ test('entriesToDirEntries: dot files filtered unless markdown', async () => {
   )
 })
 
-test('entriesToDirEntries: punctuation matches browser file-url encoding', async () => {
-  const { entriesToDirEntries, encodePathSegment } = await load()
-  // 黃金值來自 WHATWG URL 的 pathname setter —— 與瀏覽器 location.href 同一套
-  // 正規化演算法。encodePathSegment 組出的 URL 必須跟它完全一致，否則以
-  // startsWith 比對 grant 範圍時會永久失敗。
-  const goldUrl = name => {
-    const u = new URL('file:///kb/')
-    u.pathname = '/kb/' + name
-    return u.href
+test('encodePathSegment matches real-Chrome file url encoding (live-derived golds)', async () => {
+  const { encodePathSegment } = await load()
+  // Golds derived from real Chrome 151 navigation of actual files (see final-review-fixes-fsa.md)
+  const golds = {
+    'Q&A.md': 'Q&A.md',
+    'a=b.md': 'a=b.md',
+    'c+d.md': 'c+d.md',
+    'e,f.md': 'e,f.md',
+    'i@j.md': 'i@j.md',
+    'k$l.md': 'k$l.md',
+    'g;h.md': 'g%3Bh.md',
+    'v|w.md': 'v%7Cw.md',
+    '[bracket].md': '%5Bbracket%5D.md',
+    '100%.md': '100%25.md',
+    'space name.md': 'space%20name.md',
+    '中文 檔.md': '%E4%B8%AD%E6%96%87%20%E6%AA%94.md',
   }
-  const names = [
-    'Q&A.md',
-    'a=b.md',
-    'c+d.md',
-    'e,f.md',
-    'g;h.md',
-    'i@j.md',
-    'k$l.md',
-    'v|w.md',
-    '[bracket].md',
-    'space name.md',
-    '中文 檔.md',
-    '100%.md',
-  ]
-  for (const name of names) {
-    const built = 'file:///kb/' + encodePathSegment(name)
-    assert.equal(built, goldUrl(name), `mismatch for ${JSON.stringify(name)}`)
+  for (const [raw, gold] of Object.entries(golds)) {
+    assert.equal(encodePathSegment(raw), gold, raw)
   }
+})
 
+test('entriesToDirEntries: encodes punctuation in urls', async () => {
+  const { entriesToDirEntries } = await load()
   const out = entriesToDirEntries(
     [{ name: 'Q&A.md', kind: 'file' }],
     'file:///kb/',
