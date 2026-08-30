@@ -43,3 +43,7 @@
 - 架構邊界：ARCHITECTURE.md ／ 路線圖：ROADMAP.md
 - 教訓：lesson_learn.md ／ 研究文章：research/
 - Commit 訊息格式：Why / What / How / Boundary 四段（見 git log 範例）
+
+## 發佈（Release）
+
+打 tag 即自動發佈：`git tag -a vX.Y.Z -m "..." && git push origin vX.Y.Z` → GitHub Actions（.github/workflows/release.yml）建置、跑測試、打包並建立附 zip 的 Release。手動觸發（workflow_dispatch）為乾跑：只建置與上傳 artifact，不發佈。tag 版本號（去掉 v）會寫入 manifest；打 tag 前記得同步 package.json 的 version。
