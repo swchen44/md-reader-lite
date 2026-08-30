@@ -42,7 +42,7 @@ MD Reader Lite 將 .md 檔轉換成簡潔易讀的網頁。開啟本機檔案或
 | `activeTab`                       | 設定變更時通知目前分頁即時套用。 |
 | file URL access（使用者自行開啟） | 渲染本機 .md 檔。                |
 
-v1.0.1 起不再申請 host 權限：自動刷新重抓目前檔案、目錄樹抓同目錄 listing，皆由 content script 在頁面情境內直接發出同源請求，不需要任何 host 授權。
+自此版本起不再申請 host 權限：同源請求由頁面情境發出。
 
 ## 資料使用申報（Data usage disclosure）
 
