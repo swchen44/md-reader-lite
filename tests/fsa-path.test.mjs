@@ -107,3 +107,41 @@ test('entriesToDirEntries: dot files filtered unless markdown', async () => {
     ['.git', '.hidden.md'],
   )
 })
+
+test('entriesToDirEntries: punctuation matches browser file-url encoding', async () => {
+  const { entriesToDirEntries, encodePathSegment } = await load()
+  // 黃金值來自 WHATWG URL 的 pathname setter —— 與瀏覽器 location.href 同一套
+  // 正規化演算法。encodePathSegment 組出的 URL 必須跟它完全一致，否則以
+  // startsWith 比對 grant 範圍時會永久失敗。
+  const goldUrl = name => {
+    const u = new URL('file:///kb/')
+    u.pathname = '/kb/' + name
+    return u.href
+  }
+  const names = [
+    'Q&A.md',
+    'a=b.md',
+    'c+d.md',
+    'e,f.md',
+    'g;h.md',
+    'i@j.md',
+    'k$l.md',
+    'v|w.md',
+    '[bracket].md',
+    'space name.md',
+    '中文 檔.md',
+    '100%.md',
+  ]
+  for (const name of names) {
+    const built = 'file:///kb/' + encodePathSegment(name)
+    assert.equal(built, goldUrl(name), `mismatch for ${JSON.stringify(name)}`)
+  }
+
+  const out = entriesToDirEntries(
+    [{ name: 'Q&A.md', kind: 'file' }],
+    'file:///kb/',
+  )
+  assert.deepEqual(out, [
+    { name: 'Q&A.md', isDir: false, url: 'file:///kb/Q&A.md' },
+  ])
+})

@@ -23,6 +23,7 @@ import {
 } from '@/core/fsa-listing'
 import { clearGrant, loadGrant, saveGrant } from '@/core/fsa-store'
 import {
+  encodePathSegment,
   resolveByCandidates,
   rootPathCandidates,
   urlToDirPath,
@@ -271,7 +272,7 @@ function main(data: Data) {
         }
         const rootDirUrl =
           'file:///' +
-          resolved.rootDir.map(encodeURIComponent).join('/') +
+          resolved.rootDir.map(encodePathSegment).join('/') +
           (resolved.rootDir.length ? '/' : '')
         await saveGrant({ handle, rootDirUrl })
         buildTree(createFsaLister(handle, rootDirUrl))
