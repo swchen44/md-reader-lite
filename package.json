@@ -12,6 +12,9 @@
   "bugs": {
     "url": "https://github.com/swchen44/md-reader-lite/issues"
   },
+  "imports": {
+    "#core/*": "./src/core/*.ts"
+  },
   "keywords": [
     "md-reader-lite",
     "md-reader",
