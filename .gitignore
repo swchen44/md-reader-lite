@@ -6,4 +6,5 @@ extension.pem
 *.zip
 .vscode/settings.json
 .idea
-.fleet
+.fleet.DS_Store
+.DS_Store
