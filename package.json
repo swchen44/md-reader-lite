@@ -1,6 +1,6 @@
 {
   "name": "md-reader-lite",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "author": "swchen44",
   "license": "MIT",
   "description": "A lightweight markdown reader extension for Chrome (fork of md-reader)",
