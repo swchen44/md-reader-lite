@@ -6,11 +6,27 @@ import { initPlugins } from '@/plugins'
 import lifecycle from '@/core/lifecycle'
 import className from '@/config/class-name'
 import i18n from '@/config/i18n'
-import { createFileTree } from '@/core/file-tree'
+import { createFileTree, dirOf } from '@/core/file-tree'
 import { createSearchPanel } from '@/core/search-panel'
 import type { Theme } from '@/config/page-themes'
 import { getDefaultData, type Data } from '@/core/data'
 import { mdRender, type MdOptions } from '@/core/markdown'
+import { fetchDirListing } from '@/core/dir-fetch'
+import type { DirEntry } from '@/core/dir-listing'
+import {
+  createFsaLister,
+  isFsaSupported,
+  pickDirectory,
+  requestPermission,
+  verifyPermission,
+  type FsaDirectoryHandle,
+} from '@/core/fsa-listing'
+import { clearGrant, loadGrant, saveGrant } from '@/core/fsa-store'
+import {
+  resolveByCandidates,
+  rootPathCandidates,
+  urlToDirPath,
+} from '@/core/fsa-path'
 import {
   getHeads,
   getRawContainer,
@@ -142,8 +158,132 @@ function main(data: Data) {
   /* render folder tree tab */
   const localize = i18n(configData.language)
   let fileTree: ReturnType<typeof createFileTree> | null = null
+  let filesPanel: Ele<HTMLElement> | null = null
   let activeTab: 'outline' | 'files' = 'outline'
   let rawShown = false
+
+  function ensureFilesPanel(): Ele<HTMLElement> {
+    if (!filesPanel) {
+      filesPanel = new Ele<HTMLElement>('div', {
+        className: className.FILES_PANEL,
+      })
+      lifecycle.mount([filesPanel])
+      void initFilesContent()
+    }
+    return filesPanel
+  }
+
+  async function initFilesContent() {
+    const rootDir = dirOf(window.location.href.replace(/[?#].*$/, ''))
+    const isFile = rootDir.startsWith('file:')
+    try {
+      await fetchDirListing(rootDir) // 探測：http 及老 Chromium 成功
+      buildTree(undefined)
+      return
+    } catch {
+      if (!isFile || !isFsaSupported()) {
+        buildTree(undefined) // 維持原降級（樹內 dir_error 訊息）
+        return
+      }
+    }
+    const grant = (await loadGrant()) as {
+      handle: FsaDirectoryHandle
+      rootDirUrl: string
+    } | null
+    if (grant && rootDir.startsWith(grant.rootDirUrl)) {
+      const state = await verifyPermission(grant.handle).catch(() => 'denied')
+      if (state === 'granted') {
+        buildTree(createFsaLister(grant.handle, grant.rootDirUrl))
+        return
+      }
+      if (state === 'prompt') {
+        showFsaPanel('regrant', grant)
+        return
+      }
+      await clearGrant()
+    }
+    showFsaPanel('guide', null)
+  }
+
+  function buildTree(listDir?: (u: string) => Promise<DirEntry[]>) {
+    const panel = filesPanel!
+    panel.innerHTML = null
+    fileTree = createFileTree({
+      currentUrl: window.location.href,
+      localize,
+      listDir,
+      onRootStatus: status => {
+        if (status === 'error' && listDir) {
+          // FSA root 失效：清授權、回引導面板
+          void clearGrant()
+          fileTree = null
+          showFsaPanel('guide', null)
+        }
+      },
+    })
+    panel.append(fileTree.tree)
+  }
+
+  function showFsaPanel(
+    kind: 'guide' | 'regrant',
+    grant: { handle: FsaDirectoryHandle; rootDirUrl: string } | null,
+    message?: string,
+  ) {
+    const panel = filesPanel!
+    panel.innerHTML = null
+    const box = new Ele<HTMLElement>('div', { className: className.FSA_PANEL })
+    if (message) {
+      const msg = new Ele<HTMLElement>('div', { className: className.FSA_HINT })
+      msg.textContent = message
+      box.append(msg)
+    }
+    const btn = new Ele<HTMLElement>('button', {
+      className: className.FSA_BUTTON,
+    })
+    btn.textContent = localize(
+      kind === 'guide' ? 'fsa_pick_button' : 'fsa_regrant_button',
+    )
+    const hint = new Ele<HTMLElement>('div', { className: className.FSA_HINT })
+    hint.textContent = localize('fsa_pick_hint')
+    btn.on('click', async () => {
+      if (kind === 'regrant' && grant) {
+        const state = await requestPermission(grant.handle).catch(
+          () => 'denied',
+        )
+        if (state === 'granted') {
+          buildTree(createFsaLister(grant.handle, grant.rootDirUrl))
+        } else {
+          await clearGrant()
+          showFsaPanel('guide', null)
+        }
+        return
+      }
+      try {
+        const handle = await pickDirectory()
+        const dirSegs = urlToDirPath(window.location.href)
+        const resolved = await resolveByCandidates(
+          handle,
+          rootPathCandidates(handle.name, dirSegs),
+        )
+        if (!resolved) {
+          showFsaPanel('guide', null, localize('fsa_mismatch'))
+          return
+        }
+        const rootDirUrl =
+          'file:///' +
+          resolved.rootDir.map(encodeURIComponent).join('/') +
+          (resolved.rootDir.length ? '/' : '')
+        await saveGrant({ handle, rootDirUrl })
+        buildTree(createFsaLister(handle, rootDirUrl))
+      } catch (err) {
+        if ((err as Error)?.name === 'AbortError') return // 取消：靜默
+        showFsaPanel('guide', null, String((err as Error)?.message || err))
+      }
+    })
+    box.append(btn)
+    box.append(hint)
+    panel.append(box)
+  }
 
   function tabButton(labelKey: string, active: boolean) {
     const btn = new Ele<HTMLElement>('button', {
@@ -179,6 +319,7 @@ function main(data: Data) {
   })
 
   function openSearch() {
+    if (activeTab === 'files' && !fileTree) return
     if (searchOpen || rawShown) return
     searchOpen = true
     const filesMode = activeTab === 'files'
@@ -188,7 +329,7 @@ function main(data: Data) {
         searchMounted = true
       }
       mdSide.hide()
-      fileTree?.tree.hide()
+      filesPanel?.hide()
       searchPanel.panel.show()
     }
     outlineTabBtn.hide()
@@ -223,14 +364,8 @@ function main(data: Data) {
     outlineTabBtn.ele.classList.toggle(className.SIDE_TAB_ACTIVE, !isFiles)
     filesTabBtn.ele.classList.toggle(className.SIDE_TAB_ACTIVE, isFiles)
     mdSide.toggle(!isFiles)
-    if (isFiles && !fileTree) {
-      fileTree = createFileTree({
-        currentUrl: window.location.href,
-        localize,
-      })
-      lifecycle.mount([fileTree.tree])
-    }
-    fileTree?.tree.toggle(isFiles)
+    if (isFiles) ensureFilesPanel()
+    filesPanel?.toggle(isFiles)
   }
   outlineTabBtn.on('click', () => activateTab('outline'))
   filesTabBtn.on('click', () => activateTab('files'))
@@ -259,12 +394,12 @@ function main(data: Data) {
   rawToggleBtn.on('click', () => {
     if (searchOpen) closeSearch()
     const eles: Ele<HTMLElement>[] = [mdBody, mdSide, sideTabs]
-    if (fileTree) eles.push(fileTree.tree)
+    if (filesPanel) eles.push(filesPanel)
     lifecycle.toggleRaw(eles)
     rawShown = !rawShown
     if (!rawShown) {
       // lifecycle.toggleRaw() unconditionally re-shows every panel it was
-      // given, so leaving raw view can make mdSide and fileTree visible at
+      // given, so leaving raw view can make mdSide and filesPanel visible at
       // once. Re-run the tab/folder-tree wiring to restore exclusivity.
       setFolderTree(configData.folderTree !== false)
       activateTab(activeTab)

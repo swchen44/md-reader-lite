@@ -44,7 +44,11 @@
     "search_empty_hint": "Type to search headings and content",
     "search_no_results": "No matches",
     "search_truncated": "Showing first 100 content hits",
-    "search_filter_loaded_only": "Filtering loaded items only"
+    "search_filter_loaded_only": "Filtering loaded items only",
+    "fsa_pick_button": "Choose folder to enable the tree",
+    "fsa_pick_hint": "Pick the current file's folder or any of its ancestors. Read-only access, stored locally.",
+    "fsa_regrant_button": "Re-authorize folder access",
+    "fsa_mismatch": "That folder does not contain the current file. Pick its folder or an ancestor."
   },
   "zh-CN": {
     "label_enable": "启用",
@@ -82,7 +86,11 @@
     "search_empty_hint": "输入关键字搜索标题与内文",
     "search_no_results": "无符合结果",
     "search_truncated": "仅列出前 100 笔内文命中",
-    "search_filter_loaded_only": "仅过滤已加载项目"
+    "search_filter_loaded_only": "仅过滤已加载项目",
+    "fsa_pick_button": "选择文件夹以启用目录树",
+    "fsa_pick_hint": "请选择当前文件所在的文件夹或其上层。只读访问，仅存于本机。",
+    "fsa_regrant_button": "重新授权文件夹访问",
+    "fsa_mismatch": "所选文件夹不包含当前文件，请选择其所在文件夹或上层。"
   },
   "zh-TW": {
     "label_enable": "啟用",
@@ -120,7 +128,11 @@
     "search_empty_hint": "輸入關鍵字搜尋標題與內文",
     "search_no_results": "無符合結果",
     "search_truncated": "僅列出前 100 筆內文命中",
-    "search_filter_loaded_only": "僅過濾已載入項目"
+    "search_filter_loaded_only": "僅過濾已載入項目",
+    "fsa_pick_button": "選擇資料夾以啟用目錄樹",
+    "fsa_pick_hint": "請選擇目前檔案所在的資料夾或其上層。唯讀存取，僅存於本機。",
+    "fsa_regrant_button": "重新授權資料夾存取",
+    "fsa_mismatch": "所選資料夾不包含目前檔案，請選擇其所在資料夾或上層。"
   },
   "ko": {
     "label_enable": "활성화",

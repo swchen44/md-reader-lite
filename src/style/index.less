@@ -223,6 +223,43 @@ body.md-reader {
       }
     }
 
+    &__fsa-panel {
+      overflow: auto;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: @side-width;
+      padding: 70px 1.2em 22px;
+      border-right: 1px solid var(--color-side-border);
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--color-side);
+      background: var(--color-side-bg);
+      transition: transform 0.3s;
+      z-index: 1;
+      .md-reader__fsa-button {
+        display: block;
+        width: 100%;
+        padding: 8px 10px;
+        margin: 0.8em 0;
+        border: 1px solid var(--color-primary);
+        border-radius: 6px;
+        cursor: pointer;
+        color: var(--color-primary);
+        background: transparent;
+        font-size: 13px;
+        &:hover {
+          color: #fff;
+          background: var(--color-primary);
+        }
+      }
+      .md-reader__fsa-hint {
+        opacity: 0.65;
+        font-size: 12px;
+      }
+    }
+
     &__search-panel {
       overflow: auto;
       position: fixed;
@@ -417,6 +454,7 @@ body.md-reader {
       &__side,
       &__side-tabs,
       &__file-tree,
+      &__fsa-panel,
       &__search-panel {
         transform: translateX(-100%);
         border-color: transparent;
@@ -467,6 +505,7 @@ body.md-reader {
       &__side,
       &__side-tabs,
       &__file-tree,
+      &__fsa-panel,
       &__search-panel {
         transform: translateX(-100%);
         border-color: transparent;
@@ -484,6 +523,7 @@ body.md-reader {
       &__side,
       &__side-tabs,
       &__file-tree,
+      &__fsa-panel,
       &__search-panel {
         box-shadow: var(--color-side-shadow);
         transform: translateX(0);

@@ -41,6 +41,10 @@ export default {
   TREE_FILTERED_HIDDEN: p`tree-filtered-hidden`,
   TREE_NAME_HIT: p`tree-name-hit`,
   TREE_FILTER_HINT: p`tree-filter-hint`,
+  FILES_PANEL: p`files-panel`,
+  FSA_PANEL: p`fsa-panel`,
+  FSA_BUTTON: p`fsa-button`,
+  FSA_HINT: p`fsa-hint`,
   MODAL: p`modal`,
   ZOOM_IMAGE: p`zoom-image`,
 }
