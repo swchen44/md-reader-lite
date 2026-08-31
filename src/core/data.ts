@@ -1,6 +1,7 @@
 import MD_PLUGINS from '@/config/md-plugins'
 import type PAGE_THEMES from '@/config/page-themes'
 import i18n from '@/config/i18n'
+import { getDefaultPluginOptions } from './plugin-options'
 
 export interface Data {
   enable?: boolean
@@ -23,6 +24,8 @@ export interface Data {
   customWidth?: number | null
   customCss?: string
   zenMode?: boolean
+  mdPluginOptions?: Record<string, Record<string, unknown>>
+  customWidthUnit?: 'px' | 'percent'
 }
 
 export function getDefaultData(mergeData: Data = {}): Data {
@@ -47,6 +50,8 @@ export function getDefaultData(mergeData: Data = {}): Data {
     customWidth: null,
     customCss: '',
     zenMode: false,
+    mdPluginOptions: getDefaultPluginOptions(),
+    customWidthUnit: 'px',
     ...mergeData,
   }
 }
