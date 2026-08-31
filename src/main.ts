@@ -12,7 +12,13 @@ import { parseRawUrl, parentTreeUrl } from '@/core/github-url'
 import { createSearchPanel } from '@/core/search-panel'
 import type { Theme } from '@/config/page-themes'
 import { getDefaultData, type Data } from '@/core/data'
-import { clampRefreshInterval, isTxtUrl } from '@/core/settings'
+import {
+  clampRefreshInterval,
+  clampCustomWidth,
+  isTxtUrl,
+  FONT_STACKS,
+  resolveCodeTheme,
+} from '@/core/settings'
 import { mdRender, type MdOptions } from '@/core/markdown'
 import { fetchDirListing } from '@/core/dir-fetch'
 import type { DirEntry } from '@/core/dir-listing'
@@ -35,6 +41,7 @@ import {
   getHeads,
   getRawContainer,
   setTheme,
+  setCodeTheme,
   CONTENT_TYPES,
   darkMediaQuery,
   getMediaQueryTheme,
@@ -63,6 +70,7 @@ function main(data: Data) {
     },
     updatePageTheme(theme: Theme, prevTheme: Theme) {
       setTheme(theme)
+      applyCodeTheme()
       renderContentByTheme(theme, prevTheme)
     },
     toggleRefresh(value) {
@@ -91,8 +99,20 @@ function main(data: Data) {
         case 'outlineCollapse':
           window.location.reload()
           break
+        case 'codeBlockDayTheme':
+        case 'codeBlockNightTheme':
+          applyCodeTheme()
+          break
+        case 'textSize':
+        case 'textFont':
+        case 'customWidth':
+          applyTypography()
+          break
+        case 'customCss':
+          applyCustomCss()
+          break
         default:
-        // Task 3/4 補
+        // Task 4 補
       }
     },
   }
@@ -120,6 +140,15 @@ function main(data: Data) {
 
   /* init md page */
   setTheme(configData.pageTheme)
+  const applyCodeTheme = () =>
+    setCodeTheme(
+      resolveCodeTheme(
+        toTheme(configData.pageTheme),
+        configData.codeBlockDayTheme,
+        configData.codeBlockNightTheme,
+      ),
+    )
+  applyCodeTheme()
   document.body.classList.toggle(
     className.SIDE_COLLAPSED,
     configData.hiddenSide,
@@ -135,6 +164,38 @@ function main(data: Data) {
       configData.centered ? 'centered' : ''
     }`,
   })
+
+  const applyTypography = () => {
+    const s = mdContent.ele.style
+    s.setProperty('--md-reader-text-size', `${configData.textSize || 16}px`)
+    const stack = FONT_STACKS[configData.textFont] || ''
+    stack
+      ? s.setProperty('--md-reader-text-font', stack)
+      : s.removeProperty('--md-reader-text-font')
+    const w = clampCustomWidth(configData.customWidth)
+    w
+      ? s.setProperty('--md-reader-content-width', `${w}px`)
+      : s.removeProperty('--md-reader-content-width')
+  }
+  applyTypography()
+
+  const CUSTOM_CSS_ID = 'md-reader-custom-css'
+  const applyCustomCss = () => {
+    let styleEle = document.getElementById(
+      CUSTOM_CSS_ID,
+    ) as HTMLStyleElement | null
+    if (!configData.customCss) {
+      styleEle?.remove()
+      return
+    }
+    if (!styleEle) {
+      styleEle = document.createElement('style')
+      styleEle.id = CUSTOM_CSS_ID
+      document.head.appendChild(styleEle)
+    }
+    styleEle.textContent = configData.customCss
+  }
+  applyCustomCss()
 
   const mdRenderer =
     (target: HTMLElement | Ele) =>
@@ -517,6 +578,7 @@ function main(data: Data) {
 
   darkMediaQuery.addEventListener('change', (e: MediaQueryListEvent) => {
     if (configData.pageTheme === 'auto') {
+      applyCodeTheme()
       renderContentByTheme(
         e.matches ? 'light' : 'dark',
         e.matches ? 'dark' : 'light',
