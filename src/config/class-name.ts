@@ -48,4 +48,11 @@ export default {
   MODAL: p`modal`,
   ZOOM_IMAGE: p`zoom-image`,
   CODE_WRAP: p`code-wrap`,
+  ZEN: p`zen`,
+  FLOAT_MENU: p`float-menu`,
+  FLOAT_MENU_BTN: p`float-menu-btn`,
+  FLOAT_MENU_OPEN: p`float-menu--open`,
+  FLOAT_MENU_DROPDOWN: p`float-menu-dropdown`,
+  FLOAT_MENU_ITEM: p`float-menu-item`,
+  SIDE_FOLD: p`side-fold`,
 }

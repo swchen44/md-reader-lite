@@ -49,7 +49,12 @@
     "fsa_pick_button": "Choose folder to enable the tree",
     "fsa_pick_hint": "Pick the current file's folder or any of its ancestors. Read-only access, stored locally.",
     "fsa_regrant_button": "Re-authorize folder access",
-    "fsa_mismatch": "That folder does not contain the current file. Pick its folder or an ancestor."
+    "fsa_mismatch": "That folder does not contain the current file. Pick its folder or an ancestor.",
+    "menu_toggle-raw": "Toggle Raw View",
+    "menu_fullscreen": "Toggle Fullscreen",
+    "menu_print": "Print",
+    "menu_zen": "Zen Mode",
+    "menu_about": "About"
   },
   "zh-CN": {
     "label_enable": "启用",
@@ -92,7 +97,12 @@
     "fsa_pick_button": "选择文件夹以启用目录树",
     "fsa_pick_hint": "请选择当前文件所在的文件夹或其上层。只读访问，仅存于本机。",
     "fsa_regrant_button": "重新授权文件夹访问",
-    "fsa_mismatch": "所选文件夹不包含当前文件，请选择其所在文件夹或上层。"
+    "fsa_mismatch": "所选文件夹不包含当前文件，请选择其所在文件夹或上层。",
+    "menu_toggle-raw": "切换原始内容",
+    "menu_fullscreen": "切换全屏",
+    "menu_print": "打印",
+    "menu_zen": "禅模式",
+    "menu_about": "关于"
   },
   "zh-TW": {
     "label_enable": "啟用",
@@ -135,7 +145,12 @@
     "fsa_pick_button": "選擇資料夾以啟用目錄樹",
     "fsa_pick_hint": "請選擇目前檔案所在的資料夾或其上層。唯讀存取，僅存於本機。",
     "fsa_regrant_button": "重新授權資料夾存取",
-    "fsa_mismatch": "所選資料夾不包含目前檔案，請選擇其所在資料夾或上層。"
+    "fsa_mismatch": "所選資料夾不包含目前檔案，請選擇其所在資料夾或上層。",
+    "menu_toggle-raw": "切換原始內容",
+    "menu_fullscreen": "切換全螢幕",
+    "menu_print": "列印",
+    "menu_zen": "禪模式",
+    "menu_about": "關於"
   },
   "ko": {
     "label_enable": "활성화",
