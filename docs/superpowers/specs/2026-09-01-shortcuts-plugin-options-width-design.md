@@ -35,21 +35,23 @@ async toggleTheme(handler) {
 
 ```ts
 mdPluginOptions: {
-  Linkify: { fuzzyLink: false, fuzzyIP: false, fuzzyEmail: true },
+  Linkify: { fuzzyLink: true, fuzzyIP: false, fuzzyEmail: true },
   Alert:   { deep: true },
 }
 ```
+
+**預設值對齊既有行為（設計審查 Critical）**：`fuzzyLink` 預設 **`true`**（非 false）——實測 `linkify-it` 的 `.set()` 只 merge、不重置未給的 key，現行 `md.linkify.set({ fuzzyEmail: true })` 未動 `fuzzyLink`，故它吃套件預設 `true`，即**裸網域（無 `http(s)://`）今天已會自動連結**。若預設設 false，一次覆寫三鍵會靜默關掉此既有行為。`fuzzyIP` 套件預設 false，維持 false。單元測試須加一條「預設值渲染裸網域＝連結」斷言防回歸。
 
 ### 初始覆蓋範圍（本批）
 
 Lite 的插件集與商店版不同（商店版的 Linkify/FrontMatter 在 Lite 分別是 MarkdownIt 核心設定與 Obsidian 插件）。本批只做**兩個乾淨、高價值、Lite 實際擁有**的插件，建立可擴充的 `mdPluginOptions` 基礎架構，其餘（TaskLists/TOC/Katex/Mermaid/MultimdTable、以及 Obsidian 的 frontmatter showMetadata）留待後續增量：
 
 - **Linkify**（3 開關，商店版免費全開）：`fuzzyLink`（無 `http(s)://` 也自動連結）、`fuzzyIP`（純 IP）、`fuzzyEmail`（Email，預設開）。落點：`markdown.ts` 現有 `md.linkify.set({ fuzzyEmail: true })` 改為讀 `mdPluginOptions.Linkify`。Linkify 是 MarkdownIt 核心（非 `MD_PLUGINS` 成員），故 popup 中歸為獨立「連結辨識」子設定區、不掛在插件 chip 上——或作為特例插件項顯示（見 UI 節）。
-- **Alert**（1 開關）：`deep`（巢狀 alert）。落點：`src/plugins/alert.ts` 的 `[alert, { deep: true }]` 改為接受注入的 `deep`；`alert.ts` 匯出改為 `(md, opts?) => ...` 或以工廠函式包裝，`markdown.ts` 的 `PLUGINS.Alert` 改為函式型 `(mdOpts) => [mAlert, { deep: mdOpts.pluginOptions?.Alert?.deep ?? true }]`（`mAlert` 需支援收 options）。
+- **Alert**（1 開關）：`deep`（巢狀 alert）。**注意 alert.ts 複合結構**：`AlertPlugin(md)` 目前同時安裝 8 種 container——GitHub 式 `[alert, { deep: true }]`（第 8 行）＋ note/info/tips/tip/success/warning/danger 共 7 個舊式 `markdown-it-container`。本次僅需把 `deep` 注入**第一個** `[alert, {deep}]` entry，其餘 7 個 container 維持不變。落點：`alert.ts` 匯出改為 `(md, opts?: { deep?: boolean }) => ...`（`@mdit/plugin-alert` 的 `deep?: boolean` option 已確認存在、語義為「允許深層警告語法」、套件預設 false，Lite 維持預設 true），`markdown.ts` 的 `PLUGINS.Alert` 改為函式型 `(mdOpts) => [mAlert, { deep: resolveAlertDeep(mdOpts.pluginOptions?.Alert) }]`。
 
 ### 生效機制
 
-`mdPluginOptions` 是 **reload 類**（改後需重建 MarkdownIt 實例）：`background.ts` actionMap 加 `mdPluginOptions: 'applySetting'`，`main.ts` applySetting 的該 case → `window.location.reload()`（比照 `breaks`/`mdPlugins` 的重渲染需求；`mdPlugins` 現行走 `updateMdPlugins` 重渲染，`mdPluginOptions` 亦可走同路徑重渲染而非整頁 reload——擇一：優先重渲染 `contentRender(mdRaw); renderSide()`，與 `updateMdPlugins` 一致，體驗較好）。
+`mdPluginOptions` 走**重渲染**（非整頁 reload）：`background.ts` actionMap 加 `mdPluginOptions: 'applySetting'`；`main.ts` applySetting 的該 case → `contentRender(mdRaw); renderSide()`（與既有 `updateMdPlugins` handler 完全相同的重建路徑——`mdRenderer` 每次傳新 options，`mdRender` 的 `if (!md || options)` 即重建 MarkdownIt 實例，讓新 pluginOptions 生效）。此為唯一權威敘述（文末「生效機制對照」表一致）。
 
 `markdown.ts` 透傳：`MdOptions` 加 `pluginOptions?: Record<string, Record<string, unknown>>`；`initRender` 內：
 
@@ -63,7 +65,7 @@ Lite 的插件集與商店版不同（商店版的 Linkify/FrontMatter 在 Lite 
 
 - 連結辨識（Linkify）：三個 Switch。
 - 警告框（Alert）：一個 Switch（巢狀）。
-  子選項變更走既有 `updateConfig('mdPluginOptions', { ...data.mdPluginOptions, Linkify: {...} })`（整個物件回寫，popup 端維護 immutable 更新）。標示為 reload/重渲染類（沿用 `hint_reload` 或不標，因走重渲染非整頁 reload——若走重渲染則不需 hint）。
+  子選項變更**比照既有 `data.customCss`/`data.customWidth` 的直接賦值慣例**（非 immutable 回寫，與 popup 現有風格一致、更簡單）：`data.mdPluginOptions.Linkify.fuzzyLink = checked; updateConfig('mdPluginOptions', data.mdPluginOptions)`（Svelte 3/4 對 `bind:data` 巢狀屬性賦值會正確 invalidate）。走重渲染非整頁 reload，故**不需** `hint_reload` 標示。
 
 ### 純函式（core 可測）
 
@@ -82,7 +84,9 @@ Lite 的插件集與商店版不同（商店版的 Linkify/FrontMatter 在 Lite 
 
 ### 生效
 
-`customWidthUnit` 為即時類（applySetting → 呼叫既有 `applyTypography()`）。`applyTypography` 目前 `--md-reader-content-width` 設 `${w}px`；改為依單位設 `${w}px` 或 `${w}%`（CSS `max-width: var(--md-reader-content-width, 900px)` 本身吃任意長度，選擇器不改）。`background.ts` actionMap 加 `customWidthUnit: 'applySetting'`。
+`customWidthUnit` 為即時類（applySetting → 呼叫既有 `applyTypography()`）。`applyTypography` 目前 `--md-reader-content-width` 設 `${w}px`；改為依單位設 `${w}px` 或 `${w}%`（CSS `max-width: var(--md-reader-content-width, …)` 三處 fallback 分別為 900px/1200px/1600px 響應式斷點——% 值套進去在各斷點下皆為「容器寬的百分比」，語義一致合理；選擇器不改）。`background.ts` actionMap 加 `customWidthUnit: 'applySetting'`。
+
+`mdPluginOptions` 亦即時類 UI 但走重渲染（見上）；`customWidth` 既有 key 仍為即時（applyTypography）。
 
 ### 純函式擴充（`src/core/settings.ts`）
 
@@ -111,7 +115,8 @@ Lite 的插件集與商店版不同（商店版的 Linkify/FrontMatter 在 Lite 
 ## 測試
 
 1. 單元：
-   - `tests/plugin-options.test.mjs`：getDefaultPluginOptions 結構、mergePluginOptions（缺項/壞型別/多餘 key）、resolveLinkify（boolean 化/預設）、resolveAlertDeep ≥ 8 條。
+   - `tests/plugin-options.test.mjs`：getDefaultPluginOptions 結構（含 `fuzzyLink:true` 防回歸斷言）、mergePluginOptions（缺項/壞型別/多餘 key）、resolveLinkify（boolean 化/預設，`fuzzyLink` 預設 true）、resolveAlertDeep ≥ 8 條。
+   - 另加一條整合式斷言（`tests/plugin-options.test.mjs` 或 markdown 層）：以預設 mdPluginOptions 渲染 `visit example.com now`，斷言輸出含 `<a href` 裸網域連結——防止 fuzzyLink 預設被誤改。
    - `tests/settings.test.mjs` 擴充：clampCustomWidthPercent（20/100 邊界、NaN、越界）、formatContentWidth（px/percent/null）≥ 6 條新增。
 2. Playwright 驗收：
    - 四快捷鍵切換對應設定（含 toggleTheme 三態循環 auto→light→dark→auto）。
