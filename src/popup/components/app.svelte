@@ -6,6 +6,7 @@
   import TabAppearance from './tab-appearance.svelte'
   import TabPlugins from './tab-plugins.svelte'
   import { getDefaultData, type Data } from '@/core/data'
+  import { mergePluginOptions } from '@/core/plugin-options'
   import pkg from '../../../package.json'
   import i18n from '@/config/i18n'
 
@@ -25,6 +26,9 @@
   storage.get().then((_data: Data) => {
     // need an assignment to updata UI
     data = { ...data, ..._data }
+    // harden against partial/legacy mdPluginOptions missing Linkify/Alert
+    data.mdPluginOptions = mergePluginOptions(data.mdPluginOptions)
+    data = data
   })
 
   $: if (data.language) {
