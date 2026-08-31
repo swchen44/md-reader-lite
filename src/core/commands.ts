@@ -11,9 +11,10 @@ export default {
     await toggle(handler, 'refresh', false)
   },
   async toggleTheme(handler) {
-    let { pageTheme = 'light' } = await storage.get('pageTheme')
-    const value = pageTheme === 'light' ? 'dark' : 'light'
-    handler('storage', { key: 'pageTheme', value })
+    const { pageTheme = 'auto' } = await storage.get('pageTheme')
+    const next =
+      pageTheme === 'auto' ? 'light' : pageTheme === 'light' ? 'dark' : 'auto'
+    handler('storage', { key: 'pageTheme', value: next })
   },
 }
 

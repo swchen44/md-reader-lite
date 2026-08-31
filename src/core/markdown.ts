@@ -17,6 +17,7 @@ import mObsidian from '@/plugins/obsidian'
 import mGraphvizBlock from '@/plugins/graphviz-block'
 import mMultimdTable from 'markdown-it-multimd-table'
 import MD_PLUGINS from '@/config/md-plugins'
+import { resolveLinkify, resolveAlertDeep } from '@/core/plugin-options'
 import successIcon from '@/images/icon_success.svg'
 import copyIcon from '@/images/icon_copy.svg'
 import className from '@/config/class-name'
@@ -40,7 +41,10 @@ const PLUGINS: Plugins = {
   Footnote: [mFootnote],
   TaskLists: [mTaskLists],
   TOC: [mToc],
-  Alert: [mAlert],
+  Alert: (o: MdOptions) => [
+    mAlert,
+    { deep: resolveAlertDeep(o?.pluginOptions?.Alert) },
+  ],
   Obsidian: [mObsidian],
 }
 
@@ -48,9 +52,14 @@ export interface MdOptions {
   [key: string]: any
   config?: MarkdownIt.Options
   plugins?: Array<string>
+  pluginOptions?: Record<string, Record<string, unknown>>
 }
 
-function initRender({ config = {}, plugins = [...MD_PLUGINS] }: MdOptions) {
+function initRender({
+  config = {},
+  plugins = [...MD_PLUGINS],
+  pluginOptions,
+}: MdOptions) {
   const copyButton = new Ele<HTMLElement>(
     'button',
     {
@@ -86,8 +95,8 @@ function initRender({ config = {}, plugins = [...MD_PLUGINS] }: MdOptions) {
     ...config,
   })
 
-  // parse email
-  md.linkify.set({ fuzzyEmail: true })
+  // parse email / links
+  md.linkify.set(resolveLinkify(pluginOptions?.Linkify))
   // builtin plugins
   md.use(mMultimdTable)
 

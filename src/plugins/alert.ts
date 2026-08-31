@@ -3,9 +3,9 @@ import type Token from 'markdown-it/lib/token'
 import { alert } from '@mdit/plugin-alert'
 import mContainer from 'markdown-it-container'
 
-export default function AlertPlugin(md: MarkdownIt) {
+export default function AlertPlugin(md: MarkdownIt, opts?: { deep?: boolean }) {
   const customContainers = [
-    [alert, { deep: true }],
+    [alert, { deep: opts?.deep ?? true }],
     [
       mContainer,
       'note',

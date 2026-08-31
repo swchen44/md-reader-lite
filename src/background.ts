@@ -46,6 +46,8 @@ const actionMap = {
   breaks: 'applySetting',
   txtAsMd: 'applySetting',
   outlineCollapse: 'applySetting',
+  mdPluginOptions: 'applySetting',
+  customWidthUnit: 'applySetting',
 }
 
 function updatePage(key: keyof typeof actionMap, value?: any) {
