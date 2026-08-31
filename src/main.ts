@@ -92,7 +92,7 @@ function main(data: Data) {
           // 無動作：polling() 每輪重新讀取 configData.refreshInterval
           break
         case 'codeWrap':
-          mdContent.classList.toggle(className.CODE_WRAP, !!value)
+          applyCodeWrap()
           break
         case 'breaks':
         case 'txtAsMd':
@@ -166,6 +166,11 @@ function main(data: Data) {
       configData.centered ? 'centered' : ''
     }`,
   })
+
+  const applyCodeWrap = () => {
+    mdContent.classList.toggle(className.CODE_WRAP, !!configData.codeWrap)
+  }
+  applyCodeWrap()
 
   const applyTypography = () => {
     const s = mdContent.ele.style
