@@ -99,10 +99,10 @@ Lite 的插件集與商店版不同（商店版的 Linkify/FrontMatter 在 Lite 
 
 ## 資料模型總覽（`src/core/data.ts` 擴充）
 
-| key               | 型別                                      | 預設                                                                           | 生效類 |
-| ----------------- | ----------------------------------------- | ------------------------------------------------------------------------------ | ------ |
-| `mdPluginOptions` | `Record<string, Record<string, unknown>>` | `{Linkify:{fuzzyLink:false,fuzzyIP:false,fuzzyEmail:true}, Alert:{deep:true}}` | 重渲染 |
-| `customWidthUnit` | `'px'` 或 `'percent'`                     | `'px'`                                                                         | 即時   |
+| key               | 型別                                      | 預設                                                                          | 生效類 |
+| ----------------- | ----------------------------------------- | ----------------------------------------------------------------------------- | ------ |
+| `mdPluginOptions` | `Record<string, Record<string, unknown>>` | `{Linkify:{fuzzyLink:true,fuzzyIP:false,fuzzyEmail:true}, Alert:{deep:true}}` | 重渲染 |
+| `customWidthUnit` | `'px'` 或 `'percent'`                     | `'px'`                                                                        | 即時   |
 
 `pageTheme` 預設不變（v1.1.0 已為 `'auto'`）；`commands.ts` 內部預設同步為 `'auto'`。
 
