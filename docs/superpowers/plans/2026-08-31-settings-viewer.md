@@ -357,6 +357,15 @@ const applyZen = () => {
 - [ ] `docs/plans.md`/`designs.md` 案 B+F 列；`docs/ROADMAP.md` 案 B、案 F → 完成（v1.1.0）；`docs/store-listing.md` 補 .txt 支援與（依 v1.0.5 遺留 triage）修正「nothing leaves your browser」措辭對齊 GitHub API 例外。
 - [ ] 最終整分支審查（sonnet）→ fix batch → 合入 main（--no-ff）→ bump 1.1.0（package.json + src/manifest.json）→ tag v1.1.0 → CI release 監控。
 
+## 範圍擴充備忘（2026-08-31 使用者核可，未排程）
+
+使用者於 2026-08-31 檢視商店版 crx 分析後，勾選以下四項原 spec 排除的功能為後續移植目標（不納入本計畫 v1.1.0 範圍；補充事實見 `docs/research/2026-08-31-store-crx-3628-local-unpack-notes.md`）：
+
+1. **鍵盤快捷鍵**（成本低，可考慮併入 v1.1.x）：manifest 加 `commands`（`toggleCentered` Alt+Shift+C、`togglePageTheme` Alt+Shift+T、`toggleRefresh` Alt+Shift+R、`toggleSide` Alt+Shift+B），`background.ts` 掛 `chrome.commands.onCommand`，切換值走既有 `{action:'storage'}` 訊息路徑回流生效機制。`commands` 非 permission，零新權限。
+2. **插件子選項**（成本高，建議獨立成案）：新增 `mdPluginOptions` map 存 storage；popup 插件頁每插件加 ⚙ 展開；`initRender` 透傳 options。優先順序建議照商店版免費子選項起步：Linkify（fuzzy 三開關）、FrontMatter（showMetadata）、Alert（7 項），其後才是 TOC/Katex/Mermaid/MultimdTable/TaskLists（Lite 全做成免費）。完整預設值 schema 見上述 research 文件 §4。
+3. **字元集相容模式**：`charsetCompat: boolean` + `charset: string`（預設 `'utf-8'`）兩 key，僅影響 `file://` 大檔載入；商店版實作點未拆解，動工前需先研究其 content script 的讀檔路徑。
+4. **寬度 % 單位**：`customWidth` 由 `number | null` 擴為含單位（新增 `customWidthUnit: 'px' | 'percent'` key，避免破壞既有 flat 結構），popup 自訂寬度控件加單位切換（px 500–3000、% 20–100，範圍比照商店版）。
+
 ## Self-Review 紀錄
 
 - **Spec coverage**：13 key（T1 資料模型；T2 refreshInterval/breaks/txtAsMd/codeWrap；T3 textSize/textFont/customWidth/customCss/codeBlock 兩主題＋ pageTheme auto；T4 outlineCollapse/zenMode）、popup 三頁籤＋總開關＋恢復預設（T5）、浮動選單五項（T4）、案 F（T6）、manifest .txt（T2）、驗收與發版（T7）。生效機制/zen 三規則/txt 判定點/代碼主題解耦四個 binding 節各自落在 T2/T4/T2/T3。
