@@ -24,10 +24,18 @@
 
   let customCssDraft = data.customCss || ''
 
+  // Pure display mapping (slider value -> index); no side effect, so this
+  // stays reactive rather than event-driven.
   $: sizeIndex = textSizeIndex(data.textSize)
-  // Mirrors the language <Select> pattern used in tab-general: SMUI's
-  // Select has no simple on:change, so push updates via a reactive block.
-  $: if (data.textFont) updateConfig('textFont', data.textFont)
+
+  // SMUI's Select dispatches a native 'MDCSelect:change' DOM event only on
+  // user-driven selection changes (see @smui/select's Select.svelte
+  // notifyChange), so we can bind that directly instead of using a
+  // reactive block that would also fire on mount and on unrelated field
+  // changes elsewhere in this component.
+  function onTextFontChange(e: CustomEvent<{ value: string; index: number }>) {
+    updateConfig('textFont', e.detail.value)
+  }
 
   function onTextSizeChange(e: Event) {
     const idx = Number((e.target as HTMLInputElement).value)
@@ -98,7 +106,11 @@
 <div class="form-item">
   <div class="label-item">{localize('label_text-font')}:</div>
   <FormField style="padding-left: 10px">
-    <Select bind:value={data.textFont} disabled={!data.enable}>
+    <Select
+      bind:value={data.textFont}
+      disabled={!data.enable}
+      on:MDCSelect:change={onTextFontChange}
+    >
       {#each FONT_KEYS as key}
         <Option value={key}>{localize(`font_${key}`)}</Option>
       {/each}
