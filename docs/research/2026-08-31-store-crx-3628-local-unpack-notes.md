@@ -75,5 +75,63 @@
 ## 6. 其餘雜項 storage key（teardown 主表以外）
 
 `sideCollapsed:false`（側欄收合）、`popupMenu:"General"`（popup 記住所在頁籤）、
-`skipGuide:false`（新手導覽）、`charset:"utf-8"`（搭配 `charsetCompat`）、
+`skipGuide:false`（新手導覽）、`charset:"utf-8"`（死欄位，見 §7）、
 `customCSS` 編輯器支援 Tab 縮排與 Cmd/Ctrl+S 套用。
+
+## 7. 字元集相容模式（charsetCompat）實作拆解（2026-09-01 補）
+
+### 機制（content script `dist/content/index.global.js` + `dist/background/index.mjs`）
+
+1. **預設讀取路徑**：content script 以 `document.body.querySelector('pre')` 取
+   `textContent` —— 即 Chrome 自己渲染 file:// 純文字時的解碼結果。大型 CJK 檔
+   Chrome 的編碼偵測可能誤判（如 UTF-8 被猜成 Big5/GBK），這是本功能要解的問題。
+2. **相容模式路徑**：`Wt.isLocal && on.value.charsetCompat` 時
+   （`isLocal = location.protocol === 'file:'`），改送 `bg-fetch` 訊息給
+   background service worker：
+
+   ```js
+   // content：async function xxe(t){ return H1('bg-fetch', {url:t}, 'background') }
+   // background handler（去混淆重排）：
+   async function px({ data, sender }) {
+     if (!Dc(sender))
+       return { ok: false, msg: 'Error: Invalid Endpoint', res: null }
+     const tab = await chrome.tabs.get(sender.tabId) // 需 tabs 權限
+     if (new URL(tab.url).origin !== new URL(data.url).origin)
+       return {
+         ok: false,
+         msg: 'Error: Cross-origin request not allowed',
+         res: null,
+       }
+     const r = await fetch(data.url)
+     return {
+       ok: r.ok,
+       msg: r.statusText,
+       res: (await r.text()) || '',
+       status: r.status,
+     }
+   }
+   ```
+
+3. **解碼原理**：`Response.text()` 在 Content-Type 無 charset 時一律以 UTF-8 解碼
+   （spec 行為），而 file:// 回應沒有 charset —— 所以此路徑等於
+   **繞過 Chrome 頁面層的編碼猜測、強制 UTF-8**。這就是功能全部：沒有任何
+   TextDecoder 或 charset 參數參與。
+4. **`charset:"utf-8"` 是死欄位**：整包程式碼只有 `value.charsetCompat` 一個設定
+   讀取點，popup 也只有 toggle、無 charset 下拉。屬預留欄位，功能實為
+   「強制 UTF-8」而非「自選編碼」。
+5. **順帶發現**：自動刷新輪詢走同一條 `bg-fetch`（抓全文比對，變更才重渲染，
+   間隔 `refreshInterval*1000`）——商店版 refresh 不是 reload 頁面，而是
+   fetch-diff-rerender。
+
+### 移植到 Lite 的關鍵風險（動工前必須先驗證）
+
+- **MV3 SW 能否 fetch file://**：先前案 C/D 實測記錄「SW fetch 與 content script
+  XHR 讀 file:// 皆被新版 Chrome 擋」，但商店版 3.6.28 明明依賴 SW fetch file://
+  出貨。差異可能在：當時測的是**目錄** URL、或 Chrome 版本行為變動、或
+  「允許存取檔案網址」開關狀態。移植前先用最小 SW `fetch('file:///...md')`
+  smoke test 確認，結果決定方案成立與否。
+- 商店版靠 `tabs` 權限做 `tabs.get(sender.tabId)` 同源檢查；Lite 零擴權下可改用
+  `sender.tab?.url`（`onMessage` 的 sender 本身就帶 tab 資訊，不需 `tabs` 權限）。
+- 若 SW fetch file:// 不可行，替代路徑：content script 端
+  `fetch(location.href)` + `arrayBuffer()` + `TextDecoder('utf-8')`（同 origin
+  file:// 在 content script 可否 fetch 亦需一併實測）。
