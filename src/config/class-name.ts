@@ -55,4 +55,6 @@ export default {
   FLOAT_MENU_DROPDOWN: p`float-menu-dropdown`,
   FLOAT_MENU_ITEM: p`float-menu-item`,
   SIDE_FOLD: p`side-fold`,
+  DIAGRAM_VIEWER: p`diagram-viewer`,
+  DIAGRAM_CONTROLS: p`diagram-controls`,
 }

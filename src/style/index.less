@@ -433,6 +433,51 @@ body.md-reader {
             white-space: pre-wrap;
           }
         }
+        // panzoom viewer for mermaid/graphviz diagrams (see diagram-viewer.ts)
+        .md-reader__diagram-viewer {
+          position: relative;
+          overflow: hidden;
+          .md-reader__diagram-controls {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 1;
+            &-btn {
+              width: 26px;
+              height: 26px;
+              padding: 0;
+              border: none;
+              border-radius: 6px;
+              outline: none;
+              cursor: pointer;
+              font-size: 15px;
+              line-height: 1;
+              backdrop-filter: blur(3px);
+              background: var(--color-button-bg-hover);
+              color: var(--color-button);
+              transition: background 0.1s, color 0.1s;
+              &:hover {
+                color: var(--color-button-hover);
+              }
+              &:active {
+                background: var(--color-button-bg-active);
+                color: var(--color-button-active);
+              }
+            }
+          }
+          &:hover .md-reader__diagram-controls {
+            opacity: 1;
+          }
+        }
+        // pre.md-reader__graphviz sets overflow: auto above; bump
+        // specificity here so the panzoom viewer can clip instead.
+        pre.md-reader__graphviz.md-reader__diagram-viewer {
+          overflow: hidden;
+        }
         &.md-reader__code-wrap {
           pre.hljs-pre code {
             white-space: pre-wrap;
