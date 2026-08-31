@@ -12,6 +12,7 @@ import { parseRawUrl, parentTreeUrl } from '@/core/github-url'
 import { createSearchPanel } from '@/core/search-panel'
 import type { Theme } from '@/config/page-themes'
 import { getDefaultData, type Data } from '@/core/data'
+import { clampRefreshInterval, isTxtUrl } from '@/core/settings'
 import { mdRender, type MdOptions } from '@/core/markdown'
 import { fetchDirListing } from '@/core/dir-fetch'
 import type { DirEntry } from '@/core/dir-listing'
@@ -77,12 +78,33 @@ function main(data: Data) {
     toggleFolderTree(value) {
       setFolderTree(value)
     },
+    applySetting(value, _oldValue, key) {
+      switch (key) {
+        case 'refreshInterval':
+          // 無動作：polling() 每輪重新讀取 configData.refreshInterval
+          break
+        case 'codeWrap':
+          mdContent.classList.toggle(className.CODE_WRAP, !!value)
+          break
+        case 'breaks':
+        case 'txtAsMd':
+        case 'outlineCollapse':
+          window.location.reload()
+          break
+        default:
+        // Task 3/4 補
+      }
+    },
   }
   chrome.runtime.onMessage.addListener(({ action, data: { key, value } }) => {
     const oldValue = configData[key]
     configData[key] = value
-    actions[action]?.(value, oldValue)
+    actions[action]?.(value, oldValue, key)
   })
+
+  if (isTxtUrl(window.location.href) && !configData.txtAsMd) {
+    return
+  }
 
   if (!configData.enable || !CONTENT_TYPES.includes(document.contentType)) {
     return
@@ -120,6 +142,7 @@ function main(data: Data) {
       target.innerHTML = mdRender(code, {
         theme: toTheme(configData.pageTheme),
         plugins: configData.mdPlugins,
+        config: { breaks: !!configData.breaks },
         ...options,
       })
       globalEvent.emit(
@@ -529,7 +552,10 @@ function main(data: Data) {
               }, 0)
             }
           }
-          pollingTimer = setTimeout(watch, 500)
+          pollingTimer = setTimeout(
+            watch,
+            clampRefreshInterval(configData.refreshInterval) * 1000,
+          )
         })
     })()
   }

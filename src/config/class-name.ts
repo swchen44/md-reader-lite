@@ -47,4 +47,5 @@ export default {
   FSA_HINT: p`fsa-hint`,
   MODAL: p`modal`,
   ZOOM_IMAGE: p`zoom-image`,
+  CODE_WRAP: p`code-wrap`,
 }
