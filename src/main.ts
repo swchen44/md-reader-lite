@@ -12,6 +12,13 @@ import { parseRawUrl, parentTreeUrl } from '@/core/github-url'
 import { createSearchPanel } from '@/core/search-panel'
 import type { Theme } from '@/config/page-themes'
 import { getDefaultData, type Data } from '@/core/data'
+import {
+  clampRefreshInterval,
+  clampCustomWidth,
+  isTxtUrl,
+  FONT_STACKS,
+  resolveCodeTheme,
+} from '@/core/settings'
 import { mdRender, type MdOptions } from '@/core/markdown'
 import { fetchDirListing } from '@/core/dir-fetch'
 import type { DirEntry } from '@/core/dir-listing'
@@ -34,6 +41,7 @@ import {
   getHeads,
   getRawContainer,
   setTheme,
+  setCodeTheme,
   CONTENT_TYPES,
   darkMediaQuery,
   getMediaQueryTheme,
@@ -62,6 +70,7 @@ function main(data: Data) {
     },
     updatePageTheme(theme: Theme, prevTheme: Theme) {
       setTheme(theme)
+      applyCodeTheme()
       renderContentByTheme(theme, prevTheme)
     },
     toggleRefresh(value) {
@@ -77,12 +86,47 @@ function main(data: Data) {
     toggleFolderTree(value) {
       setFolderTree(value)
     },
+    applySetting(value, _oldValue, key) {
+      switch (key) {
+        case 'refreshInterval':
+          // 無動作：polling() 每輪重新讀取 configData.refreshInterval
+          break
+        case 'codeWrap':
+          applyCodeWrap()
+          break
+        case 'breaks':
+        case 'txtAsMd':
+        case 'outlineCollapse':
+          window.location.reload()
+          break
+        case 'codeBlockDayTheme':
+        case 'codeBlockNightTheme':
+          applyCodeTheme()
+          break
+        case 'textSize':
+        case 'textFont':
+        case 'customWidth':
+          applyTypography()
+          break
+        case 'customCss':
+          applyCustomCss()
+          break
+        case 'zenMode':
+          applyZen()
+          break
+        default:
+      }
+    },
   }
   chrome.runtime.onMessage.addListener(({ action, data: { key, value } }) => {
     const oldValue = configData[key]
     configData[key] = value
-    actions[action]?.(value, oldValue)
+    actions[action]?.(value, oldValue, key)
   })
+
+  if (isTxtUrl(window.location.href) && !configData.txtAsMd) {
+    return
+  }
 
   if (!configData.enable || !CONTENT_TYPES.includes(document.contentType)) {
     return
@@ -98,6 +142,15 @@ function main(data: Data) {
 
   /* init md page */
   setTheme(configData.pageTheme)
+  const applyCodeTheme = () =>
+    setCodeTheme(
+      resolveCodeTheme(
+        toTheme(configData.pageTheme),
+        configData.codeBlockDayTheme,
+        configData.codeBlockNightTheme,
+      ),
+    )
+  applyCodeTheme()
   document.body.classList.toggle(
     className.SIDE_COLLAPSED,
     configData.hiddenSide,
@@ -114,12 +167,50 @@ function main(data: Data) {
     }`,
   })
 
+  const applyCodeWrap = () => {
+    mdContent.classList.toggle(className.CODE_WRAP, !!configData.codeWrap)
+  }
+  applyCodeWrap()
+
+  const applyTypography = () => {
+    const s = mdContent.ele.style
+    s.setProperty('--md-reader-text-size', `${configData.textSize || 16}px`)
+    const stack = FONT_STACKS[configData.textFont] || ''
+    stack
+      ? s.setProperty('--md-reader-text-font', stack)
+      : s.removeProperty('--md-reader-text-font')
+    const w = clampCustomWidth(configData.customWidth)
+    w
+      ? s.setProperty('--md-reader-content-width', `${w}px`)
+      : s.removeProperty('--md-reader-content-width')
+  }
+  applyTypography()
+
+  const CUSTOM_CSS_ID = 'md-reader-custom-css'
+  const applyCustomCss = () => {
+    let styleEle = document.getElementById(
+      CUSTOM_CSS_ID,
+    ) as HTMLStyleElement | null
+    if (!configData.customCss) {
+      styleEle?.remove()
+      return
+    }
+    if (!styleEle) {
+      styleEle = document.createElement('style')
+      styleEle.id = CUSTOM_CSS_ID
+      document.head.appendChild(styleEle)
+    }
+    styleEle.textContent = configData.customCss
+  }
+  applyCustomCss()
+
   const mdRenderer =
     (target: HTMLElement | Ele) =>
     (code: string = '', options?: MdOptions) => {
       target.innerHTML = mdRender(code, {
         theme: toTheme(configData.pageTheme),
         plugins: configData.mdPlugins,
+        config: { breaks: !!configData.breaks },
         ...options,
       })
       globalEvent.emit(
@@ -392,6 +483,17 @@ function main(data: Data) {
     if (!enabled) activateTab('outline')
   }
 
+  // zenMode binding（spec 三規則）：(a) 只切 body class，不寫 hiddenSide
+  // storage；(b) 退出後回既有呈現邏輯，不做任何快照/還原；(c) 進入時若
+  // 搜尋列開著先 closeSearch()。searchOpen 在此處已宣告過（見上方），故
+  // 初次呼叫安全；初始 configData.zenMode 為 false 時 searchOpen 分支
+  // 不會被求值（短路），不受宣告順序影響。
+  const applyZen = () => {
+    if (configData.zenMode && searchOpen) closeSearch()
+    document.body.classList.toggle(className.ZEN, !!configData.zenMode)
+  }
+  applyZen()
+
   renderSide()
   document.addEventListener('scroll', throttle(onScroll, 100))
 
@@ -404,7 +506,7 @@ function main(data: Data) {
     },
     svg(codeIcon),
   )
-  rawToggleBtn.on('click', () => {
+  function toggleRawView() {
     if (searchOpen) closeSearch()
     const eles: Ele<HTMLElement>[] = [mdBody, mdSide, sideTabs]
     if (filesPanel) eles.push(filesPanel)
@@ -417,7 +519,8 @@ function main(data: Data) {
       setFolderTree(configData.folderTree !== false)
       activateTab(activeTab)
     }
-  })
+  }
+  rawToggleBtn.on('click', () => toggleRawView())
 
   /* render side expand button */
   const sideExpandBtn = new Ele<HTMLElement>(
@@ -486,14 +589,91 @@ function main(data: Data) {
     [sideExpandBtn, rawToggleBtn, goTopBtn],
   )
 
+  /* render page-level floating menu（獨立於 buttonWrap：zenMode 隱藏
+   * button-wrap 時仍要留下這顆入口；raw 檢視時它借用的樣式（FLOAT_MENU /
+   * FLOAT_MENU_BTN / ...）與 buttonWrap/btn 同放在未受 body.md-reader
+   * 限定的頂層 `.md-reader { }` 區塊，故 lifecycle.toggleRaw() 移除 body
+   * 的 md-reader class 時不受影響，選單在 raw 檢視下仍可正常顯示與互動）*/
+  const floatMenuBtn = new Ele<HTMLElement>('button', {
+    className: [className.MD_BUTTON, className.FLOAT_MENU_BTN],
+    title: 'Menu',
+  })
+  floatMenuBtn.textContent = '≡'
+
+  function floatMenuItem(labelKey: string, onSelect: () => void) {
+    const item = new Ele<HTMLElement>('button', {
+      className: className.FLOAT_MENU_ITEM,
+    })
+    item.textContent = localize(labelKey)
+    item.on('click', () => {
+      closeFloatMenu()
+      onSelect()
+    })
+    return item
+  }
+
+  const floatMenuDropdown = new Ele<HTMLElement>(
+    'div',
+    { className: className.FLOAT_MENU_DROPDOWN },
+    [
+      floatMenuItem('menu_toggle-raw', () => toggleRawView()),
+      floatMenuItem('menu_fullscreen', () => {
+        document.fullscreenElement
+          ? document.exitFullscreen()
+          : document.documentElement.requestFullscreen().catch(() => {})
+      }),
+      floatMenuItem('menu_print', () => window.print()),
+      floatMenuItem('menu_zen', () => {
+        chrome.runtime.sendMessage({
+          action: 'storage',
+          data: { key: 'zenMode', value: !configData.zenMode },
+        })
+      }),
+      floatMenuItem('menu_about', () =>
+        window.open('https://github.com/swchen44/md-reader-lite'),
+      ),
+    ],
+  )
+  floatMenuDropdown.hide()
+
+  const floatMenu = new Ele<HTMLElement>(
+    'div',
+    { className: className.FLOAT_MENU },
+    [floatMenuBtn, floatMenuDropdown],
+  )
+
+  let floatMenuOpen = false
+  function openFloatMenu() {
+    if (floatMenuOpen) return
+    floatMenuOpen = true
+    floatMenu.classList.add(className.FLOAT_MENU_OPEN)
+    floatMenuDropdown.show()
+    document.addEventListener('click', onDocClickForFloatMenu, true)
+  }
+  function closeFloatMenu() {
+    if (!floatMenuOpen) return
+    floatMenuOpen = false
+    floatMenu.classList.remove(className.FLOAT_MENU_OPEN)
+    floatMenuDropdown.hide()
+    document.removeEventListener('click', onDocClickForFloatMenu, true)
+  }
+  function onDocClickForFloatMenu(e: MouseEvent) {
+    if (!floatMenu.ele.contains(e.target as Node)) closeFloatMenu()
+  }
+  floatMenuBtn.on('click', e => {
+    e.stopPropagation()
+    floatMenuOpen ? closeFloatMenu() : openFloatMenu()
+  })
+
   /* mount elements */
-  lifecycle.mount([buttonWrap, mdBody, mdSide, sideTabs])
+  lifecycle.mount([buttonWrap, floatMenu, mdBody, mdSide, sideTabs])
   document.body.classList.add(className.HAS_TABS)
   setFolderTree(configData.folderTree !== false)
   updateAnchorPosition()
 
   darkMediaQuery.addEventListener('change', (e: MediaQueryListEvent) => {
     if (configData.pageTheme === 'auto') {
+      applyCodeTheme()
       renderContentByTheme(
         e.matches ? 'light' : 'dark',
         e.matches ? 'dark' : 'light',
@@ -529,7 +709,10 @@ function main(data: Data) {
               }, 0)
             }
           }
-          pollingTimer = setTimeout(watch, 500)
+          pollingTimer = setTimeout(
+            watch,
+            clampRefreshInterval(configData.refreshInterval) * 1000,
+          )
         })
     })()
   }
@@ -547,6 +730,7 @@ function main(data: Data) {
   function handleHeadItem(
     eleList: HTMLElement[],
     head: HTMLElement,
+    index: number,
   ): HTMLElement[] {
     const content = String(head.textContent).trim()
     const encodeContent = getDecodeContent(content)
@@ -569,10 +753,58 @@ function main(data: Data) {
       className: `${className.MD_SIDE}-${head.tagName.toLowerCase()}`,
     })
     eleList.push(li.ele)
+
+    if (configData.outlineCollapse && hasDeeperFollowing(index)) {
+      const fold = new Ele<HTMLElement>('span', {
+        className: className.SIDE_FOLD,
+      })
+      fold.ele.setAttribute('aria-expanded', 'true')
+      fold.on('click', e => {
+        e.preventDefault()
+        e.stopPropagation()
+        toggleOutlineFold(fold.ele, index)
+      })
+      li.append(fold)
+    }
+
     li.append(link)
     df.append(li.ele)
 
     return eleList
+  }
+
+  function headLevel(head: HTMLElement): number {
+    return Number(head.tagName[1])
+  }
+
+  // 是否其後緊接的標題層級更深（有子標題）：headElements 依文件順序排列，
+  // 若下一個標題層級更深即代表存在巢狀子項；若層級相同或更淺，中間不可能
+  // 夾帶更深層級的標題（那樣它自己就會是「下一個」），故只需檢查緊鄰的下一項。
+  function hasDeeperFollowing(index: number): boolean {
+    const next = headElements[index + 1]
+    return !!next && headLevel(next) > headLevel(headElements[index])
+  }
+
+  // 展開父層＝展開其後所有更深層級的 li 並重置其內巢狀箭頭為展開狀態，
+  // 避免「父層展開、子層仍顯示收合殘影」的不一致狀態；收合則單純隱藏。
+  function toggleOutlineFold(foldEle: HTMLElement, index: number) {
+    const level = headLevel(headElements[index])
+    const expanding = foldEle.getAttribute('aria-expanded') !== 'true'
+    for (let i = index + 1; i < headElements.length; i++) {
+      if (headLevel(headElements[i]) <= level) break
+      const descLi = sideLiElements[i]
+      if (!descLi) continue
+      if (expanding) {
+        descLi.style.display = ''
+        const nestedFold = descLi.querySelector(
+          `.${className.SIDE_FOLD}`,
+        ) as HTMLElement | null
+        nestedFold?.setAttribute('aria-expanded', 'true')
+      } else {
+        descLi.style.display = 'none'
+      }
+    }
+    foldEle.setAttribute('aria-expanded', expanding ? 'true' : 'false')
   }
 
   function getDecodeContent(content: string): string {

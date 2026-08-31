@@ -23,7 +23,8 @@ MD Reader Lite turns .md files into clean, readable pages. Open a local file or 
 • Obsidian syntax: ![[image|300]] embeds, [[wikilinks|alias]], %%comments%%, callouts, front matter table
 • Folder tree side panel to browse sibling documents on http servers
 • Outline panel, light/dark/auto themes, per-plugin toggles
-• Works on intranets and air-gapped machines — nothing ever leaves your browser
+• Optional: render .txt files as Markdown
+• Works on intranets and air-gapped machines — no external requests, with one documented exception: an anonymous, tokenless call to GitHub's public API to list a folder when the file tree is used on raw.githubusercontent.com pages
 Forked from the open-source md-reader (MIT) with new features; not affiliated with the original store listing.
 ZH:
 MD Reader Lite 將 .md 檔轉換成簡潔易讀的網頁。開啟本機檔案或任何以 .md 結尾的網址，即時渲染——完全離線，零資料蒐集。
@@ -31,7 +32,8 @@ MD Reader Lite 將 .md 檔轉換成簡潔易讀的網頁。開啟本機檔案或
 • Obsidian 語法：![[image|300]] 嵌入、[[wikilinks|別名]]、%%備註%%、callout 標註框、front matter 屬性表
 • 資料夾目錄樹邊欄，瀏覽 HTTP 伺服器上的相鄰文件
 • 大綱邊欄、淺色／深色／自動佈景主題、按外掛的開關
-• 適用於內網與隔離機器——任何東西都不會離開你的瀏覽器
+• .txt 檔案可選擇性當 Markdown 渲染
+• 適用於內網與隔離機器——不發出外部請求，僅一項跨域例外：於 GitHub raw 頁面使用檔案樹時，匿名呼叫 GitHub 公開 API 列目錄
 源自開源 md-reader（MIT）並加入新功能；與原版上架清單無關。
 
 ## 權限理由（審核申報用）

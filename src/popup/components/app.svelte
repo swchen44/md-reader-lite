@@ -2,21 +2,20 @@
   import storage from '@/core/storage'
   import Warning from './warning.svelte'
   import Header from './header.svelte'
-  import Radio from '@smui/radio'
-  import Switch from '@smui/switch'
-  import FormField from '@smui/form-field'
-  import Select, { Option } from '@smui/select'
-  import Chip, { Set, Text } from '@smui/chips'
-  import MD_PLUGINS from '@/config/md-plugins'
-  import PAGE_THEMES from '@/config/page-themes'
+  import TabGeneral from './tab-general.svelte'
+  import TabAppearance from './tab-appearance.svelte'
+  import TabPlugins from './tab-plugins.svelte'
   import { getDefaultData, type Data } from '@/core/data'
   import pkg from '../../../package.json'
   import i18n from '@/config/i18n'
+
+  type Tab = 'general' | 'appearance' | 'plugins'
 
   let localize = i18n()
   let homepage = pkg.homepage
   let isAllowViewFile = true
   let data = getDefaultData()
+  let activeTab: Tab = 'general'
 
   // Get if file allowed access
   chrome.extension.isAllowedFileSchemeAccess(
@@ -51,98 +50,41 @@
     <Warning {localize} />
   {/if}
 
+  <div class="tabs">
+    <button
+      type="button"
+      class="tab-btn"
+      class:active={activeTab === 'general'}
+      on:click={() => (activeTab = 'general')}
+    >
+      {localize('tab_general')}
+    </button>
+    <button
+      type="button"
+      class="tab-btn"
+      class:active={activeTab === 'appearance'}
+      on:click={() => (activeTab = 'appearance')}
+    >
+      {localize('tab_appearance')}
+    </button>
+    <button
+      type="button"
+      class="tab-btn"
+      class:active={activeTab === 'plugins'}
+      on:click={() => (activeTab = 'plugins')}
+    >
+      {localize('tab_plugins')}
+    </button>
+  </div>
+
   <div class="form" disabled={!data.enable}>
-    <div class="form-item inline">
-      <span class="label-item">{localize('label_enable')}:</span>
-      <FormField align="end">
-        <Switch
-          bind:checked={data.enable}
-          color="primary"
-          on:change={() => updateConfig('enable', data.enable)}
-        />
-      </FormField>
-    </div>
-
-    <div class="form-item inline">
-      <span class="label-item">{localize('label_centered')}:</span>
-      <FormField align="end">
-        <Switch
-          disabled={!data.enable}
-          bind:checked={data.centered}
-          color="primary"
-          on:change={() => updateConfig('centered', data.centered)}
-        />
-      </FormField>
-    </div>
-
-    <div class="form-item inline">
-      <span class="label-item">{localize('label_auto-refresh')}:</span>
-      <FormField align="end">
-        <Switch
-          disabled={!data.enable}
-          bind:checked={data.refresh}
-          color="primary"
-          on:change={() => updateConfig('refresh', data.refresh)}
-        />
-      </FormField>
-    </div>
-
-    <div class="form-item inline">
-      <span class="label-item">{localize('label_folder-tree')}:</span>
-      <FormField align="end">
-        <Switch
-          disabled={!data.enable}
-          bind:checked={data.folderTree}
-          color="primary"
-          on:change={() => updateConfig('folderTree', data.folderTree)}
-        />
-      </FormField>
-    </div>
-
-    <div class="form-item">
-      <div class="label-item">{localize('label_md-plugins')}:</div>
-      <Set
-        let:chip
-        bind:selected={data.mdPlugins}
-        chips={MD_PLUGINS}
-        nonInteractive={!data.enable}
-        filter={data.enable}
-      >
-        <Chip
-          {chip}
-          title={chip}
-          on:click={() =>
-            data.enable && updateConfig('mdPlugins', data.mdPlugins)}
-          ><Text>{localize(chip)}</Text></Chip
-        >
-      </Set>
-    </div>
-
-    <div class="form-item">
-      <div class="label-item">{localize('label_theme')}:</div>
-      {#each PAGE_THEMES as mode}
-        <FormField>
-          <span slot="label"> {localize(mode)} </span>
-          <Radio
-            disabled={!data.enable}
-            bind:group={data.pageTheme}
-            bind:value={mode}
-            on:change={() => updateConfig('pageTheme', mode)}
-          />
-        </FormField>
-      {/each}
-    </div>
-
-    <div class="form-item">
-      <div class="label-item">{localize('label_language')}:</div>
-      <FormField style="padding-left: 10px">
-        <Select bind:value={data.language}>
-          {#each i18n.locales as locale}
-            <Option value={locale}>{localize(locale)}</Option>
-          {/each}
-        </Select>
-      </FormField>
-    </div>
+    {#if activeTab === 'general'}
+      <TabGeneral bind:data {localize} {updateConfig} />
+    {:else if activeTab === 'appearance'}
+      <TabAppearance bind:data {localize} {updateConfig} />
+    {:else}
+      <TabPlugins bind:data {localize} {updateConfig} />
+    {/if}
   </div>
 </main>
 
@@ -150,23 +92,34 @@
   main {
     overflow: auto;
     box-sizing: border-box;
-    width: 330px;
+    width: 360px;
     max-height: 599px;
     padding: 22px 24px 10px;
     border: 1px solid #24315870;
     border-radius: 1px;
   }
-  .form-item {
-    margin-bottom: 6px;
-  }
-  .form-item.inline {
+  .tabs {
     display: flex;
-    justify-content: space-between;
-    margin-bottom: 15px;
+    gap: 6px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid #24315824;
   }
-  .label-item {
-    font-weight: bolder;
+  .tab-btn {
+    flex: 1;
+    padding: 8px 4px;
     font-size: 13px;
+    font-weight: bolder;
+    color: #243158a3;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+  }
+  .tab-btn:hover {
     color: #243158e3;
+  }
+  .tab-btn.active {
+    color: #607cd2;
+    border-bottom-color: #607cd2;
   }
 </style>

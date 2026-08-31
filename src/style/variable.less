@@ -47,8 +47,6 @@
   --color-scrollbar-thumb-hover: fade(#000, 35%);
   --color-modal-bg: rgba(255, 255, 255, 0.6);
   --opacity-img: 1;
-  .hljs-light();
-  .highlight();
 }
 
 .dark() {
@@ -97,8 +95,6 @@
   --color-scrollbar-thumb-hover: fade(#fff, 35%);
   --color-modal-bg: rgba(0, 0, 0, 0.4);
   --opacity-img: 0.8;
-  .hljs-dark();
-  .highlight();
 }
 
 :root {
@@ -111,6 +107,14 @@
   }
   &[data-md-reader-theme='dark'] .md-reader {
     .dark();
+  }
+  &[data-md-reader-code-theme='light'] .md-reader {
+    .hljs-light();
+    .highlight();
+  }
+  &[data-md-reader-code-theme='dark'] .md-reader {
+    .hljs-dark();
+    .highlight();
   }
   &:not([data-md-reader-theme-scheme-disabled]) {
     &[data-md-reader-theme='light'] {

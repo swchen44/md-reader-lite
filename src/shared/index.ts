@@ -1,5 +1,9 @@
 import Ele from '@/core/ele'
-import { rootThemePrefix, type Theme } from '@/config/page-themes'
+import {
+  rootThemePrefix,
+  rootCodeThemePrefix,
+  type Theme,
+} from '@/config/page-themes'
 
 export const HTML = document.documentElement
 export const HEAD = document.head
@@ -35,6 +39,10 @@ export function getHeads(
 
 export function setTheme(themeType: Theme) {
   HTML.dataset[rootThemePrefix] = themeType
+}
+
+export function setCodeTheme(theme: Exclude<Theme, 'auto'>) {
+  HTML.dataset[rootCodeThemePrefix] = theme
 }
 
 export function xhr(

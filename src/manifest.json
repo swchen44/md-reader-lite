@@ -48,6 +48,10 @@
         "file://*/*.MDX",
         "file://*/*.MKD",
         "file://*/*.MARKDOWN",
+        "*://*/*.txt",
+        "*://*/*.TXT",
+        "file://*/*.txt",
+        "file://*/*.TXT",
         "*://*/*.md?*",
         "*://*/*.mdx?*",
         "*://*/*.mkd?*",
@@ -63,7 +67,11 @@
         "file://*/*.MD?*",
         "file://*/*.MDX?*",
         "file://*/*.MKD?*",
-        "file://*/*.MARKDOWN?*"
+        "file://*/*.MARKDOWN?*",
+        "*://*/*.txt?*",
+        "*://*/*.TXT?*",
+        "file://*/*.txt?*",
+        "file://*/*.TXT?*"
       ]
     }
   ],

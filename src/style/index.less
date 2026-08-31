@@ -36,6 +36,8 @@ body.md-reader {
       will-change: transform, box-shadow;
       z-index: 1;
       li {
+        display: flex;
+        align-items: flex-start;
         &.md-reader__side-li--active {
           a {
             font-weight: bolder;
@@ -43,6 +45,8 @@ body.md-reader {
           }
         }
         a {
+          flex: 1;
+          min-width: 0;
           overflow: hidden;
           display: -webkit-box;
           padding: 0.3em 1.6em 0.3em 0;
@@ -55,6 +59,26 @@ body.md-reader {
           -webkit-line-clamp: 2;
           &:hover {
             color: var(--color-primary);
+          }
+        }
+        .md-reader__side-fold {
+          flex: 0 0 auto;
+          width: 1.2em;
+          padding: 0.3em 0 0.3em 0.4em;
+          cursor: pointer;
+          user-select: none;
+          opacity: 0.55;
+          &:hover {
+            opacity: 1;
+            color: var(--color-primary);
+          }
+          &::before {
+            content: '▾';
+            display: inline-block;
+            transition: transform 0.15s;
+          }
+          &[aria-expanded='false']::before {
+            transform: rotate(-90deg);
           }
         }
         &.md-reader__side {
@@ -334,9 +358,11 @@ body.md-reader {
         color: var(--color-text-primary);
         transition: max-width 0.1s;
         &.centered {
-          max-width: 900px;
+          max-width: var(--md-reader-content-width, 900px);
         }
         .theme(); // markdown theme
+        font-size: var(--md-reader-text-size, 16px);
+        font-family: var(--md-reader-text-font, inherit);
         .md-reader__frontmatter {
           margin-bottom: 1.2em;
           font-size: 0.88em;
@@ -407,6 +433,57 @@ body.md-reader {
             white-space: pre-wrap;
           }
         }
+        // panzoom viewer for mermaid/graphviz diagrams (see diagram-viewer.ts)
+        .md-reader__diagram-viewer {
+          position: relative;
+          overflow: hidden;
+          .md-reader__diagram-controls {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 1;
+            &-btn {
+              width: 26px;
+              height: 26px;
+              padding: 0;
+              border: none;
+              border-radius: 6px;
+              outline: none;
+              cursor: pointer;
+              font-size: 15px;
+              line-height: 1;
+              backdrop-filter: blur(3px);
+              background: var(--color-button-bg-hover);
+              color: var(--color-button);
+              transition: background 0.1s, color 0.1s;
+              &:hover {
+                color: var(--color-button-hover);
+              }
+              &:active {
+                background: var(--color-button-bg-active);
+                color: var(--color-button-active);
+              }
+            }
+          }
+          &:hover .md-reader__diagram-controls {
+            opacity: 1;
+          }
+        }
+        // pre.md-reader__graphviz sets overflow: auto above; bump
+        // specificity here so the panzoom viewer can clip instead.
+        pre.md-reader__graphviz.md-reader__diagram-viewer {
+          overflow: hidden;
+        }
+        &.md-reader__code-wrap {
+          pre.hljs-pre code {
+            white-space: pre-wrap;
+            word-break: break-all;
+          }
+        }
       }
     }
 
@@ -469,22 +546,29 @@ body.md-reader {
     @media screen and (min-width: 1660px) {
       &__body {
         .md-reader__markdown-content.centered {
-          max-width: 1200px;
+          max-width: var(--md-reader-content-width, 1200px);
         }
       }
     }
     @media screen and (min-width: 2048px) {
       &__body {
         .md-reader__markdown-content.centered {
-          max-width: 1600px;
+          max-width: var(--md-reader-content-width, 1600px);
         }
       }
     }
     @media print {
-      &__button-wrap {
+      &__button-wrap,
+      &__side,
+      &__side-tabs,
+      &__file-tree,
+      &__fsa-panel,
+      &__search-panel,
+      &__files-panel {
         display: none;
       }
       &__body {
+        padding-left: 0px;
         .md-reader__markdown-content {
           pre.hljs-pre .hljs {
             white-space: pre-wrap;
@@ -532,6 +616,19 @@ body.md-reader {
         transform: translateX(-50px);
       }
     }
+  }
+}
+
+// zenMode：只隱藏側欄/分頁/檔案面板/按鈕群，浮動選單（.md-reader__float-menu）
+// 不在此清單中，因此不受影響、禪模式下仍留在畫面上作為功能入口。獨立於
+// body.md-reader 之外宣告，即便同時處於 raw 檢視（body 失去 md-reader
+// class）也照樣生效。
+body.md-reader__zen {
+  .md-reader__side,
+  .md-reader__side-tabs,
+  .md-reader__files-panel,
+  .md-reader__button-wrap {
+    display: none;
   }
 }
 
@@ -633,6 +730,67 @@ body.md-reader {
         }
       }
     }
+  }
+
+  // page-level floating menu；與 &__button-wrap/&__btn 同層（未受
+  // body.md-reader 限定），raw 檢視移除 body 的 md-reader class 時不受影響
+  &__float-menu {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 2;
+  }
+  &__float-menu-btn {
+    position: relative;
+    font-size: 18px;
+    line-height: 1;
+  }
+  &__float-menu--open &__float-menu-btn {
+    color: var(--color-primary);
+    background: var(--color-button-bg-hover);
+  }
+  &__float-menu-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 168px;
+    padding: 6px;
+    border: 1px solid var(--color-side-border);
+    border-radius: 10px;
+    backdrop-filter: blur(6px);
+    background: var(--color-side-bg);
+    box-shadow: var(--color-side-shadow);
+  }
+  &__float-menu-item {
+    display: block;
+    width: 100%;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 6px;
+    outline: none;
+    cursor: pointer;
+    text-align: left;
+    font-size: 13px;
+    color: var(--color-side);
+    background: transparent;
+    &:hover {
+      color: var(--color-primary);
+      background: var(--color-button-bg-hover);
+    }
+  }
+  @media print {
+    &__float-menu {
+      display: none;
+    }
+  }
+}
+
+// 禪模式下浮動選單維持可見（不在 zenMode 隱藏清單中），但視覺上淡化，
+// 避免干擾閱讀；hover 時恢復完整不透明度。
+body.md-reader__zen .md-reader__float-menu-btn {
+  opacity: 0.4;
+  &:hover {
+    opacity: 1;
   }
 }
 
