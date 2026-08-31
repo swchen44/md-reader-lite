@@ -37,6 +37,17 @@
 3. file:// 測試需開「允許存取檔案網址」
 4. 內網/驗收伺服器務必送 charset=utf-8（見 lesson_learn.md）
 
+## 鍵盤快捷鍵
+
+`src/manifest.json` 的 `commands` 四項，經 `src/background.ts` 掛 `chrome.commands.onCommand` 呼叫 `src/core/commands.ts` 對應處理函式：
+
+| 快捷鍵      | 功能                                         |
+| ----------- | -------------------------------------------- |
+| Alt+Shift+B | 側欄顯示/隱藏                                |
+| Alt+Shift+C | 內容居中切換                                 |
+| Alt+Shift+R | 自動刷新切換                                 |
+| Alt+Shift+T | 主題三態循環（`auto → light → dark → auto`） |
+
 ## 文件地圖
 
 - 設計文件索引：designs.md ／ 實作計畫索引：plans.md
