@@ -41,6 +41,34 @@ export function resolveCodeTheme(
   return pageThemeResolved === 'dark' ? night : day
 }
 
+export const CUSTOM_WIDTH_PERCENT_MIN = 20
+export const CUSTOM_WIDTH_PERCENT_MAX = 100
+
+export function clampCustomWidthPercent(v: unknown): number | null {
+  if (v === null || v === undefined || v === '') return null
+  const n = typeof v === 'number' ? v : parseFloat(String(v))
+  if (!isFinite(n)) return null
+  return Math.round(
+    Math.min(CUSTOM_WIDTH_PERCENT_MAX, Math.max(CUSTOM_WIDTH_PERCENT_MIN, n)),
+  )
+}
+
+export function clampCustomWidthValue(
+  v: unknown,
+  unit: 'px' | 'percent',
+): number | null {
+  return unit === 'percent' ? clampCustomWidthPercent(v) : clampCustomWidth(v)
+}
+
+export function formatContentWidth(
+  value: number | null,
+  unit: 'px' | 'percent',
+): string | null {
+  const clamped = clampCustomWidthValue(value, unit)
+  if (clamped === null) return null
+  return unit === 'percent' ? `${clamped}%` : `${clamped}px`
+}
+
 export function isTxtUrl(url: string): boolean {
   try {
     const pathname = new URL(url).pathname

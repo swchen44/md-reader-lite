@@ -14,7 +14,7 @@ import type { Theme } from '@/config/page-themes'
 import { getDefaultData, type Data } from '@/core/data'
 import {
   clampRefreshInterval,
-  clampCustomWidth,
+  formatContentWidth,
   isTxtUrl,
   FONT_STACKS,
   resolveCodeTheme,
@@ -106,6 +106,7 @@ function main(data: Data) {
         case 'textSize':
         case 'textFont':
         case 'customWidth':
+        case 'customWidthUnit':
           applyTypography()
           break
         case 'customCss':
@@ -113,6 +114,9 @@ function main(data: Data) {
           break
         case 'zenMode':
           applyZen()
+          break
+        case 'mdPluginOptions':
+          actions.updateMdPlugins()
           break
         default:
       }
@@ -179,9 +183,12 @@ function main(data: Data) {
     stack
       ? s.setProperty('--md-reader-text-font', stack)
       : s.removeProperty('--md-reader-text-font')
-    const w = clampCustomWidth(configData.customWidth)
+    const w = formatContentWidth(
+      configData.customWidth,
+      configData.customWidthUnit || 'px',
+    )
     w
-      ? s.setProperty('--md-reader-content-width', `${w}px`)
+      ? s.setProperty('--md-reader-content-width', w)
       : s.removeProperty('--md-reader-content-width')
   }
   applyTypography()
@@ -211,6 +218,7 @@ function main(data: Data) {
         theme: toTheme(configData.pageTheme),
         plugins: configData.mdPlugins,
         config: { breaks: !!configData.breaks },
+        pluginOptions: configData.mdPluginOptions,
         ...options,
       })
       globalEvent.emit(

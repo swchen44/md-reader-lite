@@ -104,3 +104,67 @@ test('isTxtUrl: non-.txt extension and relative string are false', async () => {
   assert.equal(isTxtUrl('https://example.com/a.md'), false)
   assert.equal(isTxtUrl('relative/a.txt'), false)
 })
+
+test('clampCustomWidthPercent: min/max boundaries', async () => {
+  const { clampCustomWidthPercent } = await load()
+  assert.equal(clampCustomWidthPercent(20), 20)
+  assert.equal(clampCustomWidthPercent(100), 100)
+})
+
+test('clampCustomWidthPercent: below min clamps to min', async () => {
+  const { clampCustomWidthPercent } = await load()
+  assert.equal(clampCustomWidthPercent(10), 20)
+})
+
+test('clampCustomWidthPercent: above max clamps to max', async () => {
+  const { clampCustomWidthPercent } = await load()
+  assert.equal(clampCustomWidthPercent(200), 100)
+})
+
+test('clampCustomWidthPercent: NaN/null -> null', async () => {
+  const { clampCustomWidthPercent } = await load()
+  assert.equal(clampCustomWidthPercent(NaN), null)
+  assert.equal(clampCustomWidthPercent(null), null)
+})
+
+test('clampCustomWidthPercent: numeric string parses', async () => {
+  const { clampCustomWidthPercent } = await load()
+  assert.equal(clampCustomWidthPercent('50'), 50)
+})
+
+test('clampCustomWidthValue: px unit delegates to clampCustomWidth', async () => {
+  const { clampCustomWidthValue, clampCustomWidth } = await load()
+  assert.equal(clampCustomWidthValue(100, 'px'), clampCustomWidth(100))
+  assert.equal(clampCustomWidthValue(800, 'px'), 800)
+})
+
+test('clampCustomWidthValue: percent unit delegates to clampCustomWidthPercent', async () => {
+  const { clampCustomWidthValue, clampCustomWidthPercent } = await load()
+  assert.equal(
+    clampCustomWidthValue(10, 'percent'),
+    clampCustomWidthPercent(10),
+  )
+  assert.equal(clampCustomWidthValue(50, 'percent'), 50)
+})
+
+test('formatContentWidth: px formats with px suffix', async () => {
+  const { formatContentWidth } = await load()
+  assert.equal(formatContentWidth(900, 'px'), '900px')
+})
+
+test('formatContentWidth: percent formats with % suffix', async () => {
+  const { formatContentWidth } = await load()
+  assert.equal(formatContentWidth(50, 'percent'), '50%')
+})
+
+test('formatContentWidth: null value -> null', async () => {
+  const { formatContentWidth } = await load()
+  assert.equal(formatContentWidth(null, 'px'), null)
+  assert.equal(formatContentWidth(null, 'percent'), null)
+})
+
+test('formatContentWidth: out-of-range values are clamped before formatting', async () => {
+  const { formatContentWidth } = await load()
+  assert.equal(formatContentWidth(5000, 'px'), '3000px')
+  assert.equal(formatContentWidth(200, 'percent'), '100%')
+})

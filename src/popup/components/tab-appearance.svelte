@@ -10,8 +10,10 @@
     FONT_STACKS,
     CUSTOM_WIDTH_MIN,
     CUSTOM_WIDTH_MAX,
+    CUSTOM_WIDTH_PERCENT_MIN,
+    CUSTOM_WIDTH_PERCENT_MAX,
     textSizeIndex,
-    clampCustomWidth,
+    clampCustomWidthValue,
   } from '@/core/settings'
 
   export let data: Data
@@ -21,8 +23,18 @@
   const CODE_THEMES = ['light', 'dark'] as const
   const FONT_KEYS = Object.keys(FONT_STACKS)
   const DEFAULT_CUSTOM_WIDTH = 800
+  const WIDTH_UNITS = ['px', 'percent'] as const
 
   let customCssDraft = data.customCss || ''
+
+  $: widthMin =
+    data.customWidthUnit === 'percent'
+      ? CUSTOM_WIDTH_PERCENT_MIN
+      : CUSTOM_WIDTH_MIN
+  $: widthMax =
+    data.customWidthUnit === 'percent'
+      ? CUSTOM_WIDTH_PERCENT_MAX
+      : CUSTOM_WIDTH_MAX
 
   // Pure display mapping (slider value -> index); no side effect, so this
   // stays reactive rather than event-driven.
@@ -43,16 +55,31 @@
     updateConfig('textSize', data.textSize)
   }
 
+  function defaultCustomWidthForUnit(unit: 'px' | 'percent'): number {
+    return unit === 'percent' ? 100 : DEFAULT_CUSTOM_WIDTH
+  }
+
   function onCustomWidthToggle(e: Event) {
     const checked = (e.target as HTMLInputElement).checked
     data.customWidth = checked
-      ? clampCustomWidth(data.customWidth) ?? DEFAULT_CUSTOM_WIDTH
+      ? clampCustomWidthValue(data.customWidth, data.customWidthUnit) ??
+        defaultCustomWidthForUnit(data.customWidthUnit)
       : null
     updateConfig('customWidth', data.customWidth)
   }
 
   function onCustomWidthBlur() {
-    data.customWidth = clampCustomWidth(data.customWidth)
+    data.customWidth = clampCustomWidthValue(
+      data.customWidth,
+      data.customWidthUnit,
+    )
+    updateConfig('customWidth', data.customWidth)
+  }
+
+  function onWidthUnitChange(unit: 'px' | 'percent') {
+    data.customWidthUnit = unit
+    updateConfig('customWidthUnit', unit)
+    data.customWidth = clampCustomWidthValue(data.customWidth, unit)
     updateConfig('customWidth', data.customWidth)
   }
 
@@ -176,12 +203,24 @@
     <div class="form-item inline">
       <input
         type="number"
-        min={CUSTOM_WIDTH_MIN}
-        max={CUSTOM_WIDTH_MAX}
+        min={widthMin}
+        max={widthMax}
         disabled={!data.enable}
         bind:value={data.customWidth}
         on:blur={onCustomWidthBlur}
       />
+      <span class="unit-label">{localize('label_width-unit')}:</span>
+      {#each WIDTH_UNITS as unit}
+        <FormField>
+          <span slot="label"> {localize(`unit_${unit}`)} </span>
+          <Radio
+            disabled={!data.enable}
+            bind:group={data.customWidthUnit}
+            bind:value={unit}
+            on:change={() => onWidthUnitChange(unit)}
+          />
+        </FormField>
+      {/each}
     </div>
   {/if}
 {/if}
@@ -218,6 +257,11 @@
 <style>
   .range-value {
     margin-left: 8px;
+    font-size: 12px;
+    color: #243158a3;
+  }
+  .unit-label {
+    margin-left: 10px;
     font-size: 12px;
     color: #243158a3;
   }

@@ -10,6 +10,15 @@
 | 1.5  | F   | 圖表檢視器：Mermaid/Graphviz SVG 右下角懸浮控制列（放大/縮小/重置/全螢幕 Expand diagram），滾輪縮放與拖曳平移；採 `@panzoom/panzoom`（MIT、~4KB、零依賴，經拆解確認商店 3.x 版即用此套：panzoom\* 事件與 contain/pinchAndPan API 指紋吻合，minScale 0.5 / maxScale 8）；全螢幕用 Fullscreen API 自包 UI；同套可日後複用到圖片畫廊；已完成並發布 v1.1.0 | 完成 |
 | 2.x  | —   | PWA/Web 衍生專案：免安裝閱讀器，複用 core 層（產品形態參考 TriptoAfsin/md-viewer-pwa：drop zone、多分頁、離線 PWA）；技術棧屆時另定                                                                                                                                                                                                                    | 願景 |
 
+## 後續擴充（四項）
+
+2026-08-31 使用者核可、原自 `docs/superpowers/plans/2026-08-31-settings-viewer.md` 文末「範圍擴充備忘」的四項擴充（詳見 [2026-09-01-shortcuts-plugin-options-width-design.md](superpowers/specs/2026-09-01-shortcuts-plugin-options-width-design.md) 與 [2026-09-01-shortcuts-plugin-options-width.md](superpowers/plans/2026-09-01-shortcuts-plugin-options-width.md)）：
+
+1. 鍵盤快捷鍵（驗證＋文件＋ toggleTheme 三態循環強化）— 完成（v1.2.0）
+2. 插件子選項（`mdPluginOptions` 基礎架構：Linkify fuzzyLink/IP/Email、Alert 巢狀）— 完成（v1.2.0）
+3. 字元集相容模式（`charsetCompat`／`charset`，僅影響 file:// 大檔載入）— v1.2.1 待做（需先做 file:// fetch 可行性 spike）
+4. 寬度 % 單位（`customWidthUnit`，20–100）— 完成（v1.2.0）
+
 ## 維護策略
 
 - 上游 sync：上游 remote 名 upstream，僅挑選性 cherry-pick；版號與上游脫鉤（本 fork 自 1.0.0 起算）。
