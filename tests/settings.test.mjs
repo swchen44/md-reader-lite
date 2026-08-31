@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-const load = () => import('../src/core/settings.ts')
+const load = () => import('#core/settings')
 
 test('clampRefreshInterval: min/max boundaries', async () => {
   const { clampRefreshInterval } = await load()
