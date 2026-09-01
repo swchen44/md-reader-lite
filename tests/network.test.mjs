@@ -85,3 +85,40 @@ test('isRemoteUrl: non-string values -> false', async () => {
   assert.equal(isRemoteUrl(42), false)
   assert.equal(isRemoteUrl({}), false)
 })
+
+test('hasRemoteSrcset: local first candidate, remote second candidate -> true', async () => {
+  const { hasRemoteSrcset } = await load()
+  assert.equal(hasRemoteSrcset('local.png 1x, //evil/p.png 2x'), true)
+})
+
+test('hasRemoteSrcset: all local candidates -> false', async () => {
+  const { hasRemoteSrcset } = await load()
+  assert.equal(hasRemoteSrcset('a.png 1x, b.png 2x'), false)
+})
+
+test('hasRemoteSrcset: single http:// candidate -> true', async () => {
+  const { hasRemoteSrcset } = await load()
+  assert.equal(hasRemoteSrcset('http://x/a.png'), true)
+})
+
+test('hasRemoteSrcset: relative path candidate -> false', async () => {
+  const { hasRemoteSrcset } = await load()
+  assert.equal(hasRemoteSrcset('./a.png'), false)
+})
+
+test('hasRemoteSrcset: non-string value -> false', async () => {
+  const { hasRemoteSrcset } = await load()
+  assert.equal(hasRemoteSrcset(undefined), false)
+  assert.equal(hasRemoteSrcset(null), false)
+  assert.equal(hasRemoteSrcset(42), false)
+})
+
+test('hasRemoteSrcset: empty string -> false', async () => {
+  const { hasRemoteSrcset } = await load()
+  assert.equal(hasRemoteSrcset(''), false)
+})
+
+test('hasRemoteSrcset: extra surrounding whitespace around remote candidate -> true', async () => {
+  const { hasRemoteSrcset } = await load()
+  assert.equal(hasRemoteSrcset('  //x/a.png  2x '), true)
+})

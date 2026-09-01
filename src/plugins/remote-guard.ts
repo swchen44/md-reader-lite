@@ -1,5 +1,5 @@
 import className from '@/config/class-name'
-import { isNetworkAllowed, isRemoteUrl } from '@/core/network'
+import { hasRemoteSrcset, isNetworkAllowed, isRemoteUrl } from '@/core/network'
 
 // 廣查所有可能載入遠端資源的元素（含 SVG <image>、<input type="image">）。
 const REMOTE_RESOURCE_SELECTOR =
@@ -20,7 +20,9 @@ export function blockRemoteResources(container: ParentNode): void {
   elements.forEach(el => {
     REMOTE_ATTRS.forEach(attr => {
       const value = el.getAttribute(attr)
-      if (value && isRemoteUrl(value)) {
+      const isRemote =
+        attr === 'srcset' ? hasRemoteSrcset(value) : isRemoteUrl(value)
+      if (value && isRemote) {
         el.setAttribute('data-blocked-' + attr, value)
         el.removeAttribute(attr)
         el.classList.add(className.BLOCKED_REMOTE)
