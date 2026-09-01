@@ -19,23 +19,30 @@
 
 ### 網路 egress 站點完整清單（binding——不可遺漏任何一處）
 
-擴充**所有**對外網路請求都在 content script 端發出（background.ts 的 bgFetch 只 fetch `file://`＝本機，不受影響、不動）。共四處，離線模式各自封鎖：
+egress 分兩類：擴充**自身發起**的 fetch（站點 1-4，全在 content script；background.ts bgFetch 只 fetch `file://`＝本機）＋**文件內容經瀏覽器載入**的遠端資源（站點 5，設計審查 Critical 補）。離線模式各自封鎖：
 
-| #   | 站點          | 檔案                                        | egress 目標                       | 離線模式行為                                        |
-| --- | ------------- | ------------------------------------------- | --------------------------------- | --------------------------------------------------- |
-| 1   | 自動刷新輪詢  | `main.ts` polling                           | 重抓目前文件 URL（http 時為遠端） | 不啟動 polling（`refresh && !offlineMode` 才 poll） |
-| 2   | http 目錄樹   | `dir-fetch.ts` 的 http `fetch(dirUrl)`      | 同伺服器目錄索引                  | 不呼叫；Files 面板顯示離線訊息                      |
-| 3   | GitHub 目錄樹 | `github-listing.ts` `fetch(api.github.com)` | GitHub 公開 API                   | 不呼叫；Files 面板顯示離線訊息                      |
-| 4   | PlantUML 圖   | 新 `plantuml.ts`（`<img src=server>`）      | PlantUML 伺服器                   | 不 emit img src（見下）；顯示停用占位               |
+| #   | 站點           | 檔案／機制                                  | egress 目標                       | 離線模式行為                                            |
+| --- | -------------- | ------------------------------------------- | --------------------------------- | ------------------------------------------------------- |
+| 1   | 自動刷新輪詢   | `main.ts` polling                           | 重抓目前文件 URL（http 時為遠端） | 不啟動 polling（`refresh && isNetworkAllowed` 才 poll） |
+| 2   | http 目錄樹    | `dir-fetch.ts` 的 http `fetch(dirUrl)`      | 同伺服器目錄索引                  | 不呼叫；Files 面板顯示離線訊息                          |
+| 3   | GitHub 目錄樹  | `github-listing.ts` `fetch(api.github.com)` | GitHub 公開 API                   | 不呼叫；Files 面板顯示離線訊息                          |
+| 4   | PlantUML 圖    | 新 `plantuml.ts`（`<img src=server>`）      | PlantUML 伺服器                   | 不 emit img src（見下）；顯示停用占位                   |
+| 5   | 文件內遠端資源 | 渲染後 DOM 清掃                             | 任意第三方（含追蹤像素）          | 遠端 `src`/`srcset`/`poster` 換占位（見下）             |
 
-**保持運作（本機、非 egress，離線模式不封鎖）**：FSA 資料夾樹（file://，讀本機磁碟）、字元集相容（bgFetch 讀 file://）、dir-fetch 的 file:// XHR 路徑、所有渲染。
+**站點 5（設計審查 Critical——原稿遺漏）**：markdown-it 對 `![alt](http://…)` 用預設 image rule 直接輸出 `<img src>`，`html:true` 讓 raw `<img src=http>` 原樣通過——瀏覽器載入時即發請求，**與擴充自身 fetch 無關、不受站點 1-4 閘門影響**，是任何「保證零網路」宣稱的真實破口（亦即 markdown 追蹤像素攻擊面）。封鎖法：`contentRendered` 後對渲染容器做**遠端資源清掃** `blockRemoteResources(container)`——離線模式時，對所有 `img/video/audio/source/iframe/embed/track` 的 `src`/`srcset`/`poster`，若為**遠端 URL**（http/https/協定相對 `//`），移除該屬性並加占位 class `md-reader__blocked-remote`（原 URL 存 `data-blocked` 保留）。**本機/相對/`data:`/`blob:`/`chrome-extension:` 不動**（零 egress）。掃 DOM 而非 markdown 源，故涵蓋 image rule 與 raw HTML 兩者。已知次要缺口：inline style `background-image:url(http)` 不掃（markdown 罕見），文件誠實揭露。
+
+**保持運作（本機、非 egress，離線模式不封鎖）**：FSA 資料夾樹（file://，讀本機磁碟）、字元集相容（bgFetch 讀 file://）、dir-fetch 的 file:// XHR 路徑、本機/相對/data: 圖片、所有渲染。
 
 ### 落地
 
-- **純函式** `src/core/network.ts`：`isNetworkAllowed(offlineMode: boolean): boolean` → `!offlineMode`（單一真理來源，SW 端無關）。
+- **純函式** `src/core/network.ts`：`isNetworkAllowed(offlineMode: boolean): boolean` → `!offlineMode`；`isRemoteUrl(url: unknown): boolean`（`http:`/`https:`/協定相對 `//` 為 true；相對/`data:`/`blob:`/`chrome-extension:`/`file:`/空/非字串為 false）。單一真理來源。
 - **polling**（站點 1）：`toggleRefresh` 與初始啟動改為 `configData.refresh && isNetworkAllowed(configData.offlineMode)` 才 `polling()`。
-- **目錄樹**（站點 2、3）：`initFilesContent` 在決定 lister 前，若 `!isNetworkAllowed && 目標為遠端`（http probe 或 GitHub raw）→ 不 fetch，直接 `buildTree(undefined)` 並在樹內顯示離線訊息 `offline_blocked`。判定順序：先 `parseRawUrl`（GitHub）→ 若離線則顯示離線訊息不呼叫 API；http probe（`fetchDirListing`）→ 離線則跳過 probe 顯示離線訊息；file:// FSA → **不受離線影響照常**。
-- **generateffect**：offlineMode 為 **reload 類**（切換後重整，讓 main 重跑套用新閘門）。actionMap 加 `offlineMode: 'applySetting'`，applySetting 該 case → reload。
+- **目錄樹**（站點 2、3，binding 精確落點）：`initFilesContent`（`main.ts:280` 起）現況先算 `isFile = rootDir.startsWith('file:')`。在 `parseRawUrl`（GitHub 分支）**之前**與 `fetchDirListing` probe **之前**各插守門：
+  - GitHub raw（`parseRawUrl` 非 null）：若 `!isNetworkAllowed` → 不呼叫 `createGithubLister`，`buildTree(undefined)` 顯示 `offline_blocked` 並 return。
+  - http probe：**精確守門** `if (!isFile && !isNetworkAllowed(configData.offlineMode)) { buildTree(undefined /* offline_blocked */); return }` 置於 `await fetchDirListing(rootDir)` **之前**（`isFile` 已在函式頂算好）。
+  - `file://` FSA 分支：**不加任何離線守門**（讀本機磁碟、零 egress，離線模式照常運作）——這是「本機檔案完整可用」的體現。
+- **站點 5（遠端資源清掃）**：新 `src/plugins/remote-guard.ts`（或併入既有 render 流程）——`event.on('contentRendered', container => { if (!isNetworkAllowed(configData.offlineMode)) blockRemoteResources(container) })`。`blockRemoteResources` 遍歷 `container.querySelectorAll('img,video,audio,source,iframe,embed,track')`，對 `src`/`srcset`/`poster` 屬性值 `isRemoteUrl` 為真者：`el.removeAttribute` 該屬性、`el.dataset.blocked = 原值`、加 class `md-reader__blocked-remote`。offlineMode 需傳入 plugin（`initPlugins` 增 config 存取，或 remote-guard 讀共用 config——實作定案見計畫）。
+- **生效**：offlineMode 為 **reload 類**（切換後重整，讓 main 重跑套用四處閘門）。`background.ts` actionMap 加 `offlineMode: 'applySetting'`，`main.ts` applySetting 該 case → `window.location.reload()`。
 
 ## 二、PlantUML（網路 opt-in）
 
@@ -55,7 +62,7 @@
   - **可渲染條件（allowed）**：`plantumlEnabled && isNetworkAllowed(offlineMode) && plantumlServer` 三者皆真。
   - allowed → emit `<img class="md-reader__plantuml" src="<server>/svg/<plantuml-encoder.encode(源碼)>" alt="PlantUML diagram" loading="lazy">`（`<server>` 尾端斜線正規化）。**注意（binding）**：emit `<img src=外部>` 本身就是網路請求（瀏覽器載入圖片時發出）——故必須**只在 allowed 時 emit img src**；這是離線模式對站點 4 的封鎖點。
   - not allowed → emit 占位 `<div class="md-reader__plantuml-disabled">` 顯示 i18n 訊息（依原因：離線模式開 / 未啟用 / 未設伺服器）＋原始碼以 `<pre>` 保留（不遺失內容）。
-- 透傳：`MdOptions` 加 `plantuml?: { enabled: boolean; server: string; allowed: boolean }`；`initRender` 內 `md.use(plantumlPlugin, mdOpts.plantuml)`（比照 always-on 的 `mMultimdTable`，但讀 config 決定行為）。`main.ts` 的 `mdRenderer` 計算 `allowed = plantumlEnabled && isNetworkAllowed(offlineMode) && !!plantumlServer` 傳入。
+- 透傳：`MdOptions` 加 `plantuml?: { server: string; allowed: boolean }`；`initRender` 內 `md.use(plantumlPlugin, mdOpts.plantuml)`（比照 always-on 的 `mMultimdTable`，但讀 config 決定行為）。`main.ts` 的 `mdRenderer` 用純函式計算 `allowed = canRenderPlantuml(configData.plantumlEnabled, configData.offlineMode, configData.plantumlServer)`（**直接呼叫 `canRenderPlantuml`，不 inline 重寫條件**——設計審查 Minor：此布林是站點 4 的唯一封鎖點，須單一實作），連同 `server: normalizePlantumlServer(configData.plantumlServer)` 傳入。
 - **reload 類**：`plantumlEnabled`、`plantumlServer` 改變走重渲染（同 mdPlugins：`contentRender(mdRaw); renderSide()`）；actionMap 各加 `'applySetting'`。
 
 ### 純函式（core 可測）
@@ -73,7 +80,11 @@
 ### 一般頁籤
 
 - **離線模式**（`offlineMode`）Switch，放**顯眼位置**（一般頁籤頂部、啟用之後），預設開；hint `hint_offline`（比 hint_reload 具體：封鎖所有遠端請求、本機檔照常、切換將重整）。
-- 當 `offlineMode` 為真時，**將受管制的網路功能開關變灰（disabled）並標示原因**：目錄樹（folderTree）、自動刷新（refresh）、PlantUML（plantumlEnabled）三者 `disabled`＋ hint「離線模式已停用」。字元集相容（charsetCompat）為本機讀取、**不變灰**。
+- 當 `offlineMode` 為真時，變灰處理（設計審查 Important 修正——**folderTree 不變灰**）：
+  - **自動刷新（refresh）、PlantUML（plantumlEnabled）**：`disabled`＋ hint「離線模式已停用」（兩者純網路功能，離線下無意義）。
+  - **目錄樹（folderTree）不變灰**：因 file:// 的 FSA 資料夾樹是本機讀取、離線模式下**仍可用**；若變灰會讓本機使用者無法用檔案樹，違反「本機檔案完整可用」。folderTree 保持可切換，離線時遠端目錄由 content script 擋下並顯示 `offline_blocked`，file:// 照常。
+  - 字元集相容（charsetCompat）本機讀取、**不變灰**。
+  - popup 於離線模式旁加說明：離線模式會封鎖遠端目錄樹/GitHub/自動刷新/PlantUML/文件內遠端圖片；本機與 file:// 目錄樹照常。
 
 ### 插件頁籤（或一般頁籤）新增 PlantUML 區塊
 
@@ -92,18 +103,19 @@
 ## 五、零權限/上架
 
 - 無新 permission、無 host_permissions；PlantUML 的網路是 `<img src>`（瀏覽器層，非擴充 fetch），不需 host 權限。無 manifest 變更（`.txt` 等 matches 不動）。`git diff main -- src/manifest.json` 須為空。
-- background.ts **不動**（所有 egress 在 content script）。
+- **background.ts 僅允許 `actionMap` 增列**（設計審查 Critical 修正——原稿「不動」與 reload 生效機制矛盾）：`offlineMode`、`plantumlEnabled`、`plantumlServer` 三個 key 加進 `actionMap` 全部映射 `'applySetting'`（比照 charsetCompat 等前例）。這是無新 egress、無權限變更的既有慣例；`messageHandler`/`onMessage` 結構與 bgFetch case 不動。所有實際網路 egress 仍全在 content script。
 - 隱私文案更新：README/PRIVACY 加離線模式（一鍵封鎖遠端）與 PlantUML（唯一會把內容送第三方的功能、預設關、離線模式下停用）。這維持「無過度宣稱」——PlantUML 是誠實揭露的網路功能。
 
 ## 六、測試
 
 1. 單元：
-   - `tests/network.test.mjs`：`isNetworkAllowed`（true/false）。
+   - `tests/network.test.mjs`：`isNetworkAllowed`（true/false）；`isRemoteUrl`（`http://x`/`https://x`/`//x` → true；`img.png`/`./a`/`../a`/`data:...`/`blob:...`/`chrome-extension://...`/`file:///x`/空/非字串 → false）≥ 8 條。
    - `tests/plantuml.test.mjs`：`normalizePlantumlServer`（去尾斜線/非字串 → 預設/trim/空 → 預設）、`buildPlantumlImageUrl`、`canRenderPlantuml`（enabled+online+server→true；offline→false；未啟用 →false；空 server→false）≥ 10 條。
 2. Playwright 驗收（延續 v1.3.0 網路監聽）：
    - **離線模式開（預設）**：http .md 頁啟用 folderTree+refresh、開 GitHub raw 頁 → 網路監聽確認**零遠端請求**（無 dir fetch、無 api.github、無 polling）；Files 面板顯示離線訊息；PlantUML 區塊顯示停用占位、**無 img 請求到 plantuml 伺服器**。
-   - **離線模式關 + 各功能開**：dir fetch / GitHub API / polling / PlantUML img 各自恢復（PlantUML 用可攔截的假伺服器或監聽 img 請求 URL 確認 encode 正確、送對 server）。
-   - **本機不受離線影響**：file:// + charsetCompat 在離線模式下仍運作（讀本機）。
+   - **站點 5 遠端圖片封鎖**：離線模式下開含 `![](http://遠端/pixel.png)` 與 raw `<img src=http://遠端>` 的 md → 網路監聽確認**無該遠端 img 請求**、DOM 上元素有 `md-reader__blocked-remote` class 且 src 已移除；相對/`data:` 圖片仍渲染。
+   - **離線模式關 + 各功能開**：dir fetch / GitHub API / polling / PlantUML img / 遠端圖片 各自恢復（PlantUML 用可攔截的假伺服器或監聽 img 請求 URL 確認 encode 正確、送對 server）。
+   - **本機不受離線影響（binding，補測）**：離線模式開（預設）＋ file:// 頁 → **FSA 資料夾樹仍可用**（folderTree 開 + 授權資料夾 → 列出本機檔，零 egress）；charsetCompat 仍運作（讀本機）。
    - v1.3.0 隱私迴歸（預設零網路）＋ v1.2.x 全功能迴歸。
 3. `tsc --noEmit`、build、zip。
 
