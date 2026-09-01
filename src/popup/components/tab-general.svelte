@@ -93,6 +93,9 @@
     />
   </FormField>
 </div>
+{#if data.offlineMode}
+  <div class="hint-item">{localize('hint_offline-disabled')}</div>
+{/if}
 
 {#if data.refresh}
   <div class="form-item inline">

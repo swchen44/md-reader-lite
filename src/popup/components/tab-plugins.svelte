@@ -124,6 +124,9 @@
     />
   </FormField>
 </div>
+{#if data.offlineMode}
+  <div class="hint-item">{localize('hint_offline-disabled')}</div>
+{/if}
 
 <div class="form-item">
   <div class="label-item">{localize('label_plantuml-server')}:</div>
