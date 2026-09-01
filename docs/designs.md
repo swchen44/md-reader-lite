@@ -11,5 +11,6 @@
 | 2026-08-31 | 案 D：GitHub 目錄樹（零權限版）                                                                                                                                                                   | [superpowers/specs/2026-08-31-github-tree-design.md](superpowers/specs/2026-08-31-github-tree-design.md)                                             | 已實作 |
 | 2026-08-31 | 案 B+F：設定面板對齊商店版（13 flat key：字級/字體/自訂寬度/自訂 CSS/代碼換行/代碼主題解耦/大綱摺疊/換行風格/refresh 間隔/.txt 渲染/禪模式）＋頁內浮動選單五項＋ panzoom 圖表檢視器；popup 三頁籤 | [superpowers/specs/2026-08-31-settings-panel-and-diagram-viewer-design.md](superpowers/specs/2026-08-31-settings-panel-and-diagram-viewer-design.md) | 已實作 |
 | 2026-09-01 | 快捷鍵驗證+toggleTheme 三態循環；mdPluginOptions 插件子選項基礎架構（Linkify fuzzyLink/IP/Email + Alert 巢狀）；customWidthUnit 寬度%單位（20-100）                                               | [superpowers/specs/2026-09-01-shortcuts-plugin-options-width-design.md](superpowers/specs/2026-09-01-shortcuts-plugin-options-width-design.md)       | 已實作 |
+| 2026-09-01 | 字元集相容模式（file:// 強制 UTF-8 重解碼）；零權限 SW bgFetch + 精確 URL 比對安全模型（senderUrl===targetUrl，堵 file-disclosure）；GATE 實測 SW fetch file:// 可行、CS fetch 不可行             | [superpowers/specs/2026-09-01-charset-compat-design.md](superpowers/specs/2026-09-01-charset-compat-design.md)                                       | 已實作 |
 
 新設計請放 docs/superpowers/specs/ 並在此登錄。

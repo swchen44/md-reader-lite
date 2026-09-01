@@ -16,8 +16,10 @@
 
 1. 鍵盤快捷鍵（驗證＋文件＋ toggleTheme 三態循環強化）— 完成（v1.2.0）
 2. 插件子選項（`mdPluginOptions` 基礎架構：Linkify fuzzyLink/IP/Email、Alert 巢狀）— 完成（v1.2.0）
-3. 字元集相容模式（`charsetCompat`／`charset`，僅影響 file:// 大檔載入）— v1.2.1 待做（需先做 file:// fetch 可行性 spike）
+3. 字元集相容模式（`charsetCompat`／`charset`，僅影響 file:// 大檔載入；詳見 [2026-09-01-charset-compat-design.md](superpowers/specs/2026-09-01-charset-compat-design.md) 與 [2026-09-01-charset-compat.md](superpowers/plans/2026-09-01-charset-compat.md)）— 完成（v1.2.1）
 4. 寬度 % 單位（`customWidthUnit`，20–100）— 完成（v1.2.0）
+
+四項擴充全數完成。
 
 ## 維護策略
 
