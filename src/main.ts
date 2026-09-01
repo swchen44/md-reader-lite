@@ -14,6 +14,7 @@ import type { Theme } from '@/config/page-themes'
 import { getDefaultData, type Data } from '@/core/data'
 import { needsCharsetCompat } from '@/core/charset'
 import { isNetworkAllowed } from '@/core/network'
+import { canRenderPlantuml, normalizePlantumlServer } from '@/core/plantuml'
 import {
   clampRefreshInterval,
   formatContentWidth,
@@ -225,6 +226,14 @@ function main(data: Data) {
         plugins: configData.mdPlugins,
         config: { breaks: !!configData.breaks },
         pluginOptions: configData.mdPluginOptions,
+        plantuml: {
+          server: normalizePlantumlServer(configData.plantumlServer),
+          allowed: canRenderPlantuml(
+            configData.plantumlEnabled,
+            configData.offlineMode,
+            configData.plantumlServer,
+          ),
+        },
         ...options,
       })
       globalEvent.emit(

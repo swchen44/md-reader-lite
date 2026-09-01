@@ -91,6 +91,9 @@ importers:
       markdown-it-task-lists:
         specifier: ^2.1.1
         version: 2.1.1
+      plantuml-encoder:
+        specifier: ^1.4.0
+        version: 1.4.0
       svelte:
         specifier: ^3.50.0
         version: 3.50.0
@@ -3552,6 +3555,12 @@ packages:
       }
     engines: { node: '>=8' }
 
+  plantuml-encoder@1.4.0:
+    resolution:
+      {
+        integrity: sha512-sxMwpDw/ySY1WB2CE3+IdMuEcWibJ72DDOsXLkSmEaSzwEUaYBT6DWgOfBiHGCux4q433X6+OEFWjlVqp7gL6g==,
+      }
+
   postcss-modules-extract-imports@3.0.0:
     resolution:
       {
@@ -6674,6 +6683,8 @@ snapshots:
   pkg-dir@4.2.0:
     dependencies:
       find-up: 4.1.0
+
+  plantuml-encoder@1.4.0: {}
 
   postcss-modules-extract-imports@3.0.0(postcss@8.4.16):
     dependencies:

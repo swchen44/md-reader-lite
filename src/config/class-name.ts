@@ -58,4 +58,6 @@ export default {
   DIAGRAM_VIEWER: p`diagram-viewer`,
   DIAGRAM_CONTROLS: p`diagram-controls`,
   BLOCKED_REMOTE: p`blocked-remote`,
+  PLANTUML: p`plantuml`,
+  PLANTUML_DISABLED: p`plantuml-disabled`,
 }

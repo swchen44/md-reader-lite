@@ -15,6 +15,7 @@ import mMermaid from '@md-reader/markdown-it-mermaid'
 import mAlert from '@/plugins/alert'
 import mObsidian from '@/plugins/obsidian'
 import mGraphvizBlock from '@/plugins/graphviz-block'
+import mPlantuml from '@/plugins/plantuml'
 import mMultimdTable from 'markdown-it-multimd-table'
 import MD_PLUGINS from '@/config/md-plugins'
 import { resolveLinkify, resolveAlertDeep } from '@/core/plugin-options'
@@ -53,12 +54,14 @@ export interface MdOptions {
   config?: MarkdownIt.Options
   plugins?: Array<string>
   pluginOptions?: Record<string, Record<string, unknown>>
+  plantuml?: { server: string; allowed: boolean }
 }
 
 function initRender({
   config = {},
   plugins = [...MD_PLUGINS],
   pluginOptions,
+  plantuml,
 }: MdOptions) {
   const copyButton = new Ele<HTMLElement>(
     'button',
@@ -99,6 +102,7 @@ function initRender({
   md.linkify.set(resolveLinkify(pluginOptions?.Linkify))
   // builtin plugins
   md.use(mMultimdTable)
+  md.use(mPlantuml, plantuml)
 
   // custom plugins
   plugins.forEach(name => {
