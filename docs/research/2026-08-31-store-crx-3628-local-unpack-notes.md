@@ -135,3 +135,12 @@
 - 若 SW fetch file:// 不可行，替代路徑：content script 端
   `fetch(location.href)` + `arrayBuffer()` + `TextDecoder('utf-8')`（同 origin
   file:// 在 content script 可否 fetch 亦需一併實測）。
+
+### GATE 實測結果（2026-09-01，Playwright + 載入 unpacked 擴充）
+
+**SW fetch file:// 可行——零權限 charsetCompat 成立。** 實測（`scratchpad/pw/spike-charset.mjs`，Chromium via Playwright，file access 授權下）：
+
+- `chrome.extension.isAllowedFileSchemeAccess()` = `true`（Playwright `--load-extension` 預設授權；與 content script 能注入 file:// 頁一致——兩者共用同一 file-access 授權，**charsetCompat 不需任何新權限**，riding on 既有 file-access grant）。
+- **SW `fetch('file:///…md')` → `{ok:true, status:200}`**，`await r.text()` 與 `new TextDecoder('utf-8').decode(await r.arrayBuffer())` 皆正確解出繁中（`# 字元集測試 — 繁體中文`）。先前案 C/D「SW fetch file:// 被擋」的推定，於現行 Chrome + 檔案 URL（非目錄）+ file access 開啟下**不成立**。
+- 主世界（page.evaluate）`fetch(location.href)` → `TypeError: Failed to fetch`（預期：一般頁面無 file:// fetch 特權）。content-script 隔離世界的 fetch 未在此 spike 直接測（Playwright 不易注入隔離世界），實作時可一併驗證；但 **SW 路徑已足夠、且與商店版一致**。
+- 結論方案：content script 偵測 `file://` + `charsetCompat` on → 送訊息給 SW → SW `fetch` + `arrayBuffer` + `TextDecoder('utf-8')` → 回傳強制 UTF-8 文字 → content script 重渲染；SW 同源檢查用 `sender.tab?.url`（免 `tabs` 權限）。charset 欄位維持死欄位（功能=強制 UTF-8）。
