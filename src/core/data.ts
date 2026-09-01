@@ -26,6 +26,7 @@ export interface Data {
   zenMode?: boolean
   mdPluginOptions?: Record<string, Record<string, unknown>>
   customWidthUnit?: 'px' | 'percent'
+  charsetCompat?: boolean
 }
 
 export function getDefaultData(mergeData: Data = {}): Data {
@@ -52,6 +53,7 @@ export function getDefaultData(mergeData: Data = {}): Data {
     zenMode: false,
     mdPluginOptions: getDefaultPluginOptions(),
     customWidthUnit: 'px',
+    charsetCompat: false,
     ...mergeData,
   }
 }

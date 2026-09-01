@@ -48,6 +48,14 @@
 | Alt+Shift+R | 自動刷新切換                                 |
 | Alt+Shift+T | 主題三態循環（`auto → light → dark → auto`） |
 
+## 字元集相容模式
+
+僅影響 file:// 頁面（`charsetCompat`）。開啟後由 background Service Worker 以 `fetch()` 重新抓取當前檔案並強制以 UTF-8 重新解碼，解決 Chrome 頁面層對大型 CJK 純文字檔的編碼誤判（無 BOM 時常被啟發式猜成 Big5/GBK 等而亂碼）。
+
+需求：瀏覽器擴充功能設定需先開啟「允許存取檔案網址」授權（同「本機載入與驗收」步驟 3），否則 SW 無法對 file:// URL 發出 fetch。安全模型採精確 URL 比對（`senderUrl === targetUrl`）：SW 只重新抓取請求方當前所在的同一份檔案，不比對同源（file:// 的 origin 恆為常數字串、無區辨力），藉此擋下任意 file:// 路徑被讀取（file-disclosure）。
+
+`charsetCompat` 屬 reload 類設定，切換後會重新整理頁面以套用新的解碼模式。
+
 ## 文件地圖
 
 - 設計文件索引：designs.md ／ 實作計畫索引：plans.md
