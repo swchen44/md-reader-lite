@@ -29,7 +29,16 @@ egress 分兩類：擴充**自身發起**的 fetch（站點 1-4，全在 content
 | 4   | PlantUML 圖    | 新 `plantuml.ts`（`<img src=server>`）      | PlantUML 伺服器                   | 不 emit img src（見下）；顯示停用占位                   |
 | 5   | 文件內遠端資源 | 渲染後 DOM 清掃                             | 任意第三方（含追蹤像素）          | 遠端 `src`/`srcset`/`poster` 換占位（見下）             |
 
-**站點 5（設計審查 Critical——原稿遺漏）**：markdown-it 對 `![alt](http://…)` 用預設 image rule 直接輸出 `<img src>`，`html:true` 讓 raw `<img src=http>` 原樣通過——瀏覽器載入時即發請求，**與擴充自身 fetch 無關、不受站點 1-4 閘門影響**，是任何「保證零網路」宣稱的真實破口（亦即 markdown 追蹤像素攻擊面）。封鎖法：`contentRendered` 後對渲染容器做**遠端資源清掃** `blockRemoteResources(container)`——離線模式時，對所有 `img/video/audio/source/iframe/embed/track` 的 `src`/`srcset`/`poster`，若為**遠端 URL**（http/https/協定相對 `//`），移除該屬性並加占位 class `md-reader__blocked-remote`（原 URL 存 `data-blocked` 保留）。**本機/相對/`data:`/`blob:`/`chrome-extension:` 不動**（零 egress）。掃 DOM 而非 markdown 源，故涵蓋 image rule 與 raw HTML 兩者。已知次要缺口：inline style `background-image:url(http)` 不掃（markdown 罕見），文件誠實揭露。
+**站點 5（設計審查 Critical——原稿遺漏，複審再擴充）**：markdown-it 對 `![alt](http://…)` 用預設 image rule 直接輸出 `<img src>`，`html:true` 讓 raw HTML 原樣通過——瀏覽器載入時即發請求，**與擴充自身 fetch 無關、不受站點 1-4 閘門影響**，是任何「保證零網路」宣稱的真實破口（markdown 追蹤像素/beacon 攻擊面）。封鎖法：`contentRendered` 後對渲染容器做**遠端資源清掃** `blockRemoteResources(container)`——離線模式時掃描並中和以下每個元素的每個載入屬性，值若為**遠端 URL**（`isRemoteUrl`：http/https/協定相對 `//`）則移除該屬性、原值存 `data-blocked-<attr>`、加占位 class `md-reader__blocked-remote`：
+
+| 元素                                                    | 載入屬性                                             |
+| ------------------------------------------------------- | ---------------------------------------------------- |
+| `img`/`video`/`audio`/`source`/`iframe`/`embed`/`track` | `src`、`srcset`、`poster`                            |
+| `object`                                                | `data`                                               |
+| SVG `image`（tag 名為 `image`）                         | `href`、`xlink:href`（用 `getAttribute`，非 `.src`） |
+| `input[type=image]`                                     | `src`                                                |
+
+實作用一次廣查（`querySelectorAll('img,video,audio,source,iframe,embed,track,object,image,input[type="image"]')`）＋逐屬性 `isRemoteUrl` 判定，reuse 同一移除/占位處理。**本機/相對/`data:`/`blob:`/`chrome-extension:` 不動**（零 egress）。掃 DOM 而非 markdown 源，故涵蓋 image rule 與 raw HTML 兩者。**誠實揭露的殘留缺口（README/PRIVACY 需如實列，不可宣稱絕對）**：inline `style="background-image:url(http)"`、`<style>`/`@import url()`、`<use xlink:href>`、legacy `background` attr——這些屬 CSS/引用尾端邊角，markdown 極罕見，清掃不涵蓋，文案措辭須與此一致（「封鎖文件內遠端圖片與媒體」而非「封鎖一切可能的遠端引用」）。
 
 **保持運作（本機、非 egress，離線模式不封鎖）**：FSA 資料夾樹（file://，讀本機磁碟）、字元集相容（bgFetch 讀 file://）、dir-fetch 的 file:// XHR 路徑、本機/相對/data: 圖片、所有渲染。
 
@@ -113,7 +122,7 @@ egress 分兩類：擴充**自身發起**的 fetch（站點 1-4，全在 content
    - `tests/plantuml.test.mjs`：`normalizePlantumlServer`（去尾斜線/非字串 → 預設/trim/空 → 預設）、`buildPlantumlImageUrl`、`canRenderPlantuml`（enabled+online+server→true；offline→false；未啟用 →false；空 server→false）≥ 10 條。
 2. Playwright 驗收（延續 v1.3.0 網路監聽）：
    - **離線模式開（預設）**：http .md 頁啟用 folderTree+refresh、開 GitHub raw 頁 → 網路監聽確認**零遠端請求**（無 dir fetch、無 api.github、無 polling）；Files 面板顯示離線訊息；PlantUML 區塊顯示停用占位、**無 img 請求到 plantuml 伺服器**。
-   - **站點 5 遠端圖片封鎖**：離線模式下開含 `![](http://遠端/pixel.png)` 與 raw `<img src=http://遠端>` 的 md → 網路監聽確認**無該遠端 img 請求**、DOM 上元素有 `md-reader__blocked-remote` class 且 src 已移除；相對/`data:` 圖片仍渲染。
+   - **站點 5 遠端資源封鎖**：離線模式下開含 `![](http://遠端/pixel.png)`、raw `<img src=http://遠端>`、`<object data=http://遠端>`、`<svg><image href=http://遠端>` 的 md → 網路監聽確認**無任何該等遠端請求**、DOM 上各元素有 `md-reader__blocked-remote` class 且載入屬性已移除；相對/`data:` 圖片仍渲染。
    - **離線模式關 + 各功能開**：dir fetch / GitHub API / polling / PlantUML img / 遠端圖片 各自恢復（PlantUML 用可攔截的假伺服器或監聽 img 請求 URL 確認 encode 正確、送對 server）。
    - **本機不受離線影響（binding，補測）**：離線模式開（預設）＋ file:// 頁 → **FSA 資料夾樹仍可用**（folderTree 開 + 授權資料夾 → 列出本機檔，零 egress）；charsetCompat 仍運作（讀本機）。
    - v1.3.0 隱私迴歸（預設零網路）＋ v1.2.x 全功能迴歸。
