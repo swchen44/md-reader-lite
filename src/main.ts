@@ -13,6 +13,8 @@ import { createSearchPanel } from '@/core/search-panel'
 import type { Theme } from '@/config/page-themes'
 import { getDefaultData, type Data } from '@/core/data'
 import { needsCharsetCompat } from '@/core/charset'
+import { isNetworkAllowed } from '@/core/network'
+import { canRenderPlantuml, normalizePlantumlServer } from '@/core/plantuml'
 import {
   clampRefreshInterval,
   formatContentWidth,
@@ -76,7 +78,7 @@ function main(data: Data) {
     },
     toggleRefresh(value) {
       clearTimeout(pollingTimer)
-      value && polling()
+      value && isNetworkAllowed(configData.offlineMode) && polling()
     },
     toggleCentered(value) {
       mdContent.classList.toggle('centered', value)
@@ -99,6 +101,7 @@ function main(data: Data) {
         case 'txtAsMd':
         case 'outlineCollapse':
         case 'charsetCompat':
+        case 'offlineMode':
           window.location.reload()
           break
         case 'codeBlockDayTheme':
@@ -118,6 +121,8 @@ function main(data: Data) {
           applyZen()
           break
         case 'mdPluginOptions':
+        case 'plantumlEnabled':
+        case 'plantumlServer':
           actions.updateMdPlugins()
           break
         default:
@@ -144,7 +149,7 @@ function main(data: Data) {
   let isSideHover: boolean = false
   let globalEvent: Event = new Event()
 
-  initPlugins({ event: globalEvent })
+  initPlugins({ event: globalEvent, offlineMode: configData.offlineMode })
 
   /* init md page */
   setTheme(configData.pageTheme)
@@ -221,6 +226,14 @@ function main(data: Data) {
         plugins: configData.mdPlugins,
         config: { breaks: !!configData.breaks },
         pluginOptions: configData.mdPluginOptions,
+        plantuml: {
+          server: normalizePlantumlServer(configData.plantumlServer),
+          allowed: canRenderPlantuml(
+            configData.plantumlEnabled,
+            configData.offlineMode,
+            configData.plantumlServer,
+          ),
+        },
         ...options,
       })
       globalEvent.emit(
@@ -282,7 +295,15 @@ function main(data: Data) {
     const isFile = rootDir.startsWith('file:')
     const gh = parseRawUrl(window.location.href.replace(/[?#].*$/, ''))
     if (gh) {
+      if (!isNetworkAllowed(configData.offlineMode)) {
+        buildTree(undefined, 'default', null, localize('offline_blocked'))
+        return
+      }
       buildTree(createGithubLister(gh, rootDir), 'github', parentTreeUrl(gh))
+      return
+    }
+    if (!isFile && !isNetworkAllowed(configData.offlineMode)) {
+      buildTree(undefined, 'default', null, localize('offline_blocked'))
       return
     }
     try {
@@ -318,6 +339,7 @@ function main(data: Data) {
     listDir?: (u: string) => Promise<DirEntry[]>,
     kind: 'default' | 'fsa' | 'github' = 'default',
     parentHref?: string | null,
+    rootMessage?: string,
   ) {
     const panel = filesPanel!
     panel.innerHTML = null
@@ -326,6 +348,7 @@ function main(data: Data) {
       localize,
       listDir,
       parentHref,
+      rootMessage,
       onRootStatus: status => {
         if (status === 'error' && kind === 'fsa') {
           // FSA root 失效：清授權、回引導面板
@@ -710,7 +733,7 @@ function main(data: Data) {
   })
 
   /* auto refresh */
-  if (configData.refresh) {
+  if (configData.refresh && isNetworkAllowed(configData.offlineMode)) {
     polling()
   }
 

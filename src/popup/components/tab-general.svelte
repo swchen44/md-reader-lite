@@ -69,16 +69,33 @@
 </div>
 
 <div class="form-item inline">
-  <span class="label-item">{localize('label_auto-refresh')}:</span>
+  <span class="label-item">{localize('label_offline')}:</span>
   <FormField align="end">
     <Switch
       disabled={!data.enable}
+      bind:checked={data.offlineMode}
+      color="primary"
+      on:change={() => updateConfig('offlineMode', data.offlineMode)}
+    />
+  </FormField>
+</div>
+<div class="hint-item">{localize('hint_offline')}</div>
+<div class="hint-item">{localize('desc_offline')}</div>
+
+<div class="form-item inline">
+  <span class="label-item">{localize('label_auto-refresh')}:</span>
+  <FormField align="end">
+    <Switch
+      disabled={!data.enable || data.offlineMode}
       bind:checked={data.refresh}
       color="primary"
       on:change={() => updateConfig('refresh', data.refresh)}
     />
   </FormField>
 </div>
+{#if data.offlineMode}
+  <div class="hint-item">{localize('hint_offline-disabled')}</div>
+{/if}
 
 {#if data.refresh}
   <div class="form-item inline">

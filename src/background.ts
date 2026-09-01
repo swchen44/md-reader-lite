@@ -75,6 +75,9 @@ const actionMap = {
   mdPluginOptions: 'applySetting',
   customWidthUnit: 'applySetting',
   charsetCompat: 'applySetting',
+  offlineMode: 'applySetting',
+  plantumlEnabled: 'applySetting',
+  plantumlServer: 'applySetting',
 }
 
 function updatePage(key: keyof typeof actionMap, value?: any) {

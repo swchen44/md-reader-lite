@@ -4,6 +4,7 @@
   import Switch from '@smui/switch'
   import MD_PLUGINS from '@/config/md-plugins'
   import type { Data } from '@/core/data'
+  import { normalizePlantumlServer } from '@/core/plantuml'
 
   export let data: Data
   export let localize: (field: string) => string
@@ -23,6 +24,11 @@
   // object to storage.
   function onMdPluginOptionsChange() {
     updateConfig('mdPluginOptions', data.mdPluginOptions)
+  }
+
+  function onPlantumlServerBlur() {
+    data.plantumlServer = normalizePlantumlServer(data.plantumlServer)
+    updateConfig('plantumlServer', data.plantumlServer)
   }
 </script>
 
@@ -107,7 +113,42 @@
   </div>
 </div>
 
+<div class="form-item inline">
+  <span class="label-item">{localize('label_plantuml')}:</span>
+  <FormField align="end">
+    <Switch
+      disabled={!data.enable || data.offlineMode}
+      bind:checked={data.plantumlEnabled}
+      color="primary"
+      on:change={() => updateConfig('plantumlEnabled', data.plantumlEnabled)}
+    />
+  </FormField>
+</div>
+{#if data.offlineMode}
+  <div class="hint-item">{localize('hint_offline-disabled')}</div>
+{/if}
+
+<div class="form-item">
+  <div class="label-item">{localize('label_plantuml-server')}:</div>
+  <input
+    type="text"
+    class="plantuml-server-input"
+    disabled={!data.enable || data.offlineMode || !data.plantumlEnabled}
+    bind:value={data.plantumlServer}
+    on:blur={onPlantumlServerBlur}
+  />
+</div>
+<div class="hint-item">{localize('warn_plantuml')}</div>
+
 <style>
+  .plantuml-server-input {
+    width: 100%;
+    padding: 4px 6px;
+    box-sizing: border-box;
+    font-size: 13px;
+    border: 1px solid #24315840;
+    border-radius: 4px;
+  }
   .sub-label {
     margin-top: 8px;
     margin-bottom: 4px;
