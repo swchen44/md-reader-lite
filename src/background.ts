@@ -1,5 +1,6 @@
 import storage from '@/core/storage'
 import commands from '@/core/commands'
+import { canBgFetch } from '@/core/charset'
 
 chrome.runtime.onMessage.addListener(({ action, data }, sender, callback) => {
   messageHandler(action, data, sender, callback)
@@ -18,6 +19,31 @@ async function messageHandler(
       updatePage(data.key, data.value)
       callback?.(data)
       break
+    case 'bgFetch': {
+      const allowed = canBgFetch(
+        sender.url,
+        data?.url,
+        chrome.runtime.id,
+        sender.id,
+      )
+      if (!allowed) {
+        callback?.({ ok: false })
+        break
+      }
+      try {
+        const r = await fetch(data.url)
+        if (!r.ok) {
+          callback?.({ ok: false })
+          break
+        }
+        const buf = await r.arrayBuffer()
+        const text = new TextDecoder('utf-8').decode(buf)
+        callback?.({ ok: true, text })
+      } catch {
+        callback?.({ ok: false })
+      }
+      break
+    }
   }
 }
 
@@ -48,6 +74,7 @@ const actionMap = {
   outlineCollapse: 'applySetting',
   mdPluginOptions: 'applySetting',
   customWidthUnit: 'applySetting',
+  charsetCompat: 'applySetting',
 }
 
 function updatePage(key: keyof typeof actionMap, value?: any) {

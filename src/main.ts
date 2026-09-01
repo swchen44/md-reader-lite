@@ -12,6 +12,7 @@ import { parseRawUrl, parentTreeUrl } from '@/core/github-url'
 import { createSearchPanel } from '@/core/search-panel'
 import type { Theme } from '@/config/page-themes'
 import { getDefaultData, type Data } from '@/core/data'
+import { needsCharsetCompat } from '@/core/charset'
 import {
   clampRefreshInterval,
   formatContentWidth,
@@ -97,6 +98,7 @@ function main(data: Data) {
         case 'breaks':
         case 'txtAsMd':
         case 'outlineCollapse':
+        case 'charsetCompat':
           window.location.reload()
           break
         case 'codeBlockDayTheme':
@@ -503,6 +505,24 @@ function main(data: Data) {
   applyZen()
 
   renderSide()
+
+  if (needsCharsetCompat(window.location.protocol, configData.charsetCompat)) {
+    chrome.runtime.sendMessage(
+      { action: 'bgFetch', data: { url: window.location.href } },
+      resp => {
+        if (chrome.runtime.lastError) return
+        if (resp?.ok && typeof resp.text === 'string' && resp.text !== mdRaw) {
+          mdRaw = resp.text
+          contentRender(mdRaw)
+          renderSide()
+          setTimeout(() => {
+            if (rawContainer) rawContainer.textContent = mdRaw
+          }, 0)
+        }
+      },
+    )
+  }
+
   document.addEventListener('scroll', throttle(onScroll, 100))
 
   /* render raw toggle button */
