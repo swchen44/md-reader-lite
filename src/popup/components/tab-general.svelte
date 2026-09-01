@@ -146,6 +146,19 @@
 </div>
 <div class="hint-item">{localize('hint_reload')}</div>
 
+<div class="form-item inline">
+  <span class="label-item">{localize('label_charset-compat')}:</span>
+  <FormField align="end">
+    <Switch
+      disabled={!data.enable}
+      bind:checked={data.charsetCompat}
+      color="primary"
+      on:change={() => updateConfig('charsetCompat', data.charsetCompat)}
+    />
+  </FormField>
+</div>
+<div class="hint-item">{localize('hint_charset')}</div>
+
 <div class="form-item">
   <div class="label-item">{localize('label_language')}:</div>
   <FormField style="padding-left: 10px">
