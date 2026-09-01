@@ -28,7 +28,9 @@ export default function PlantumlPlugin(
       if (opts?.allowed) {
         const encoded = encoder.encode(code)
         const src = buildPlantumlImageUrl(opts.server ?? '', encoded)
-        return `<img class="${className.PLANTUML}" src="${src}" alt="PlantUML diagram" loading="lazy">`
+        return `<img class="${className.PLANTUML}" src="${escapeHtml(
+          src,
+        )}" alt="PlantUML diagram" loading="lazy">`
       }
       return `<div class="${
         className.PLANTUML_DISABLED
