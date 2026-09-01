@@ -42,15 +42,26 @@ background service worker（background.ts）
 
 先渲染 Chrome 版、再以 SW 版覆蓋——避免等待 SW 造成白屏；SW 回來若內容不同才重渲染（相同則零成本）。
 
-### 安全檢查（bgFetch handler，關鍵）
+### SW 必要性（GATE 補測確立）
 
-SW 能 fetch 任意 URL 是敏感能力，必須嚴格限縮，防止惡意頁面借 SW 讀本機檔：
+設計審查質疑「SW 可能不必要，content-script 直接 fetch 即可」。2026-09-01 補測（research §7 末）：**content-script 隔離世界 fetch(file://) 亦失敗**（`TypeError: Failed to fetch`），只有 SW 能 fetch file://。故 SW/bgFetch 架構是必要的、非可繞過。連帶結論：Lite 現有 content-script polling 在 file:// 恆失敗 →inert，與 charsetCompat bgFetch **無競態**（設計審查的 polling 競態疑點消解）。
 
-- 用 **`sender.url`**（content-script 所在頁面 URL，`onMessage` 恆帶、**免任何權限**——比 `sender.tab?.url` 更穩，後者的 `url` 欄位受 tabs/host 權限影響）。
-- **同源檢查**：`new URL(sender.url).origin === new URL(data.url).origin` 才 fetch。content script 只送自己的 `location.href`，故正常情形恆同源；此檢查擋掉「http 頁面借 SW 讀 file://」（http origin ≠ file origin → 拒絕）。
-- **file:// 限縮（縱深防禦）**：僅當 `new URL(data.url).protocol === 'file:'` 才處理（http 同源 fetch 頁面自己就能做，SW 不需代勞；限 file:// 縮小攻擊面）。
-- `sender.url` 缺失（非 content script 來源）→ 拒絕。
-- 純函式 `canBgFetch(senderUrl, targetUrl): boolean`（core 可測）封裝上述三條，SW handler 只呼叫它。
+### 安全檢查（bgFetch handler，關鍵——設計審查 Critical 修正）
+
+SW 能 fetch file:// 是敏感能力，必須嚴格限縮，防止惡意頁面借 SW 讀任意本機檔。
+
+**設計審查 Critical**：實測 Chromium 的 `new URL('file:///任何路徑').origin` **恆為常數字串 `"file://"`**（與路徑無關，非規格的 opaque 值）——故「同源檢查」對 file⇄file 完全沒有區辨力，等於 no-op。若只靠同源檢查，一旦 `data.url` 被污染成別的本機檔（如 `file:///etc/passwd`）即成任意檔案外洩原語。**修正：改用精確 URL 比對**。
+
+`canBgFetch(senderUrl, targetUrl, extensionId, senderId): boolean`（core 可測，SW handler 只呼叫它）四條：
+
+1. `senderUrl`、`targetUrl` 皆為非空字串且可 `new URL()` parse（parse 失敗 → false）。
+2. **精確比對 `senderUrl === targetUrl`**（非同源）——SW 只重抓「content script 自己所在的那個頁面」，永遠不抓別的檔。content script 只送自己的 `location.href`，故正常恆通過；任何 `data.url ≠ 頁面 URL` 一律拒絕。這在結構上強制了「只讀自己」不變量，堵死 file-disclosure。
+3. `new URL(targetUrl).protocol === 'file:'`（file:// 限縮，縱深防禦；http 頁面自己就能 fetch 自身，SW 不代勞）。
+4. `senderId === extensionId`（`sender.id === chrome.runtime.id`，免權限；擋其他擴充直接 `sendMessage` 探測本擴充 onMessage）。
+
+`sender.url` 缺失（非 content script 來源）→ 第 1 條 false。用 `sender.url`（content-script 頁面 URL，`onMessage` 恆帶、免權限），不用 `sender.tab?.url`（url 欄位受 tabs/host 權限影響）。
+
+**兩條不變量須在測試明列並斷言**：(a) content script 送的 `data.url` 只能來自自身 `location.href`（不受 DOM/訊息/頁面內容影響）；(b) 僅在 `location.protocol === 'file:'` 時才送 bgFetch。
 
 ## 生效機制
 
@@ -63,7 +74,7 @@ SW 能 fetch 任意 URL 是敏感能力，必須嚴格限縮，防止惡意頁�
 `src/core/charset.ts`（零 chrome 依賴）：
 
 - `needsCharsetCompat(protocol: string, charsetCompat: boolean): boolean` → `protocol === 'file:' && charsetCompat`
-- `canBgFetch(senderUrl: unknown, targetUrl: unknown): boolean` → 三條安全檢查（senderUrl/targetUrl 為字串且可 parse、同源、target 為 file:）
+- `canBgFetch(senderUrl: unknown, targetUrl: unknown, extensionId: unknown, senderId: unknown): boolean` → 四條安全檢查（見上：可 parse、精確比對 senderUrl===targetUrl、target 為 file:、senderId===extensionId）
 
 TextDecoder 解碼與 fetch 在 SW（shell）；content-script 重渲染在 main.ts（shell）。
 
@@ -75,7 +86,7 @@ TextDecoder 解碼與 fetch 在 SW（shell）；content-script 重渲染在 main
 
 1. 單元（`tests/charset.test.mjs`）：
    - `needsCharsetCompat`（file:+true→true、file:+false→false、http:+true→false、非字串防禦）。
-   - `canBgFetch`：file://同源 →true、http 頁面請求 file://（跨 origin）→false、file 頁面請求別的 file 同源 →true、http 同源 →false（限 file: 縮限）、senderUrl 缺/壞 →false、targetUrl 壞 →false ≥ 8 條。
+   - `canBgFetch`（精確比對模型）：senderUrl===targetUrl 且 file: 且 id 相符 →true；**file 頁面請求「別的」file（senderUrl≠targetUrl）→false**（本案核心：堵 file-disclosure）；http 頁面請求 file://（≠）→false；同一 http URL（senderUrl===targetUrl 但 protocol 非 file:）→false（限 file:）；senderId≠extensionId →false；senderUrl 缺/壞 →false；targetUrl 壞 →false ≥ 8 條。
 2. Playwright 驗收（file:// 真檔）：
    - 造一個「Chrome 會誤判」的檔難以穩定重現，改以**行為等價驗收**：charsetCompat=false 時 mdRaw 來自 `<pre>`；charsetCompat=true 時 content script 確有送 bgFetch 且 SW 回 UTF-8 文字、頁面渲染出正確中文（以 UTF-8 檔驗證 SW 路徑端到端；bgFetch 訊息與 SW fetch 成功即證機制）。
    - 安全：從 http 頁面（http://localhost:8123）呼叫 bgFetch 請求 file:// → SW 拒絕（canBgFetch false）。
