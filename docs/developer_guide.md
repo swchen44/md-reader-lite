@@ -1,5 +1,19 @@
 # Developer Guide
 
+## 隱私原則（Privacy by default）
+
+零網路（zero network）是本專案最高指導原則，優先於功能便利性。全部三個會觸及網路的設定，預設值皆在 `src/core/data.ts` 的 `getDefaultData()` 中定為關閉：
+
+| 設定            | 預設值  | 觸發的網路行為                                                                                                                    |
+| --------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `folderTree`    | `false` | 開啟且切到「檔案」頁籤時才懶載入：列出目前文件所在資料夾（同伺服器），或於 raw.githubusercontent.com 頁面匿名呼叫 GitHub 公開 API |
+| `refresh`       | `false` | 定時重新抓取目前這份文件的同一 URL，偵測內容變更                                                                                  |
+| `charsetCompat` | `false` | 僅 file://；由 background Service Worker 重新 fetch 同一本機檔並強制 UTF-8 解碼                                                   |
+
+程式實際會發出的網路請求就只有以上三種，沒有第四種。頁面載入當下（預設設定）不會發出任何請求——目錄樹的 fetch 是懶載入，只在使用者主動點開「檔案」頁籤才觸發；`folderTree` 預設 `false` 時該頁籤根本不會顯示。三者皆為 opt-in，使用者需自行在設定中開啟。
+
+擴充功能沒有任何後端伺服器、不做分析／遙測／錯誤回報、不產生或傳送裝置 ID 或任何識別碼。新增功能或修改預設值前，先確認是否會影響這張表；若某功能會發出網路請求，預設必須為關閉，並同步更新 README.md 的「Privacy — our defining feature」段與 PRIVACY.md。
+
 ## 環境需求
 
 - Node ≥ 22（本 repo 以 Node 26 驗證；測試直接 import .ts，依賴 type stripping）
