@@ -14,6 +14,26 @@
 
 擴充功能沒有任何後端伺服器、不做分析／遙測／錯誤回報、不產生或傳送裝置 ID 或任何識別碼。新增功能或修改預設值前，先確認是否會影響這張表；若某功能會發出網路請求，預設必須為關閉，並同步更新 README.md 的「Privacy — our defining feature」段與 PRIVACY.md。
 
+### 離線模式（offlineMode）——五處 egress 閘門
+
+`offlineMode`（`src/core/data.ts` `getDefaultData()`）**預設 `true`**，是凌駕上表個別開關之上的總開關：開啟時強制封鎖擴充自身可能發出的所有對外請求，不管上表三個設定個別是否被使用者打開。落點：
+
+| #   | 站點              | 檔案                                                    | 閘門機制                                                                                                                                                                                                                                                                                                 |
+| --- | ----------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 自動刷新          | `src/main.ts`（`polling`/`toggleRefresh`）              | `configData.refresh && isNetworkAllowed(configData.offlineMode)` 才 `polling()`                                                                                                                                                                                                                          |
+| 2   | http/https 目錄樹 | `src/main.ts`（`initFilesContent`）                     | `fetchDirListing` probe 前守門，離線時不 fetch                                                                                                                                                                                                                                                           |
+| 3   | GitHub API 目錄樹 | `src/main.ts`（`initFilesContent`）                     | `parseRawUrl` 分支前守門，離線時不呼叫 GitHub API                                                                                                                                                                                                                                                        |
+| 4   | PlantUML img      | `src/core/plantuml.ts`（`canRenderPlantuml`）           | `!!enabled && !offlineMode && !!server`——唯一實作，`main.ts` 直接呼叫、不 inline 重寫條件；離線時不 emit `<img src=遠端>`                                                                                                                                                                                |
+| 5   | 文件內遠端資源    | `src/plugins/remote-guard.ts`（`blockRemoteResources`） | `contentRendered` 後對渲染容器廣查 `img,video,audio,source,iframe,embed,track,object,image,input[type="image"]`，逐屬性（`src`/`srcset`/`poster`/`data`/`href`/`xlink:href`）以 `isRemoteUrl` 判定為遠端者，移除屬性、原值存 `data-blocked-<attr>`、加 `md-reader__blocked-remote` class（涵蓋追蹤像素） |
+
+`isNetworkAllowed(offlineMode)`（`src/core/network.ts`）是站點 1-4 的共用純函式（`!offlineMode`）。站點 5 掃的是渲染後 DOM 而非 markdown 源，故同時涵蓋 image rule 產生的 `<img>` 與 raw HTML。**本機 `file://` 功能不受離線模式影響**（FSA 資料夾樹、`charsetCompat`、dir-fetch 的 `file://` XHR 分支）——讀本機磁碟本就是零 egress，離線模式故意不封鎖。`offlineMode` 屬 reload 類設定（`background.ts` actionMap 映射 `'applySetting'`，切換後 `main.ts` 重整頁面套用五處閘門）。
+
+**誠實揭露的殘留缺口**：站點 5 的清掃鎖定元素屬性，不掃 CSS——inline `style="background-image:url(http)"`、`<style>`/`@import url()`、`<use xlink:href>`、legacy `background` 屬性不在涵蓋範圍（markdown 內容中極罕見）。對外文案（README/PRIVACY）措辭須為「封鎖文件內遠端圖片與媒體」，不可宣稱「封鎖一切遠端引用」。
+
+### PlantUML——唯一的網路 opt-in 內容外送功能
+
+`plantumlEnabled`（預設 `false`）與 `plantumlServer`（預設 `https://www.plantuml.com/plantuml`，可自架）在 `src/core/data.ts`。`src/plugins/plantuml.ts` 在 `canRenderPlantuml(...)` 為真時才 emit `<img src="<server>/svg/<plantuml-encoder.encode(源碼)>">`——emit `img src` 本身即是網路請求（瀏覽器載入圖片時發出），故必須只在 allowed 時 emit。PlantUML 是本專案**唯一**會把文件內容（圖表原始碼）送到第三方伺服器的功能：需使用者主動開啟，且 `offlineMode` 開啟時無論 `plantumlEnabled` 為何一律強制停用。修改此邏輯前務必意識到它是「內容外送」而非單純「metadata 請求」，風險層級高於折疊上表三項。
+
 ## 環境需求
 
 - Node ≥ 22（本 repo 以 Node 26 驗證；測試直接 import .ts，依賴 type stripping）

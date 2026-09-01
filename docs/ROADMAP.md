@@ -8,6 +8,7 @@
 | 1.3  | D   | GitHub 目錄樹（零權限版）：raw.githubusercontent.com 頁由 content script 直呼 GitHub Contents API 列出檔案（實測 CORS 全開、CSP 不擋 content script fetch）；零 host 權限、零 manifest 變更；knownDirs 路徑註冊表防 URL 回推；未登入 API 60 req/hr 限流，懶加載天然節流＋ ratelimit 專屬訊息；已完成並發布 v1.0.5                                      | 完成 |
 | 1.4  | E   | 側邊欄搜尋：側欄新增搜尋框（第三個頁籤或大綱頁籤上方），即時過濾大綱標題並高亮命中字串、點擊跳轉至該標題；進階為當前文件全文搜尋（命中段落列表 + 跳轉 + 內文高亮）。純前端、無新權限（參考商店 3.x 版的 outline search 形態）＋ Phase 2 形態一致（祖先鏈脈絡、檔案樹過濾）                                                                             | 完成 |
 | 1.5  | F   | 圖表檢視器：Mermaid/Graphviz SVG 右下角懸浮控制列（放大/縮小/重置/全螢幕 Expand diagram），滾輪縮放與拖曳平移；採 `@panzoom/panzoom`（MIT、~4KB、零依賴，經拆解確認商店 3.x 版即用此套：panzoom\* 事件與 contain/pinchAndPan API 指紋吻合，minScale 0.5 / maxScale 8）；全螢幕用 Fullscreen API 自包 UI；同套可日後複用到圖片畫廊；已完成並發布 v1.1.0 | 完成 |
+| 1.6  | —   | 離線模式總開關 `offlineMode`（預設開，一鍵封鎖擴充所有對外 egress：refresh 重抓、http 目錄樹、GitHub API 目錄樹、PlantUML img、文件內遠端資源 DOM 清掃；本機 `file://` 功能不受影響）＋ PlantUML 圖表（opt-in、預設關、離線下強制停用、可設定自架伺服器）；Playwright 網路監聽驗收 11/11；已完成並發布 v1.4.0                                          | 完成 |
 | 2.x  | —   | PWA/Web 衍生專案：免安裝閱讀器，複用 core 層（產品形態參考 TriptoAfsin/md-viewer-pwa：drop zone、多分頁、離線 PWA）；技術棧屆時另定                                                                                                                                                                                                                    | 願景 |
 
 ## 後續擴充（四項）

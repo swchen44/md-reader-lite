@@ -11,5 +11,6 @@
 | 2026-08-31 | 案 B+F：設定面板對齊 + 浮動選單 + 圖表檢視器          | [superpowers/plans/2026-08-31-settings-viewer.md](superpowers/plans/2026-08-31-settings-viewer.md)                               | 完成（v1.1.0）      |
 | 2026-09-01 | 快捷鍵強化 + 插件子選項 + 寬度 % 單位                 | [superpowers/plans/2026-09-01-shortcuts-plugin-options-width.md](superpowers/plans/2026-09-01-shortcuts-plugin-options-width.md) | 完成（v1.2.0）      |
 | 2026-09-01 | 字元集相容模式（charsetCompat／file:// UTF-8 重解碼） | [superpowers/plans/2026-09-01-charset-compat.md](superpowers/plans/2026-09-01-charset-compat.md)                                 | 完成（v1.2.1）      |
+| 2026-09-01 | 離線總開關（offlineMode）＋ PlantUML 圖表             | [superpowers/plans/2026-09-01-offline-mode-plantuml.md](superpowers/plans/2026-09-01-offline-mode-plantuml.md)                   | 完成（v1.4.0）      |
 
 新計畫請放 docs/superpowers/plans/ 並在此登錄。
