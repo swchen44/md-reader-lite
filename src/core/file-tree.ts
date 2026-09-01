@@ -9,6 +9,8 @@ interface FileTreeOptions {
   listDir?: (dirUrl: string) => Promise<DirEntry[]>
   onRootStatus?: (status: 'ok' | 'error') => void
   parentHref?: string | null
+  /** 提供時：完全跳過 lister/probe，直接顯示此訊息（零 fetch，離線封鎖用） */
+  rootMessage?: string
 }
 
 export interface FileTreeHandle {
@@ -43,6 +45,7 @@ export function createFileTree({
   listDir: listDirOpt,
   onRootStatus,
   parentHref,
+  rootMessage,
 }: FileTreeOptions): FileTreeHandle {
   // currentUrl 可能帶 #hash 或 ?query（例如錨點跳轉後的頁面網址），
   // 兩者都與檔案樹的目錄／作用中檔案判斷無關，先去除再使用。
@@ -270,6 +273,12 @@ export function createFileTree({
     const up = new Ele<HTMLElement>('div', { className: className.TREE_FILE })
     up.append(upLink)
     container.append(up)
+  }
+  if (rootMessage) {
+    // 零 fetch：不掛 listDir、不呼叫 loadDir/fetchDirListing，直接顯示訊息
+    // （離線封鎖等場景，樹本身不得觸發任何目錄請求）。
+    renderMessage(container, rootMessage)
+    return { tree: container, applyFilter, clearFilter }
   }
   const rootMsgEle = renderMessage(container, '…')
   loadDir(rootDir)

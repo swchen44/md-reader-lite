@@ -19,9 +19,16 @@ export function usePlugin(plugin: Plugin | Array<Plugin>) {
   }
 }
 
-export function initPlugins({ event }: { event: Event }) {
+export function initPlugins({
+  event,
+  offlineMode,
+}: {
+  event: Event
+  offlineMode?: boolean
+}) {
   const ctx: Ctx = {
     event,
+    offlineMode,
   }
   plugins.forEach(p => p(ctx))
 }

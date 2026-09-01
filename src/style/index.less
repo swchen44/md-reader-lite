@@ -484,6 +484,16 @@ body.md-reader {
             word-break: break-all;
           }
         }
+        // 離線模式：遠端資源已被 remote-guard 插件移除 src 等屬性後的占位樣式
+        // （見 src/plugins/remote-guard.ts）。虛線框標示此處原有一個遠端資源。
+        .md-reader__blocked-remote {
+          display: inline-block;
+          min-width: 2em;
+          min-height: 1.4em;
+          border: 1px dashed var(--color-border);
+          border-radius: 4px;
+          opacity: 0.6;
+        }
       }
     }
 
