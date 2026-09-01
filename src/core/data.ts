@@ -27,6 +27,9 @@ export interface Data {
   mdPluginOptions?: Record<string, Record<string, unknown>>
   customWidthUnit?: 'px' | 'percent'
   charsetCompat?: boolean
+  offlineMode?: boolean
+  plantumlEnabled?: boolean
+  plantumlServer?: string
 }
 
 export function getDefaultData(mergeData: Data = {}): Data {
@@ -54,6 +57,9 @@ export function getDefaultData(mergeData: Data = {}): Data {
     mdPluginOptions: getDefaultPluginOptions(),
     customWidthUnit: 'px',
     charsetCompat: false,
+    offlineMode: true,
+    plantumlEnabled: false,
+    plantumlServer: 'https://www.plantuml.com/plantuml',
     ...mergeData,
   }
 }
