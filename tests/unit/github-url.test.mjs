@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-const load = () => import('../src/core/github-url.ts')
+const load = () => import('../../src/core/github-url.ts')
 
 test('parseRawUrl: classic form', async () => {
   const { parseRawUrl } = await load()

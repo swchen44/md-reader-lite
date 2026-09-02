@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import MarkdownIt from 'markdown-it'
 import MermaidPlugin from '@md-reader/markdown-it-mermaid'
 
-const loadGraphviz = () => import('../src/core/graphviz.ts')
+const loadGraphviz = () => import('../../src/core/graphviz.ts')
 
 test('treats digraph blocks as graphviz diagrams', async () => {
   const { isGraphvizCodeBlock } = await loadGraphviz()

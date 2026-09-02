@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-const load = () => import('../src/core/fsa-path.ts')
+const load = () => import('../../src/core/fsa-path.ts')
 
 test('urlToDirPath: file URL strips filename/query/hash, decodes, no empty segs', async () => {
   const { urlToDirPath } = await load()

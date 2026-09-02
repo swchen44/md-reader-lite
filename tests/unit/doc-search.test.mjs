@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-const load = () => import('../src/core/doc-search.ts')
+const load = () => import('../../src/core/doc-search.ts')
 
 test('findRanges: case-insensitive, all non-overlapping hits', async () => {
   const { findRanges } = await load()
