@@ -90,6 +90,17 @@ function updatePage(key: keyof typeof actionMap, value?: any) {
   action &&
     chrome.tabs.query({ currentWindow: true, active: true }, tabs => {
       tabs.length &&
-        chrome.tabs.sendMessage(tabs[0].id, { action, data: { key, value } })
+        // The active tab may have no content script listening (a non-markdown
+        // page, a chrome:// page, or the settings opened as an options tab), in
+        // which case sendMessage rejects with "Could not establish connection.
+        // Receiving end does not exist." Passing a callback that reads
+        // lastError uses callback style (no returned promise to reject) and
+        // marks the error handled — the setting is already persisted via
+        // storage.set, and there is simply no in-page view to live-update.
+        chrome.tabs.sendMessage(
+          tabs[0].id,
+          { action, data: { key, value } },
+          () => void chrome.runtime.lastError,
+        )
     })
 }
