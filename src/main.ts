@@ -22,6 +22,7 @@ import {
 } from '@/core/plantuml'
 import {
   clampRefreshInterval,
+  clampSideWidth,
   formatContentWidth,
   isTxtUrl,
   FONT_STACKS,
@@ -127,6 +128,9 @@ function main(data: Data) {
         case 'plantumlServer':
           actions.updateMdPlugins()
           break
+        case 'sideWidth':
+          applySideWidth()
+          break
         default:
       }
     },
@@ -218,6 +222,13 @@ function main(data: Data) {
       : s.removeProperty('--md-reader-content-width')
   }
   applyTypography()
+
+  const applySideWidth = () => {
+    document.documentElement.style.setProperty(
+      '--md-reader-side-width',
+      clampSideWidth(configData.sideWidth) + 'px',
+    )
+  }
 
   const CUSTOM_CSS_ID = 'md-reader-custom-css'
   const applyCustomCss = () => {
@@ -762,11 +773,46 @@ function main(data: Data) {
     floatMenuOpen ? closeFloatMenu() : openFloatMenu()
   })
 
+  const sideResizer = new Ele<HTMLElement>('div', {
+    className: className.SIDE_RESIZER,
+  })
+  sideResizer.on('mousedown', (e: MouseEvent) => {
+    e.preventDefault()
+    document.body.style.userSelect = 'none'
+    const onMove = (ev: MouseEvent) => {
+      const w = clampSideWidth(ev.clientX)
+      document.documentElement.style.setProperty(
+        '--md-reader-side-width',
+        w + 'px',
+      )
+    }
+    const onUp = (ev: MouseEvent) => {
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+      document.body.style.userSelect = ''
+      const w = clampSideWidth(ev.clientX)
+      chrome.runtime.sendMessage({
+        action: 'storage',
+        data: { key: 'sideWidth', value: w },
+      })
+    }
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  })
+
   /* mount elements */
-  lifecycle.mount([buttonWrap, floatMenu, mdBody, mdSide, sideTabs])
+  lifecycle.mount([
+    buttonWrap,
+    floatMenu,
+    mdBody,
+    mdSide,
+    sideTabs,
+    sideResizer,
+  ])
   document.body.classList.add(className.HAS_TABS)
   setFolderTree(configData.folderTree !== false)
   updateAnchorPosition()
+  if (configData.sideWidth != null) applySideWidth()
 
   darkMediaQuery.addEventListener('change', (e: MediaQueryListEvent) => {
     if (configData.pageTheme === 'auto') {

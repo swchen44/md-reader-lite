@@ -29,6 +29,7 @@ export interface Data {
   offlineMode?: boolean
   plantumlEnabled?: boolean
   plantumlServer?: string
+  sideWidth?: number
 }
 
 export function getDefaultData(mergeData: Data = {}): Data {

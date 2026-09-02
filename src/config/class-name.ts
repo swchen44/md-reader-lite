@@ -62,4 +62,5 @@ export default {
   PLANTUML: p`plantuml`,
   PLANTUML_DISABLED: p`plantuml-disabled`,
   PLANTUML_SOURCE: p`plantuml-source`,
+  SIDE_RESIZER: p`side-resizer`,
 }

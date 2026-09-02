@@ -82,6 +82,7 @@ const actionMap = {
   offlineMode: 'applySetting',
   plantumlEnabled: 'applySetting',
   plantumlServer: 'applySetting',
+  sideWidth: 'applySetting',
 }
 
 function updatePage(key: keyof typeof actionMap, value?: any) {

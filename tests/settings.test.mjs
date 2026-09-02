@@ -168,3 +168,27 @@ test('formatContentWidth: out-of-range values are clamped before formatting', as
   assert.equal(formatContentWidth(5000, 'px'), '3000px')
   assert.equal(formatContentWidth(200, 'percent'), '100%')
 })
+
+test('clampSideWidth: 正常值原樣返回', async () => {
+  const { clampSideWidth } = await load()
+  assert.equal(clampSideWidth(300), 300)
+})
+test('clampSideWidth: 下界 180', async () => {
+  const { clampSideWidth } = await load()
+  assert.equal(clampSideWidth(100), 180)
+})
+test('clampSideWidth: 上界 560', async () => {
+  const { clampSideWidth } = await load()
+  assert.equal(clampSideWidth(9999), 560)
+})
+test('clampSideWidth: 非數字回預設 260', async () => {
+  const { clampSideWidth } = await load()
+  assert.equal(clampSideWidth('abc'), 260)
+  assert.equal(clampSideWidth(NaN), 260)
+  assert.equal(clampSideWidth(undefined), 260)
+})
+test('clampSideWidth: 邊界值', async () => {
+  const { clampSideWidth } = await load()
+  assert.equal(clampSideWidth(180), 180)
+  assert.equal(clampSideWidth(560), 560)
+})

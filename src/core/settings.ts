@@ -17,6 +17,16 @@ export function clampCustomWidth(v: unknown): number | null {
   return Math.round(Math.min(CUSTOM_WIDTH_MAX, Math.max(CUSTOM_WIDTH_MIN, n)))
 }
 
+export const SIDE_WIDTH_MIN = 180
+export const SIDE_WIDTH_MAX = 560
+export const SIDE_WIDTH_DEFAULT = 260
+
+export function clampSideWidth(v: unknown): number {
+  const n = typeof v === 'number' ? v : parseFloat(String(v))
+  if (!isFinite(n)) return SIDE_WIDTH_DEFAULT
+  return Math.round(Math.min(SIDE_WIDTH_MAX, Math.max(SIDE_WIDTH_MIN, n)))
+}
+
 export function textSizeIndex(px: unknown): number {
   const n = typeof px === 'number' ? px : parseFloat(String(px))
   let best = 2 // 16px
