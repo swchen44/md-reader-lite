@@ -660,9 +660,9 @@ function main(data: Data) {
     [sideExpandBtn, rawToggleBtn, goTopBtn],
   )
 
-  /* render page-level floating menu（獨立於 buttonWrap：raw 檢視時它借用
-   * 的樣式（FLOAT_MENU / FLOAT_MENU_BTN / ...）與 buttonWrap/btn 同放在
-   * 未受 body.md-reader 限定的頂層 `.md-reader { }` 區塊，故
+  /* render page-level floating menu（與 raw 檢視解耦：其樣式
+   * （FLOAT_MENU / FLOAT_MENU_BTN / ...）與 buttonWrap/btn 同放在未受
+   * body.md-reader 限定的頂層 `.md-reader { }` 區塊，故
    * lifecycle.toggleRaw() 移除 body 的 md-reader class 時不受影響，選單
    * 在 raw 檢視下仍可正常顯示與互動）*/
   const floatMenuBtn = new Ele<HTMLElement>('button', {
@@ -706,9 +706,13 @@ function main(data: Data) {
     const icon = new Ele<HTMLImageElement>('img', {
       src: chrome.runtime.getURL('images/logo-stroke.png'),
     })
-    const name = new Ele<HTMLElement>('div', { className: 'about-name' })
+    const name = new Ele<HTMLElement>('div', {
+      className: className.ABOUT_NAME,
+    })
     name.textContent = 'MD Reader Lite'
-    const version = new Ele<HTMLElement>('div', { className: 'about-version' })
+    const version = new Ele<HTMLElement>('div', {
+      className: className.ABOUT_VERSION,
+    })
     version.textContent = 'v' + chrome.runtime.getManifest().version
     const link = new Ele<HTMLAnchorElement>('a', {
       href: 'https://github.com/swchen44/md-reader-lite',
