@@ -64,7 +64,11 @@ body {
   vertical-align: middle;
 }
 
-.form-item input[type='checkbox'] {
+/* Direct-child only: the plugin master-toggle checkbox. Must NOT match the
+   SMUI switch's nested native checkbox (.mdc-switch__native-control), or it
+   shrinks that control to 16×16 and offsets it so the switch becomes
+   unclickable. */
+.form-item > input[type='checkbox'] {
   width: 16px;
   height: 16px;
 }

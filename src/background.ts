@@ -19,6 +19,10 @@ async function messageHandler(
       updatePage(data.key, data.value)
       callback?.(data)
       break
+    case 'openOptions':
+      chrome.runtime.openOptionsPage()
+      callback?.()
+      break
     case 'bgFetch': {
       const allowed = canBgFetch(
         sender.url,

@@ -689,6 +689,9 @@ function main(data: Data) {
     'div',
     { className: className.FLOAT_MENU_DROPDOWN },
     [
+      floatMenuItem('menu_settings', () =>
+        chrome.runtime.sendMessage({ action: 'openOptions' }),
+      ),
       floatMenuItem('menu_toggle-raw', () => toggleRawView()),
       floatMenuItem('menu_fullscreen', () => {
         document.fullscreenElement
