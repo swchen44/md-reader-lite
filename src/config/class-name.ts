@@ -54,6 +54,7 @@ export default {
   FLOAT_MENU_DROPDOWN: p`float-menu-dropdown`,
   FLOAT_MENU_ITEM: p`float-menu-item`,
   SETTINGS_OVERLAY: p`settings-overlay`,
+  ABOUT_MODAL: p`about-modal`,
   SIDE_FOLD: p`side-fold`,
   DIAGRAM_VIEWER: p`diagram-viewer`,
   DIAGRAM_CONTROLS: p`diagram-controls`,

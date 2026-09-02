@@ -689,6 +689,33 @@ function main(data: Data) {
     return settingsOverlay
   }
 
+  let aboutOverlay: ReturnType<typeof createDismissable> | null = null
+  function getAboutOverlay() {
+    if (aboutOverlay) return aboutOverlay
+    const icon = new Ele<HTMLImageElement>('img', {
+      src: chrome.runtime.getURL('images/logo-stroke.png'),
+    })
+    const name = new Ele<HTMLElement>('div', { className: 'about-name' })
+    name.textContent = 'MD Reader Lite'
+    const version = new Ele<HTMLElement>('div', { className: 'about-version' })
+    version.textContent = 'v' + chrome.runtime.getManifest().version
+    const link = new Ele<HTMLAnchorElement>('a', {
+      href: 'https://github.com/swchen44/md-reader-lite',
+      target: '_blank',
+      rel: 'noopener',
+    })
+    link.textContent = 'github.com/swchen44/md-reader-lite'
+    const modal = new Ele<HTMLElement>(
+      'div',
+      { className: className.ABOUT_MODAL },
+      [icon, name, version, link],
+    )
+    modal.hide()
+    lifecycle.mount([modal])
+    aboutOverlay = createDismissable(modal)
+    return aboutOverlay
+  }
+
   const floatMenuDropdown = new Ele<HTMLElement>(
     'div',
     { className: className.FLOAT_MENU_DROPDOWN },
@@ -701,9 +728,7 @@ function main(data: Data) {
           : document.documentElement.requestFullscreen().catch(() => {})
       }),
       floatMenuItem('menu_print', () => window.print()),
-      floatMenuItem('menu_about', () =>
-        window.open('https://github.com/swchen44/md-reader-lite'),
-      ),
+      floatMenuItem('menu_about', () => getAboutOverlay().open()),
     ],
   )
   floatMenuDropdown.hide()
