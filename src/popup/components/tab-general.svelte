@@ -51,6 +51,10 @@
     resetDone = true
   }
 
+  function onLanguageChange(e: CustomEvent<{ value: string }>) {
+    updateConfig('language', e.detail.value)
+  }
+
   function onRefreshIntervalBlur() {
     data.refreshInterval = clampRefreshInterval(data.refreshInterval)
     updateConfig('refreshInterval', data.refreshInterval)
@@ -179,7 +183,10 @@
 <div class="form-item">
   <div class="label-item">{localize('label_language')}:</div>
   <FormField style="padding-left: 10px">
-    <Select bind:value={data.language}>
+    <Select
+      bind:value={data.language}
+      on:MDCSelect:change={onLanguageChange}
+    >
       {#each i18n.locales as locale}
         <Option value={locale}>{localize(locale)}</Option>
       {/each}
