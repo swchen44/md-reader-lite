@@ -64,9 +64,55 @@ body {
   vertical-align: middle;
 }
 
-.form-item input[type='checkbox'] {
+/* Direct-child only: the plugin master-toggle checkbox. Must NOT match the
+   SMUI switch's nested native checkbox (.mdc-switch__native-control), or it
+   shrinks that control to 16×16 and offsets it so the switch becomes
+   unclickable. */
+.form-item > input[type='checkbox'] {
   width: 16px;
   height: 16px;
+}
+
+/* SMUI's bare.css does not stretch the hidden native control over the visible
+   switch/radio, so it renders as a tiny 16×16 box offset from the control and
+   normal clicks on the visible switch/radio miss it entirely (the control
+   appears un-toggleable). Overlay the native control across the whole visible
+   control so a normal click toggles it. */
+.mdc-switch,
+.mdc-radio {
+  position: relative;
+}
+/* Higher specificity than @smui bare.css (which is imported after index.css and
+   would otherwise win at equal specificity). */
+.mdc-switch .mdc-switch__native-control {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 30px;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+.mdc-radio .mdc-radio__native-control {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+.mdc-switch--disabled .mdc-switch__native-control,
+.mdc-radio--disabled .mdc-radio__native-control {
+  cursor: not-allowed;
 }
 
 .form-item textarea {
