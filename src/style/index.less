@@ -648,19 +648,6 @@ body.md-reader {
   }
 }
 
-// zenMode：只隱藏側欄/分頁/檔案面板/按鈕群，浮動選單（.md-reader__float-menu）
-// 不在此清單中，因此不受影響、禪模式下仍留在畫面上作為功能入口。獨立於
-// body.md-reader 之外宣告，即便同時處於 raw 檢視（body 失去 md-reader
-// class）也照樣生效。
-body.md-reader__zen {
-  .md-reader__side,
-  .md-reader__side-tabs,
-  .md-reader__files-panel,
-  .md-reader__button-wrap {
-    display: none;
-  }
-}
-
 .md-reader {
   // buttons
   &__button-wrap {
@@ -811,15 +798,6 @@ body.md-reader__zen {
     &__float-menu {
       display: none;
     }
-  }
-}
-
-// 禪模式下浮動選單維持可見（不在 zenMode 隱藏清單中），但視覺上淡化，
-// 避免干擾閱讀；hover 時恢復完整不透明度。
-body.md-reader__zen .md-reader__float-menu-btn {
-  opacity: 0.4;
-  &:hover {
-    opacity: 1;
   }
 }
 

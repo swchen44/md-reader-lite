@@ -73,7 +73,6 @@ const actionMap = {
   textFont: 'applySetting',
   customWidth: 'applySetting',
   customCss: 'applySetting',
-  zenMode: 'applySetting',
   breaks: 'applySetting',
   txtAsMd: 'applySetting',
   outlineCollapse: 'applySetting',

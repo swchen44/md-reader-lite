@@ -121,9 +121,6 @@ function main(data: Data) {
         case 'customCss':
           applyCustomCss()
           break
-        case 'zenMode':
-          applyZen()
-          break
         case 'mdPluginOptions':
         case 'plantumlEnabled':
         case 'plantumlServer':
@@ -538,17 +535,6 @@ function main(data: Data) {
     if (!enabled) activateTab('outline')
   }
 
-  // zenMode binding（spec 三規則）：(a) 只切 body class，不寫 hiddenSide
-  // storage；(b) 退出後回既有呈現邏輯，不做任何快照/還原；(c) 進入時若
-  // 搜尋列開著先 closeSearch()。searchOpen 在此處已宣告過（見上方），故
-  // 初次呼叫安全；初始 configData.zenMode 為 false 時 searchOpen 分支
-  // 不會被求值（短路），不受宣告順序影響。
-  const applyZen = () => {
-    if (configData.zenMode && searchOpen) closeSearch()
-    document.body.classList.toggle(className.ZEN, !!configData.zenMode)
-  }
-  applyZen()
-
   renderSide()
 
   if (needsCharsetCompat(window.location.protocol, configData.charsetCompat)) {
@@ -662,11 +648,11 @@ function main(data: Data) {
     [sideExpandBtn, rawToggleBtn, goTopBtn],
   )
 
-  /* render page-level floating menu（獨立於 buttonWrap：zenMode 隱藏
-   * button-wrap 時仍要留下這顆入口；raw 檢視時它借用的樣式（FLOAT_MENU /
-   * FLOAT_MENU_BTN / ...）與 buttonWrap/btn 同放在未受 body.md-reader
-   * 限定的頂層 `.md-reader { }` 區塊，故 lifecycle.toggleRaw() 移除 body
-   * 的 md-reader class 時不受影響，選單在 raw 檢視下仍可正常顯示與互動）*/
+  /* render page-level floating menu（獨立於 buttonWrap：raw 檢視時它借用
+   * 的樣式（FLOAT_MENU / FLOAT_MENU_BTN / ...）與 buttonWrap/btn 同放在
+   * 未受 body.md-reader 限定的頂層 `.md-reader { }` 區塊，故
+   * lifecycle.toggleRaw() 移除 body 的 md-reader class 時不受影響，選單
+   * 在 raw 檢視下仍可正常顯示與互動）*/
   const floatMenuBtn = new Ele<HTMLElement>('button', {
     className: [className.MD_BUTTON, className.FLOAT_MENU_BTN],
     title: 'Menu',
@@ -699,12 +685,6 @@ function main(data: Data) {
           : document.documentElement.requestFullscreen().catch(() => {})
       }),
       floatMenuItem('menu_print', () => window.print()),
-      floatMenuItem('menu_zen', () => {
-        chrome.runtime.sendMessage({
-          action: 'storage',
-          data: { key: 'zenMode', value: !configData.zenMode },
-        })
-      }),
       floatMenuItem('menu_about', () =>
         window.open('https://github.com/swchen44/md-reader-lite'),
       ),
