@@ -13,4 +13,6 @@
 | 2026-09-01 | 字元集相容模式（charsetCompat／file:// UTF-8 重解碼） | [superpowers/plans/2026-09-01-charset-compat.md](superpowers/plans/2026-09-01-charset-compat.md)                                 | 完成（v1.2.1）      |
 | 2026-09-01 | 離線總開關（offlineMode）＋ PlantUML 圖表             | [superpowers/plans/2026-09-01-offline-mode-plantuml.md](superpowers/plans/2026-09-01-offline-mode-plantuml.md)                   | 完成（v1.4.0）      |
 
+| 2026-09-02 | .mdc/.puml/.plantuml + 關閉顯示原碼 + 伺服器教學 + language 修正 + 全按鈕測試 | [superpowers/plans/2026-09-02-plantuml-files-and-fixes.md](superpowers/plans/2026-09-02-plantuml-files-and-fixes.md) | 完成（v1.5.0） |
+
 新計畫請放 docs/superpowers/plans/ 並在此登錄。
