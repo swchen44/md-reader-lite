@@ -67,7 +67,7 @@
 
 指令：
 
-    npm test            # = test:unit，跑 tests/unit/ 全部（164 條）
+    npm test            # = test:unit，跑 tests/unit/ 全部（190 條）
     npm run test:unit   # node --test tests/unit/*.test.mjs
     npm run test:e2e    # 需先 npm run build；載入 extension/ 進真實瀏覽器
     npm run typecheck   # tsc --noEmit
@@ -77,6 +77,8 @@
 純函式測試，直接 `import` .ts（依賴 Node type stripping）。import 用 `#core/*`（package.json `imports` 映射）或相對 `../../src/...`。**CI（release.yml）跑 `tests/unit/*.test.mjs` 全部**——新增測試檔放進 `tests/unit/` 即自動納入 CI，不需改 workflow。
 
 坑：`node --test tests/unit/`（目錄模式）在本 repo 會誤判失敗；用 `tests/unit/*.test.mjs`（glob 展開為檔案清單）才對。
+
+當一個模組的 `@/` 別名依賴鏈太深（例如同時拉進 `@/config/*`、多層 core 互 import），不值得為了測一兩個純函式而改動 production import 佈線時，改**在測試檔內鏡射（mirror）那段純邏輯**（見 `graphviz.test.mjs`／`plantuml-plugin.test.mjs`／`file-tree.test.mjs`／`commands.test.mjs` 開頭註解）——鏡射範圍務必極小、逐字對照來源，且註解寫明「鏡射自何處」以防日後漂移。`tests/unit/manifest.test.mjs` 額外驗證 `src/manifest.json` 的 match pattern 結構合法性與零權限姿態（`permissions` 不得多出 `host_permissions`）——這是 2026-09-03 事故（見 lesson_learn.md #11）的迴歸守衛，但**此測試只驗證 Chrome 官方文件描述的通用 match-pattern 文法，不保證 `web_accessible_resources` 會接受**（實測發現 WAR 驗證比 content_scripts 更嚴格、且確切額外限制未完全隔離出來）；日後要再收窄 WAR matches，測試通過後仍須以 Chrome 實際載入驗證。
 
 ### 端對端測試（tests/e2e/）
 
