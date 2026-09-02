@@ -14,6 +14,7 @@ import type { Theme } from '@/config/page-themes'
 import { getDefaultData, type Data } from '@/core/data'
 import { needsCharsetCompat } from '@/core/charset'
 import { isNetworkAllowed } from '@/core/network'
+import { createDismissable } from '@/core/overlay'
 import {
   canRenderPlantuml,
   normalizePlantumlServer,
@@ -21,6 +22,7 @@ import {
 } from '@/core/plantuml'
 import {
   clampRefreshInterval,
+  clampSideWidth,
   formatContentWidth,
   isTxtUrl,
   FONT_STACKS,
@@ -121,13 +123,13 @@ function main(data: Data) {
         case 'customCss':
           applyCustomCss()
           break
-        case 'zenMode':
-          applyZen()
-          break
         case 'mdPluginOptions':
         case 'plantumlEnabled':
         case 'plantumlServer':
           actions.updateMdPlugins()
+          break
+        case 'sideWidth':
+          applySideWidth()
           break
         default:
       }
@@ -220,6 +222,13 @@ function main(data: Data) {
       : s.removeProperty('--md-reader-content-width')
   }
   applyTypography()
+
+  const applySideWidth = () => {
+    document.documentElement.style.setProperty(
+      '--md-reader-side-width',
+      clampSideWidth(configData.sideWidth) + 'px',
+    )
+  }
 
   const CUSTOM_CSS_ID = 'md-reader-custom-css'
   const applyCustomCss = () => {
@@ -538,17 +547,6 @@ function main(data: Data) {
     if (!enabled) activateTab('outline')
   }
 
-  // zenMode binding（spec 三規則）：(a) 只切 body class，不寫 hiddenSide
-  // storage；(b) 退出後回既有呈現邏輯，不做任何快照/還原；(c) 進入時若
-  // 搜尋列開著先 closeSearch()。searchOpen 在此處已宣告過（見上方），故
-  // 初次呼叫安全；初始 configData.zenMode 為 false 時 searchOpen 分支
-  // 不會被求值（短路），不受宣告順序影響。
-  const applyZen = () => {
-    if (configData.zenMode && searchOpen) closeSearch()
-    document.body.classList.toggle(className.ZEN, !!configData.zenMode)
-  }
-  applyZen()
-
   renderSide()
 
   if (needsCharsetCompat(window.location.protocol, configData.charsetCompat)) {
@@ -662,11 +660,11 @@ function main(data: Data) {
     [sideExpandBtn, rawToggleBtn, goTopBtn],
   )
 
-  /* render page-level floating menu（獨立於 buttonWrap：zenMode 隱藏
-   * button-wrap 時仍要留下這顆入口；raw 檢視時它借用的樣式（FLOAT_MENU /
-   * FLOAT_MENU_BTN / ...）與 buttonWrap/btn 同放在未受 body.md-reader
-   * 限定的頂層 `.md-reader { }` 區塊，故 lifecycle.toggleRaw() 移除 body
-   * 的 md-reader class 時不受影響，選單在 raw 檢視下仍可正常顯示與互動）*/
+  /* render page-level floating menu（獨立於 buttonWrap：raw 檢視時它借用
+   * 的樣式（FLOAT_MENU / FLOAT_MENU_BTN / ...）與 buttonWrap/btn 同放在
+   * 未受 body.md-reader 限定的頂層 `.md-reader { }` 區塊，故
+   * lifecycle.toggleRaw() 移除 body 的 md-reader class 時不受影響，選單
+   * 在 raw 檢視下仍可正常顯示與互動）*/
   const floatMenuBtn = new Ele<HTMLElement>('button', {
     className: [className.MD_BUTTON, className.FLOAT_MENU_BTN],
     title: 'Menu',
@@ -685,13 +683,55 @@ function main(data: Data) {
     return item
   }
 
+  let settingsOverlay: ReturnType<typeof createDismissable> | null = null
+  function getSettingsOverlay() {
+    if (settingsOverlay) return settingsOverlay
+    const iframe = new Ele<HTMLIFrameElement>('iframe', {
+      src: chrome.runtime.getURL('popup.html'),
+    })
+    const panel = new Ele<HTMLElement>(
+      'div',
+      { className: className.SETTINGS_OVERLAY },
+      [iframe],
+    )
+    panel.hide()
+    lifecycle.mount([panel])
+    settingsOverlay = createDismissable(panel)
+    return settingsOverlay
+  }
+
+  let aboutOverlay: ReturnType<typeof createDismissable> | null = null
+  function getAboutOverlay() {
+    if (aboutOverlay) return aboutOverlay
+    const icon = new Ele<HTMLImageElement>('img', {
+      src: chrome.runtime.getURL('images/logo-stroke.png'),
+    })
+    const name = new Ele<HTMLElement>('div', { className: 'about-name' })
+    name.textContent = 'MD Reader Lite'
+    const version = new Ele<HTMLElement>('div', { className: 'about-version' })
+    version.textContent = 'v' + chrome.runtime.getManifest().version
+    const link = new Ele<HTMLAnchorElement>('a', {
+      href: 'https://github.com/swchen44/md-reader-lite',
+      target: '_blank',
+      rel: 'noopener',
+    })
+    link.textContent = 'github.com/swchen44/md-reader-lite'
+    const modal = new Ele<HTMLElement>(
+      'div',
+      { className: className.ABOUT_MODAL },
+      [icon, name, version, link],
+    )
+    modal.hide()
+    lifecycle.mount([modal])
+    aboutOverlay = createDismissable(modal)
+    return aboutOverlay
+  }
+
   const floatMenuDropdown = new Ele<HTMLElement>(
     'div',
     { className: className.FLOAT_MENU_DROPDOWN },
     [
-      floatMenuItem('menu_settings', () =>
-        chrome.runtime.sendMessage({ action: 'openOptions' }),
-      ),
+      floatMenuItem('menu_settings', () => getSettingsOverlay().toggle()),
       floatMenuItem('menu_toggle-raw', () => toggleRawView()),
       floatMenuItem('menu_fullscreen', () => {
         document.fullscreenElement
@@ -699,15 +739,7 @@ function main(data: Data) {
           : document.documentElement.requestFullscreen().catch(() => {})
       }),
       floatMenuItem('menu_print', () => window.print()),
-      floatMenuItem('menu_zen', () => {
-        chrome.runtime.sendMessage({
-          action: 'storage',
-          data: { key: 'zenMode', value: !configData.zenMode },
-        })
-      }),
-      floatMenuItem('menu_about', () =>
-        window.open('https://github.com/swchen44/md-reader-lite'),
-      ),
+      floatMenuItem('menu_about', () => getAboutOverlay().open()),
     ],
   )
   floatMenuDropdown.hide()
@@ -741,11 +773,50 @@ function main(data: Data) {
     floatMenuOpen ? closeFloatMenu() : openFloatMenu()
   })
 
+  const sideResizer = new Ele<HTMLElement>('div', {
+    className: className.SIDE_RESIZER,
+  })
+  sideResizer.on('pointerdown', (e: PointerEvent) => {
+    e.preventDefault()
+    sideResizer.ele.setPointerCapture(e.pointerId)
+    document.body.style.userSelect = 'none'
+    const onMove = (ev: PointerEvent) => {
+      const w = clampSideWidth(ev.clientX)
+      document.documentElement.style.setProperty(
+        '--md-reader-side-width',
+        w + 'px',
+      )
+    }
+    const onUp = (ev: PointerEvent) => {
+      sideResizer.off('pointermove', onMove)
+      sideResizer.off('pointerup', onUp)
+      sideResizer.off('pointercancel', onUp)
+      sideResizer.ele.releasePointerCapture(ev.pointerId)
+      document.body.style.userSelect = ''
+      const w = clampSideWidth(ev.clientX)
+      chrome.runtime.sendMessage({
+        action: 'storage',
+        data: { key: 'sideWidth', value: w },
+      })
+    }
+    sideResizer.on('pointermove', onMove)
+    sideResizer.on('pointerup', onUp)
+    sideResizer.on('pointercancel', onUp)
+  })
+
   /* mount elements */
-  lifecycle.mount([buttonWrap, floatMenu, mdBody, mdSide, sideTabs])
+  lifecycle.mount([
+    buttonWrap,
+    floatMenu,
+    mdBody,
+    mdSide,
+    sideTabs,
+    sideResizer,
+  ])
   document.body.classList.add(className.HAS_TABS)
   setFolderTree(configData.folderTree !== false)
   updateAnchorPosition()
+  if (configData.sideWidth != null) applySideWidth()
 
   darkMediaQuery.addEventListener('change', (e: MediaQueryListEvent) => {
     if (configData.pageTheme === 'auto') {

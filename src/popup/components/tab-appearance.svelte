@@ -242,18 +242,6 @@
   </button>
 </div>
 
-<div class="form-item inline">
-  <span class="label-item">{localize('label_zen')}:</span>
-  <FormField align="end">
-    <Switch
-      disabled={!data.enable}
-      bind:checked={data.zenMode}
-      color="primary"
-      on:change={() => updateConfig('zenMode', data.zenMode)}
-    />
-  </FormField>
-</div>
-
 <style>
   .range-value {
     margin-left: 8px;

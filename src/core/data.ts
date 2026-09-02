@@ -23,13 +23,13 @@ export interface Data {
   breaks?: boolean
   customWidth?: number | null
   customCss?: string
-  zenMode?: boolean
   mdPluginOptions?: Record<string, Record<string, unknown>>
   customWidthUnit?: 'px' | 'percent'
   charsetCompat?: boolean
   offlineMode?: boolean
   plantumlEnabled?: boolean
   plantumlServer?: string
+  sideWidth?: number
 }
 
 export function getDefaultData(mergeData: Data = {}): Data {
@@ -53,7 +53,6 @@ export function getDefaultData(mergeData: Data = {}): Data {
     breaks: false,
     customWidth: null,
     customCss: '',
-    zenMode: false,
     mdPluginOptions: getDefaultPluginOptions(),
     customWidthUnit: 'px',
     charsetCompat: false,

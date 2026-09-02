@@ -17,6 +17,20 @@ body {
   opacity: 0.54;
 }
 
+/* SMUI/Material components (Chip, Select, FormField radio labels, and the
+   Select's dropdown menu list) render text at library-default sizes (14px/
+   16px via rem units) that were never authored as literal "font-size: Npx"
+   in this file, so they weren't caught by a plain source grep. Scope these
+   overrides under the popup's ".form" wrapper (which contains every tab's
+   content) purely to win specificity over the vendor rules that appear
+   later in the compiled stylesheet — not to narrow where they apply. */
+.form .mdc-chip,
+.form .mdc-form-field,
+.form .mdc-select__selected-text,
+.form .mdc-deprecated-list {
+  font-size: 13px;
+}
+
 .mdc-chip .mdc-chip__checkmark {
   display: none;
 }
@@ -46,7 +60,7 @@ body {
 
 .hint-item {
   margin: -10px 0 12px;
-  font-size: 11px;
+  font-size: 12px;
   color: #8890a6;
 }
 
