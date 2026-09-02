@@ -239,6 +239,7 @@ function main(data: Data) {
   }
   applyCustomCss()
 
+  const localize = i18n(configData.language)
   const mdRenderer =
     (target: HTMLElement | Ele) =>
     (code: string = '', options?: MdOptions) => {
@@ -254,6 +255,7 @@ function main(data: Data) {
             configData.offlineMode,
             configData.plantumlServer,
           ),
+          disabledHint: localize('plantuml_disabled_render'),
         },
         ...options,
       })
@@ -294,7 +296,6 @@ function main(data: Data) {
   })
 
   /* render folder tree tab */
-  const localize = i18n(configData.language)
   let fileTree: ReturnType<typeof createFileTree> | null = null
   let filesPanel: Ele<HTMLElement> | null = null
   let activeTab: 'outline' | 'files' = 'outline'

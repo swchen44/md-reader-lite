@@ -54,7 +54,7 @@ export interface MdOptions {
   config?: MarkdownIt.Options
   plugins?: Array<string>
   pluginOptions?: Record<string, Record<string, unknown>>
-  plantuml?: { server: string; allowed: boolean }
+  plantuml?: { server: string; allowed: boolean; disabledHint?: string }
 }
 
 function initRender({

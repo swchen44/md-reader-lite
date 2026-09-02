@@ -60,4 +60,5 @@ export default {
   BLOCKED_REMOTE: p`blocked-remote`,
   PLANTUML: p`plantuml`,
   PLANTUML_DISABLED: p`plantuml-disabled`,
+  PLANTUML_SOURCE: p`plantuml-source`,
 }
