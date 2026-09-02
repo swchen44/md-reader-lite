@@ -105,3 +105,30 @@ test('canRenderPlantuml: non-string/nullish server -> false', async () => {
   assert.equal(canRenderPlantuml(true, false, undefined), false)
   assert.equal(canRenderPlantuml(true, false, null), false)
 })
+
+test('isPlantumlUrl: .puml / .plantuml (case-insensitive) -> true', async () => {
+  const { isPlantumlUrl } = await load()
+  assert.equal(isPlantumlUrl('http://x/a.puml'), true)
+  assert.equal(isPlantumlUrl('http://x/a.plantuml'), true)
+  assert.equal(isPlantumlUrl('file:///x/A.PUML'), true)
+  assert.equal(isPlantumlUrl('https://x/dir/b.PlantUML'), true)
+})
+
+test('isPlantumlUrl: query string tolerated', async () => {
+  const { isPlantumlUrl } = await load()
+  assert.equal(isPlantumlUrl('http://x/a.puml?x=1'), true)
+})
+
+test('isPlantumlUrl: non-plantuml extensions -> false', async () => {
+  const { isPlantumlUrl } = await load()
+  assert.equal(isPlantumlUrl('http://x/a.md'), false)
+  assert.equal(isPlantumlUrl('http://x/a.txt'), false)
+  assert.equal(isPlantumlUrl('http://x/pumla.md'), false)
+})
+
+test('isPlantumlUrl: bad/non-string url -> false', async () => {
+  const { isPlantumlUrl } = await load()
+  assert.equal(isPlantumlUrl('not a url'), false)
+  assert.equal(isPlantumlUrl(''), false)
+  assert.equal(isPlantumlUrl(undefined), false)
+})
