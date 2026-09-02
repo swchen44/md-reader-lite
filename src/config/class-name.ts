@@ -53,6 +53,7 @@ export default {
   FLOAT_MENU_OPEN: p`float-menu--open`,
   FLOAT_MENU_DROPDOWN: p`float-menu-dropdown`,
   FLOAT_MENU_ITEM: p`float-menu-item`,
+  SETTINGS_OVERLAY: p`settings-overlay`,
   SIDE_FOLD: p`side-fold`,
   DIAGRAM_VIEWER: p`diagram-viewer`,
   DIAGRAM_CONTROLS: p`diagram-controls`,

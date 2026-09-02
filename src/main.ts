@@ -14,6 +14,7 @@ import type { Theme } from '@/config/page-themes'
 import { getDefaultData, type Data } from '@/core/data'
 import { needsCharsetCompat } from '@/core/charset'
 import { isNetworkAllowed } from '@/core/network'
+import { createDismissable } from '@/core/overlay'
 import {
   canRenderPlantuml,
   normalizePlantumlServer,
@@ -671,13 +672,28 @@ function main(data: Data) {
     return item
   }
 
+  let settingsOverlay: ReturnType<typeof createDismissable> | null = null
+  function getSettingsOverlay() {
+    if (settingsOverlay) return settingsOverlay
+    const iframe = new Ele<HTMLIFrameElement>('iframe', {
+      src: chrome.runtime.getURL('popup.html'),
+    })
+    const panel = new Ele<HTMLElement>(
+      'div',
+      { className: className.SETTINGS_OVERLAY },
+      [iframe],
+    )
+    panel.hide()
+    lifecycle.mount([panel])
+    settingsOverlay = createDismissable(panel)
+    return settingsOverlay
+  }
+
   const floatMenuDropdown = new Ele<HTMLElement>(
     'div',
     { className: className.FLOAT_MENU_DROPDOWN },
     [
-      floatMenuItem('menu_settings', () =>
-        chrome.runtime.sendMessage({ action: 'openOptions' }),
-      ),
+      floatMenuItem('menu_settings', () => getSettingsOverlay().toggle()),
       floatMenuItem('menu_toggle-raw', () => toggleRawView()),
       floatMenuItem('menu_fullscreen', () => {
         document.fullscreenElement
