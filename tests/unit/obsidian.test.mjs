@@ -3,7 +3,9 @@ import assert from 'node:assert/strict'
 import MarkdownIt from 'markdown-it'
 
 const md = async () => {
-  const { default: ObsidianPlugin } = await import('../src/plugins/obsidian.ts')
+  const { default: ObsidianPlugin } = await import(
+    '../../src/plugins/obsidian.ts'
+  )
   return new MarkdownIt({ html: true }).use(ObsidianPlugin)
 }
 
@@ -73,7 +75,9 @@ test('escapes html in wikilink text', async () => {
 })
 
 test('normalizes obsidian callouts to alert-compatible form', async () => {
-  const { default: ObsidianPlugin } = await import('../src/plugins/obsidian.ts')
+  const { default: ObsidianPlugin } = await import(
+    '../../src/plugins/obsidian.ts'
+  )
   const m = new MarkdownIt({ html: true }).use(ObsidianPlugin)
   // 未知型別 → NOTE；摺疊記號去除；自訂標題移到粗體行
   const html = m.render('> [!hint]- My Title\n> body')
@@ -82,7 +86,9 @@ test('normalizes obsidian callouts to alert-compatible form', async () => {
 })
 
 test('renders front matter as collapsed details table', async () => {
-  const { default: ObsidianPlugin } = await import('../src/plugins/obsidian.ts')
+  const { default: ObsidianPlugin } = await import(
+    '../../src/plugins/obsidian.ts'
+  )
   const m = new MarkdownIt({ html: true }).use(ObsidianPlugin)
   const html = m.render('---\ntitle: Hello\ntags: a, b\n---\n\n# Doc')
   assert.match(html, /<details class="md-reader__frontmatter">/)
@@ -91,14 +97,18 @@ test('renders front matter as collapsed details table', async () => {
 })
 
 test('front matter requires document start', async () => {
-  const { default: ObsidianPlugin } = await import('../src/plugins/obsidian.ts')
+  const { default: ObsidianPlugin } = await import(
+    '../../src/plugins/obsidian.ts'
+  )
   const m = new MarkdownIt({ html: true }).use(ObsidianPlugin)
   const html = m.render('# Doc\n\n---\nnot: frontmatter\n---')
   assert.ok(!html.includes('md-reader__frontmatter'))
 })
 
 test('does not leak frontmatterHtml across renders when env is reused', async () => {
-  const { default: ObsidianPlugin } = await import('../src/plugins/obsidian.ts')
+  const { default: ObsidianPlugin } = await import(
+    '../../src/plugins/obsidian.ts'
+  )
   const m = new MarkdownIt({ html: true }).use(ObsidianPlugin)
   const env = {}
   const html1 = m.render('---\ntitle: Hello\n---\n\n# Doc', env)
@@ -108,7 +118,9 @@ test('does not leak frontmatterHtml across renders when env is reused', async ()
 })
 
 test('applying the plugin twice does not double-render front matter', async () => {
-  const { default: ObsidianPlugin } = await import('../src/plugins/obsidian.ts')
+  const { default: ObsidianPlugin } = await import(
+    '../../src/plugins/obsidian.ts'
+  )
   const m = new MarkdownIt({ html: true })
     .use(ObsidianPlugin)
     .use(ObsidianPlugin)
@@ -117,7 +129,9 @@ test('applying the plugin twice does not double-render front matter', async () =
 })
 
 test('callout normalization does not touch fenced code blocks', async () => {
-  const { default: ObsidianPlugin } = await import('../src/plugins/obsidian.ts')
+  const { default: ObsidianPlugin } = await import(
+    '../../src/plugins/obsidian.ts'
+  )
   const m = new MarkdownIt({ html: true }).use(ObsidianPlugin)
   const html = m.render('```\n> [!note] Title\n```')
   assert.match(html, /<code>[\s\S]*\[!note\][\s\S]*<\/code>/)
@@ -125,7 +139,9 @@ test('callout normalization does not touch fenced code blocks', async () => {
 })
 
 test('normalizes nested blockquote callouts', async () => {
-  const { default: ObsidianPlugin } = await import('../src/plugins/obsidian.ts')
+  const { default: ObsidianPlugin } = await import(
+    '../../src/plugins/obsidian.ts'
+  )
   const m = new MarkdownIt({ html: true }).use(ObsidianPlugin)
   const html = m.render('> > [!hint] Deep\n> > body')
   assert.match(html, /<strong>Deep<\/strong>/)
@@ -133,7 +149,9 @@ test('normalizes nested blockquote callouts', async () => {
 })
 
 test('same-line pseudo-fence does not desync fence tracking', async () => {
-  const { default: ObsidianPlugin } = await import('../src/plugins/obsidian.ts')
+  const { default: ObsidianPlugin } = await import(
+    '../../src/plugins/obsidian.ts'
+  )
   const m = new MarkdownIt({ html: true }).use(ObsidianPlugin)
   // ```js``` is not a real fence opener (backtick info strings may not
   // contain a backtick); normalization must still apply afterwards.
@@ -142,14 +160,18 @@ test('same-line pseudo-fence does not desync fence tracking', async () => {
 })
 
 test('shorter marker nested inside a longer fence is not a closer', async () => {
-  const { default: ObsidianPlugin } = await import('../src/plugins/obsidian.ts')
+  const { default: ObsidianPlugin } = await import(
+    '../../src/plugins/obsidian.ts'
+  )
   const m = new MarkdownIt({ html: true }).use(ObsidianPlugin)
   const html = m.render('````\n```\n> [!note] Trapped\n````')
   assert.ok(html.includes('[!note] Trapped'))
 })
 
 test('fences hidden behind blockquote markers are tracked', async () => {
-  const { default: ObsidianPlugin } = await import('../src/plugins/obsidian.ts')
+  const { default: ObsidianPlugin } = await import(
+    '../../src/plugins/obsidian.ts'
+  )
   const m = new MarkdownIt({ html: true }).use(ObsidianPlugin)
   const html = m.render('> ```\n> [!note] QuotedInFence\n> ```')
   assert.ok(html.includes('[!note] QuotedInFence'))

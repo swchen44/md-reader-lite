@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-const load = () => import('../src/core/dir-listing.ts')
+const load = () => import('../../src/core/dir-listing.ts')
 
 const NGINX_HTML = `<html><head><title>Index of /docs/</title></head>
 <body bgcolor="white"><h1>Index of /docs/</h1><hr><pre><a href="../">../</a>

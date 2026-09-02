@@ -23,6 +23,10 @@
     "chrome extension"
   ],
   "scripts": {
+    "test": "node --test tests/unit/*.test.mjs",
+    "test:unit": "node --test tests/unit/*.test.mjs",
+    "test:e2e": "node --test tests/e2e/*.e2e.mjs",
+    "typecheck": "tsc --noEmit",
     "dev": "webpack --config ./build/webpack.dev.js",
     "build": "run-s build:*",
     "build:manifest": "node ./scripts/manifest.mjs",
