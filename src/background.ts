@@ -21,6 +21,7 @@ async function messageHandler(
       break
     case 'openOptions':
       chrome.runtime.openOptionsPage()
+      callback?.()
       break
     case 'bgFetch': {
       const allowed = canBgFetch(
