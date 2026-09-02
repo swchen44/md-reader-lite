@@ -31,19 +31,15 @@
     data = data
   })
 
-  $: if (data.language) {
-    updateConfig('language', data.language)
-    changeLocale(data.language)
-  }
+  // Pure reactive re-localization: no side effect. Persistence of `language`
+  // is event-driven in tab-general's Select (on:MDCSelect:change), so this must
+  // NOT call updateConfig (which previously fired on every unrelated data change).
+  $: localize = i18n(data.language || i18n().locale)
 
   function updateConfig(key, value) {
     setTimeout(() => {
       chrome.runtime.sendMessage({ action: 'storage', data: { key, value } })
     }, 0)
-  }
-
-  function changeLocale(language) {
-    localize = i18n(language)
   }
 </script>
 

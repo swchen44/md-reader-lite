@@ -10,7 +10,8 @@ A lightweight, **privacy-first** Chrome extension that renders local and online 
 - Obsidian syntax: `![[image|300]]` embeds, `[[wikilinks|alias]]`, `%%comments%%`, callouts, front matter table
 - Outline (TOC) side panel, light/dark/auto themes, custom plugins toggle, per-plugin options
 - Folder tree side panel for browsing sibling markdown files — **opt-in, off by default** (http/https autoindex, `file://` via folder picker, GitHub raw pages)
-- PlantUML diagrams via a configurable server — **opt-in, off by default, and disabled whenever offline mode is on** (self-hostable)
+- PlantUML diagrams via a configurable server — **opt-in, off by default, and disabled whenever offline mode is on** (self-hostable; `.puml`/`.plantuml` files render whole as one diagram — [self-host guide](docs/plantuml-server-setup.md))
+- Recognizes `.md` / `.markdown` / `.mkd` / `.mdx` / `.mdc` / `.txt` (opt-in) / `.puml` / `.plantuml`
 - Works on `file://`, intranet servers, and raw URLs
 
 ## Privacy — our defining feature

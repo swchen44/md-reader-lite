@@ -17,3 +17,12 @@ export function canRenderPlantuml(
 ): boolean {
   return !!enabled && !offlineMode && !!String(server ?? '').trim()
 }
+
+export function isPlantumlUrl(url: string): boolean {
+  try {
+    const pathname = new URL(url).pathname
+    return /\.(puml|plantuml)$/i.test(pathname)
+  } catch {
+    return false
+  }
+}

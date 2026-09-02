@@ -139,6 +139,20 @@
   />
 </div>
 <div class="hint-item">{localize('warn_plantuml')}</div>
+<div class="hint-item plantuml-help">
+  {localize('label_plantuml-help')}:
+  <a
+    href="https://github.com/swchen44/md-reader-lite/blob/main/docs/plantuml-server-setup.zh-TW.md"
+    target="_blank"
+    rel="noopener">中文</a
+  >
+  /
+  <a
+    href="https://github.com/swchen44/md-reader-lite/blob/main/docs/plantuml-server-setup.md"
+    target="_blank"
+    rel="noopener">English</a
+  >
+</div>
 
 <style>
   .plantuml-server-input {

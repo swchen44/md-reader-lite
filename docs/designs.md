@@ -14,4 +14,6 @@
 | 2026-09-01 | 字元集相容模式（file:// 強制 UTF-8 重解碼）；零權限 SW bgFetch + 精確 URL 比對安全模型（senderUrl===targetUrl，堵 file-disclosure）；GATE 實測 SW fetch file:// 可行、CS fetch 不可行             | [superpowers/specs/2026-09-01-charset-compat-design.md](superpowers/specs/2026-09-01-charset-compat-design.md)                                       | 已實作 |
 | 2026-09-01 | 離線模式總開關（offlineMode，預設開，封鎖五處 egress：refresh/http 目錄樹/GitHub 目錄樹/PlantUML img/文件內遠端資源 DOM 清掃）＋ PlantUML 圖表（opt-in、預設關、離線下強制停用、可自架伺服器）    | [superpowers/specs/2026-09-01-offline-mode-plantuml-design.md](superpowers/specs/2026-09-01-offline-mode-plantuml-design.md)                         | 已實作 |
 
+| 2026-09-02 | .mdc/.puml/.plantuml 副檔名（.puml/.plantuml 整檔即一張圖，wrap-as-fence 復用離線管制）＋ PlantUML 關閉顯示小提示+原碼 ＋ 伺服器內網自架教學連結 ＋ language 即時生效修正（actionMap reload）＋ 全按鈕驗收 | [superpowers/specs/2026-09-02-plantuml-files-and-fixes-design.md](superpowers/specs/2026-09-02-plantuml-files-and-fixes-design.md) | 已實作 |
+
 新設計請放 docs/superpowers/specs/ 並在此登錄。

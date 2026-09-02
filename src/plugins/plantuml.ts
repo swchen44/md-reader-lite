@@ -15,7 +15,7 @@ function escapeHtml(content: string): string {
 
 export default function PlantumlPlugin(
   md: MarkdownIt,
-  opts?: { server?: string; allowed?: boolean },
+  opts?: { server?: string; allowed?: boolean; disabledHint?: string },
 ) {
   const fallbackFence = md.renderer.rules.fence?.bind(md.renderer.rules)
 
@@ -32,9 +32,11 @@ export default function PlantumlPlugin(
           src,
         )}" alt="PlantUML diagram" loading="lazy">`
       }
-      return `<div class="${
-        className.PLANTUML_DISABLED
-      }">PlantUML disabled</div><pre>${escapeHtml(code)}</pre>`
+      return `<div class="${className.PLANTUML_DISABLED}">${escapeHtml(
+        opts?.disabledHint || 'PlantUML disabled',
+      )}</div><pre class="${className.PLANTUML_SOURCE}">${escapeHtml(
+        code,
+      )}</pre>`
     }
 
     if (fallbackFence) {

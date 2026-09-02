@@ -14,7 +14,11 @@ import type { Theme } from '@/config/page-themes'
 import { getDefaultData, type Data } from '@/core/data'
 import { needsCharsetCompat } from '@/core/charset'
 import { isNetworkAllowed } from '@/core/network'
-import { canRenderPlantuml, normalizePlantumlServer } from '@/core/plantuml'
+import {
+  canRenderPlantuml,
+  normalizePlantumlServer,
+  isPlantumlUrl,
+} from '@/core/plantuml'
 import {
   clampRefreshInterval,
   formatContentWidth,
@@ -139,7 +143,18 @@ function main(data: Data) {
     return
   }
 
-  if (!configData.enable || !CONTENT_TYPES.includes(document.contentType)) {
+  const isPuml = isPlantumlUrl(window.location.href)
+  if (!configData.enable) {
+    return
+  }
+  if (isPuml) {
+    // .puml/.plantuml：本擴充明確認得的副檔名。放行條件縮窄為 text/* 且非
+    // text/html——保留對「某網站 .puml 動態路由實回 HTML」誤命中的防線。
+    const ct = document.contentType
+    if (!ct.startsWith('text/') || ct === 'text/html') {
+      return
+    }
+  } else if (!CONTENT_TYPES.includes(document.contentType)) {
     return
   }
 
@@ -170,6 +185,12 @@ function main(data: Data) {
   const rawContainer = getRawContainer()
   lifecycle.init(rawContainer)
   mdRaw = rawContainer?.textContent
+  if (isPuml && mdRaw) {
+    // .puml/.plantuml 獨立檔：整份內容即一張 PlantUML 圖，包成單一 plantuml
+    // fence 走既有 markdown→plantuml 插件管線（離線/啟用管制、關閉顯示原碼
+    // 全部自動沿用站點 4 機制）。
+    mdRaw = '```plantuml\n' + mdRaw.trim() + '\n```'
+  }
 
   /* render content */
   const mdContent = new Ele<HTMLElement>('article', {
@@ -218,6 +239,7 @@ function main(data: Data) {
   }
   applyCustomCss()
 
+  const localize = i18n(configData.language)
   const mdRenderer =
     (target: HTMLElement | Ele) =>
     (code: string = '', options?: MdOptions) => {
@@ -233,6 +255,7 @@ function main(data: Data) {
             configData.offlineMode,
             configData.plantumlServer,
           ),
+          disabledHint: localize('plantuml_disabled_render'),
         },
         ...options,
       })
@@ -273,7 +296,6 @@ function main(data: Data) {
   })
 
   /* render folder tree tab */
-  const localize = i18n(configData.language)
   let fileTree: ReturnType<typeof createFileTree> | null = null
   let filesPanel: Ele<HTMLElement> | null = null
   let activeTab: 'outline' | 'files' = 'outline'

@@ -60,6 +60,7 @@ const actionMap = {
   pageTheme: 'updatePageTheme',
   hiddenSide: 'toggleSide',
   folderTree: 'toggleFolderTree',
+  language: 'reload',
   refreshInterval: 'applySetting',
   codeWrap: 'applySetting',
   codeBlockDayTheme: 'applySetting',
