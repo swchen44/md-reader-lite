@@ -776,19 +776,22 @@ function main(data: Data) {
   const sideResizer = new Ele<HTMLElement>('div', {
     className: className.SIDE_RESIZER,
   })
-  sideResizer.on('mousedown', (e: MouseEvent) => {
+  sideResizer.on('pointerdown', (e: PointerEvent) => {
     e.preventDefault()
+    sideResizer.ele.setPointerCapture(e.pointerId)
     document.body.style.userSelect = 'none'
-    const onMove = (ev: MouseEvent) => {
+    const onMove = (ev: PointerEvent) => {
       const w = clampSideWidth(ev.clientX)
       document.documentElement.style.setProperty(
         '--md-reader-side-width',
         w + 'px',
       )
     }
-    const onUp = (ev: MouseEvent) => {
-      document.removeEventListener('mousemove', onMove)
-      document.removeEventListener('mouseup', onUp)
+    const onUp = (ev: PointerEvent) => {
+      sideResizer.off('pointermove', onMove)
+      sideResizer.off('pointerup', onUp)
+      sideResizer.off('pointercancel', onUp)
+      sideResizer.ele.releasePointerCapture(ev.pointerId)
       document.body.style.userSelect = ''
       const w = clampSideWidth(ev.clientX)
       chrome.runtime.sendMessage({
@@ -796,8 +799,9 @@ function main(data: Data) {
         data: { key: 'sideWidth', value: w },
       })
     }
-    document.addEventListener('mousemove', onMove)
-    document.addEventListener('mouseup', onUp)
+    sideResizer.on('pointermove', onMove)
+    sideResizer.on('pointerup', onUp)
+    sideResizer.on('pointercancel', onUp)
   })
 
   /* mount elements */
