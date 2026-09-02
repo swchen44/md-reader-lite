@@ -28,7 +28,19 @@ Bob --> Alice: Authentication Response
 - manifest matches 加 `.puml`、`.plantuml`（http + file + 大寫 + `?*`）。
 - 純函式 `src/core/plantuml.ts` 加 `isPlantumlUrl(url: string): boolean`（pathname 以 `.puml`/`.plantuml` 結尾，不分大小寫，比照 `isTxtUrl`）。
 - `main.ts`：**在讀取 mdRaw 後、渲染前**，若 `isPlantumlUrl(location.href)` → 把整份內容包成單一 plantuml fence：` mdRaw = '```plantuml\n' + mdRaw.trim() + '\n```' `，之後照常走 `contentRender(mdRaw)`→markdown→plantuml 插件。如此**離線/啟用管制、關閉顯示原碼全部自動沿用**站點 4 既有機制。
-- **content-type 閘門**：`.puml`/`.plantuml` 經 http 可能非 `text/plain`；`main.ts` 對 `isPlantumlUrl` 為真者**繞過 `CONTENT_TYPES` 檢查強制渲染**（比照本擴充明確認得的副檔名，插入點在 `isTxtUrl` early-return 之後、`CONTENT_TYPES` return 之前——若 isPlantumlUrl 則不因 content-type 而 return）。
+- **content-type 閘門（設計審查 Important 修正——繞過縮窄，保留 HTML 誤命中防線）**：`CONTENT_TYPES`（`text/plain`/`text/markdown`/`text/x-markdown`）是「manifest 以副檔名寬鬆比對後」的第二道防線——擋掉某網站有 `.puml`/`.md` 結尾動態路由但實際回 `text/html`（真實頁面）時擴充誤注入污染版面。`.puml` 常見的 `text/plain` **本就在 CONTENT_TYPES**，不需繞過；唯一需要放行的是「`text/*` 但非 CONTENT_TYPES 成員」的少數情形。故**不無條件繞過**：對 `isPlantumlUrl` 為真者，放行條件改為 `document.contentType.startsWith('text/') && document.contentType !== 'text/html'`（`text/html` 一律不注入，保留防線）。main.ts 現況 `if (!configData.enable || !CONTENT_TYPES.includes(document.contentType)) return` 為**合併判斷**，需重構為：
+
+```ts
+const isPuml = isPlantumlUrl(window.location.href)
+if (!configData.enable) return
+if (isPuml) {
+  const ct = document.contentType
+  if (!ct.startsWith('text/') || ct === 'text/html') return
+} else if (!CONTENT_TYPES.includes(document.contentType)) {
+  return
+}
+```
+
 - 邊界：plantuml 源碼理論上不含 ```，wrap 安全；若含則該 fence 可能提前結束（罕見，非目標處理）。
 
 ## 三、關閉 PlantUML（或離線）時顯示：小提示 + 原始碼
@@ -36,7 +48,7 @@ Bob --> Alice: Authentication Response
 使用者選「小提示 + 原始碼」。`src/plugins/plantuml.ts` 的 not-allowed 分支現為 `<div>PlantUML disabled</div><pre>source</pre>`（硬編英文）。改為：
 
 - 一行淡色小提示（i18n，經 md env 傳入 localize 結果或固定多語——定案：透過 `opts` 多傳一個 `disabledHint: string`，由 main.ts 以 `localize('plantuml_disabled_render')` 算好傳入），文案如「PlantUML 已關閉——啟用插件並關閉離線模式即可算圖」。
-- 下方原始碼以 `<pre class="md-reader__plantuml-source">` + `escapeHtml(code)` 顯示（既有）。
+- 下方原始碼以 `<pre class="md-reader__plantuml-source">` + `escapeHtml(code)` 顯示。**注意（審查 Minor）：`plantuml-source` class 為新增**——需在 `src/config/class-name.ts` 加 `PLANTUML_SOURCE = p\`plantuml-source\`` 常數、`src/style/index.less`加對應樣式（現況占位僅`<pre>` 無 class）。
 - 三語系 locale key `plantuml_disabled_render`。
 
 ## 四、伺服器欄位旁的教學連結（GitHub 中英文件）
@@ -52,7 +64,7 @@ Bob --> Alice: Authentication Response
 
 ## 六、全按鈕驗收（Playwright，controller）
 
-逐一驗證**每個** popup 控件與浮動選單項：點/切/填 → 寫入正確 storage key → （即時類）對 DOM 生效或（reload/重渲染類）storage 正確。清單：一般 11 項（含恢復預設、language 現會 reload）、外觀 11 項、插件全開關/chips/Linkify×3/Alert/plantumlEnabled/plantumlServer、浮動選單 5 項。每項一條斷言，全綠才算「每個按鈕都有實作」。
+逐一驗證**每個** popup 控件與浮動選單項：點/切/填 → 寫入正確 storage key → （即時類）對 DOM 生效或（reload/重渲染類）storage 正確。清單：一般 11 項（含恢復預設、language 現會 reload）、外觀 11 項、插件全開關/chips/Linkify×3/Alert/plantumlEnabled/plantumlServer、**PlantUML 伺服器教學連結 2 項（中/英，斷言 href 指向對應 GitHub blob URL、`target=_blank`、`rel=noopener`）**、浮動選單 5 項。每項一條斷言，全綠才算「每個按鈕都有實作」。另加 .puml/.plantuml 檔渲染（啟用+非離線 → 圖、離線/關閉 → 小提示+原碼）與 .mdc 檔渲染驗收。
 
 ## 資料模型 / 純函式
 
