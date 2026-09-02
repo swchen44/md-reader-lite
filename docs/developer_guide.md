@@ -58,10 +58,40 @@
 
 ## 測試
 
-    node --test tests/obsidian.test.mjs tests/dir-listing.test.mjs tests/graphviz.test.mjs
-    node_modules/.bin/tsc --noEmit
+測試分兩層，目錄即分類：
 
-坑：`node --test tests/`（目錄模式）在本 repo 會誤判失敗，一律指定檔案。
+| 目錄          | 類型                 | 執行                | CI    | 依賴                          |
+| ------------- | -------------------- | ------------------- | ----- | ----------------------------- |
+| `tests/unit/` | 單元（純函式）       | `npm run test:unit` | ✅ 有 | 無（Node 內建 `node --test`） |
+| `tests/e2e/`  | 端對端（真實瀏覽器） | `npm run test:e2e`  | ❌ 無 | Playwright + headed Chromium  |
+
+指令：
+
+    npm test            # = test:unit，跑 tests/unit/ 全部（164 條）
+    npm run test:unit   # node --test tests/unit/*.test.mjs
+    npm run test:e2e    # 需先 npm run build；載入 extension/ 進真實瀏覽器
+    npm run typecheck   # tsc --noEmit
+
+### 單元測試（tests/unit/）
+
+純函式測試，直接 `import` .ts（依賴 Node type stripping）。import 用 `#core/*`（package.json `imports` 映射）或相對 `../../src/...`。**CI（release.yml）跑 `tests/unit/*.test.mjs` 全部**——新增測試檔放進 `tests/unit/` 即自動納入 CI，不需改 workflow。
+
+坑：`node --test tests/unit/`（目錄模式）在本 repo 會誤判失敗；用 `tests/unit/*.test.mjs`（glob 展開為檔案清單）才對。
+
+### 端對端測試（tests/e2e/）
+
+把**建置後的**未封裝擴充（`extension/`）載入真實 Chromium，用真實滑鼠點擊驅動——能抓到單元測試測不到的 CSS／點擊 bug（例如 v1.5.1 的 SMUI 開關點不動、設定浮層 iframe 內控件是否真的可操作）。共用夾具在 `tests/e2e/_harness.mjs`（起 md http server、launch 帶擴充的瀏覽器、storage helper）；驗收流程在 `tests/e2e/*.e2e.mjs`。
+
+**不進 CI**：載入 MV3 擴充需 headed／new-headless 瀏覽器，CI 的純 headless runner 不支援（要進 CI 需自備 xvfb 或 new-headless + service worker 就緒等待）。**Playwright 刻意不列入 `package.json` devDependencies**，以免破壞 CI 的 `pnpm install --frozen-lockfile`；本機自行安裝：
+
+    pnpm add -D playwright   # 或全域安裝；本 repo 上層 node_modules 已有時亦可直接跑
+    npm run build && npm run test:e2e
+
+瀏覽器或 Playwright 不可用時，e2e 會在 `before` 掛鉤捕捉並整組 **skip**（不硬性失敗）。
+
+坑：headed 瀏覽器偶爾啟動卡住——**若自動化瀏覽器無故 hang，先懷疑 `extension/manifest.json` 無效**（無效的 `web_accessible_resources` match pattern 會讓擴充載入失敗、Chrome 一開就卡，表象像環境壞掉）。手動 `chrome://extensions → 載入未封裝項目` 會跳出真正的錯誤對話框（見 lesson_learn.md）。
+
+> **新增功能時**：碰網路/隱私的邏輯補 `tests/unit/`（可 CI 把關）；碰 popup／頁內 UI／點擊行為的補 `tests/e2e/`（本機驗收）。
 
 ## 本機載入與驗收
 
