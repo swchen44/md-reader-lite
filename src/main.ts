@@ -142,11 +142,13 @@ function main(data: Data) {
   })
 
   if (isTxtUrl(window.location.href) && !configData.txtAsMd) {
+    document.body.classList.add(className.MD_READY)
     return
   }
 
   const isPuml = isPlantumlUrl(window.location.href)
   if (!configData.enable) {
+    document.body.classList.add(className.MD_READY)
     return
   }
   if (isPuml) {
@@ -154,9 +156,11 @@ function main(data: Data) {
     // text/html——保留對「某網站 .puml 動態路由實回 HTML」誤命中的防線。
     const ct = document.contentType
     if (!ct.startsWith('text/') || ct === 'text/html') {
+      document.body.classList.add(className.MD_READY)
       return
     }
   } else if (!CONTENT_TYPES.includes(document.contentType)) {
+    document.body.classList.add(className.MD_READY)
     return
   }
 
@@ -818,7 +822,6 @@ function main(data: Data) {
     'div',
     { className: className.FLOAT_MENU_DROPDOWN },
     [
-      floatMenuItem('menu_settings', () => getSettingsOverlay().toggle()),
       floatMenuItem('menu_toggle-raw', () => toggleRawView()),
       floatMenuItem('menu_fullscreen', () => {
         document.fullscreenElement
@@ -826,6 +829,7 @@ function main(data: Data) {
           : document.documentElement.requestFullscreen().catch(() => {})
       }),
       floatMenuItem('menu_print', () => window.print()),
+      floatMenuItem('menu_settings', () => getSettingsOverlay().toggle()),
       floatMenuItem('menu_about', () => getAboutOverlay().open()),
     ],
   )
@@ -900,6 +904,9 @@ function main(data: Data) {
     sideTabs,
     sideResizer,
   ])
+  // 渲染好的內容已經掛上 DOM，此刻掀開 index.less 頂部那層「先藏原始
+  // <pre>、蓋 loading 圖示」的 FOUC 遮罩最不會有空白閃爍。
+  document.body.classList.add(className.MD_READY)
   document.body.classList.add(className.HAS_TABS)
   setFolderTree(configData.folderTree !== false)
   updateAnchorPosition()
@@ -1135,5 +1142,17 @@ if (
   )
   window.parent.postMessage({ __mdReaderDirProbe: true, entries }, '*')
 } else {
-  storage.get().then(main)
+  // main() 若因未預期例外中途中斷，絕不能讓上面 CSS 的 loading 遮罩卡住不
+  // 放——那會比「原始碼閃一下」嚴重得多，變成整份文件永遠打不開（同一類
+  // 教訓見 sessionStorage SecurityError 那次回歸）。catch 接住同步/非同步
+  // 錯誤，setTimeout 再加一層與 main() 執行路徑完全無關的保底。
+  storage
+    .get()
+    .then(main)
+    .catch(() => {
+      document.body.classList.add(className.MD_READY)
+    })
+  setTimeout(() => {
+    document.body.classList.add(className.MD_READY)
+  }, 4000)
 }

@@ -17,6 +17,7 @@ export default {
   SIDE_COLLAPSED: 'side-collapsed',
   SIDE_EXPANDED: 'side-expanded',
   HAS_TABS: 'md-reader-has-tabs',
+  MD_READY: 'md-reader-ready',
   SIDE_TABS: p`side-tabs`,
   SIDE_TAB: p`side-tab`,
   SIDE_TAB_ACTIVE: p`side-tab--active`,

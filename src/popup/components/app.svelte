@@ -23,12 +23,22 @@
     (isAllow: boolean) => (isAllowViewFile = !!isAllow),
   )
 
+  // Tracks what we know is already persisted, so updateConfig can no-op when
+  // a value round-trips back to itself. Needed because SMUI's <Select> fires
+  // MDCSelect:change as a side effect of `bind:value` being programmatically
+  // set (e.g. when storage.get() below loads the saved language into the
+  // dropdown) — without this guard that spurious event re-sends the same
+  // language, which background.ts maps to a page reload, instantly closing
+  // the settings overlay the user just opened ("設定頁一閃即逝").
+  let persisted: Partial<Data> = {}
+
   storage.get().then((_data: Data) => {
     // need an assignment to updata UI
     data = { ...data, ..._data }
     // harden against partial/legacy mdPluginOptions missing Linkify/Alert
     data.mdPluginOptions = mergePluginOptions(data.mdPluginOptions)
     data = data
+    persisted = { ...persisted, ...data }
   })
 
   // Pure reactive re-localization: no side effect. Persistence of `language`
@@ -37,6 +47,8 @@
   $: localize = i18n(data.language || i18n().locale)
 
   function updateConfig(key, value) {
+    if (persisted[key] === value) return
+    persisted[key] = value
     setTimeout(() => {
       chrome.runtime.sendMessage({ action: 'storage', data: { key, value } })
     }, 0)

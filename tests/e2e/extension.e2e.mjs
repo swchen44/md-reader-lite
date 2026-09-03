@@ -219,4 +219,121 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
     await page.mouse.click(600, 850)
     await page.waitForTimeout(200)
   })
+
+  test('≡ 選單: 「設定」緊鄰在「關於」前面', async t => {
+    if (unavailable) return t.skip(unavailable)
+    await page.click('.md-reader__float-menu-btn')
+    await page.waitForTimeout(200)
+    const order = await page.evaluate(() =>
+      [...document.querySelectorAll('.md-reader__float-menu-item')].map(e =>
+        e.textContent.trim(),
+      ),
+    )
+    await page.mouse.click(600, 850)
+    await page.waitForTimeout(200)
+    assert.equal(order.length, 5, '選單應有 5 個項目')
+    const settingsIdx = order.length - 2
+    const aboutIdx = order.length - 1
+    assert.match(
+      order[settingsIdx],
+      /設定|Settings|设置/,
+      '倒數第二項應是「設定」',
+    )
+    assert.match(order[aboutIdx], /關於|About|关于/, '最後一項應是「關於」')
+  })
+
+  test('設定: 切換語言（頁面重整）後再次打開不應閃退', async t => {
+    if (unavailable) return t.skip(unavailable)
+    // 迴歸鎖：頁籤記憶功能上線前，SMUI <Select> 在 storage.get() 回填語言
+    // 值時會誤觸發 MDCSelect:change，導致「language -> reload」被重複送出，
+    // 使剛打開的設定浮層在下一次開啟時瞬間被整頁重整關掉。
+    const langPage = await ctx.newPage()
+    await setStorage({ enable: true, offlineMode: false, language: 'en' })
+    await langPage.goto(`http://localhost:${port}/x.md`, {
+      waitUntil: 'domcontentloaded',
+    })
+    await langPage.waitForSelector('.md-reader__markdown-content', {
+      timeout: 12000,
+    })
+
+    async function openSettingsOn(p) {
+      await p.click('.md-reader__float-menu-btn')
+      await p.waitForTimeout(200)
+      await p.evaluate(() => {
+        const it = [
+          ...document.querySelectorAll('.md-reader__float-menu-item'),
+        ].find(e => /設定|Settings|设置/.test(e.textContent || ''))
+        it && it.click()
+      })
+      await p.waitForTimeout(400)
+    }
+
+    await openSettingsOn(langPage)
+    const frame = langPage.frames().find(f => /popup\.html/.test(f.url()))
+    await frame.evaluate(() => {
+      const row = [...document.querySelectorAll('.form-item')].find(r =>
+        /Language/.test(r.querySelector('.label-item')?.textContent || ''),
+      )
+      const sel = row?.querySelector('.mdc-select__anchor, .mdc-select')
+      sel && sel.click()
+    })
+    await langPage.waitForTimeout(300)
+    await frame.evaluate(() => {
+      const opt = [
+        ...document.querySelectorAll(
+          '.mdc-deprecated-list-item, [role="option"]',
+        ),
+      ].find(e => e.textContent.trim() === '繁體中文')
+      opt && opt.click()
+    })
+    await langPage
+      .waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 8000 })
+      .catch(() => {})
+    await langPage.waitForSelector('.md-reader__markdown-content', {
+      timeout: 12000,
+    })
+    await langPage.waitForTimeout(300)
+    assert.equal(
+      (await getStorage('language')).language,
+      'zh-TW',
+      '語言切換本身應該真的生效',
+    )
+
+    await openSettingsOn(langPage)
+    const visibleRightAfterOpen = await langPage.evaluate(() => {
+      const o = document.querySelector('.md-reader__settings-overlay')
+      return !!o && getComputedStyle(o).display !== 'none'
+    })
+    await langPage.waitForTimeout(1500)
+    const stillVisible = await langPage.evaluate(() => {
+      const o = document.querySelector('.md-reader__settings-overlay')
+      return !!o && getComputedStyle(o).display !== 'none'
+    })
+    assert.ok(visibleRightAfterOpen, '重新開啟設定浮層應可見')
+    assert.ok(stillVisible, '設定浮層不應在打開後自己閃退關閉')
+
+    await setStorage({ language: 'en' })
+    await langPage.close()
+  })
+
+  test('擴充停用時，FOUC 防護遮罩不能卡住不放內容', async t => {
+    if (unavailable) return t.skip(unavailable)
+    // 迴歸鎖：index.less 的 loading 遮罩預設蓋住整頁，只有 main.ts 明確
+    // 加上 md-reader-ready class 才會掀開。main() 在「擴充已停用」等提早
+    // return 的分支都必須補上這個 class，否則畫面會永遠卡在 loading 狀態。
+    await setStorage({ enable: false })
+    const disabledPage = await ctx.newPage()
+    await disabledPage.goto(`http://localhost:${port}/x.md`, {
+      waitUntil: 'domcontentloaded',
+    })
+    await disabledPage.waitForTimeout(1200)
+    const state = await disabledPage.evaluate(() => ({
+      ready: document.body.classList.contains('md-reader-ready'),
+      bodyVisible: document.body.textContent.length > 0,
+    }))
+    assert.ok(state.ready, '停用時也要補上 md-reader-ready，掀開遮罩')
+    assert.ok(state.bodyVisible, '停用時原生內容應該看得到，不能被卡住')
+    await disabledPage.close()
+    await setStorage({ enable: true })
+  })
 })
