@@ -405,12 +405,11 @@ function main(data: Data) {
       showFsaPanel('guide', null)
       return
     }
-    // 同伺服器 http(s)：offlineMode 的離線例外在 Task 2 處理，此任務先維持
-    // 既有行為（離線時封鎖）不變，避免與 Task 1 的重構混在一次 diff 裡。
-    if (!isNetworkAllowed(configData.offlineMode)) {
-      buildTree(undefined, 'default', null, localize('offline_blocked'))
-      return
-    }
+    // 同伺服器 http(s)：不受離線模式限制。載入目前這份文件本身即已是對
+    // 這台伺服器的一次網路請求，該伺服器已知道使用者存在；使用者主動
+    // 瀏覽同一伺服器的目錄清單是既有信任關係的延伸，不是新增暴露面
+    // （GitHub 分支請求的是不同主機 api.github.com，不適用此推論，仍受
+    // isNetworkAllowed 把關，見本函式上方）。
     try {
       await fetchDirListing(rootDir)
       buildTree(undefined)
