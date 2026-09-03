@@ -266,14 +266,22 @@ body.md-reader {
         text-align: right;
       }
       .md-reader__tree-settings-btn {
-        padding: 2px 8px;
-        font-size: 14px;
-        line-height: 1.4;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        padding: 4px;
         color: inherit;
         background: none;
         border: 1px solid var(--color-side-border);
         border-radius: 4px;
         cursor: pointer;
+        svg {
+          width: 100%;
+          height: 100%;
+          fill: currentColor;
+        }
         &:hover {
           color: var(--color-primary);
         }
@@ -283,9 +291,9 @@ body.md-reader {
         top: 100%;
         right: 1.2em;
         z-index: 2;
-        width: 200px;
-        padding: 6px;
-        font-size: 12px;
+        width: 180px;
+        padding: 4px;
+        font-size: 11px;
         background: var(--color-side-bg);
         border: 1px solid var(--color-side-border);
         border-radius: 6px;
@@ -295,7 +303,7 @@ body.md-reader {
       .md-reader__tree-settings-option {
         display: block;
         width: 100%;
-        padding: 5px 8px;
+        padding: 3px 6px;
         text-align: left;
         color: inherit;
         background: none;

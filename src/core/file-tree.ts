@@ -1,8 +1,9 @@
-import Ele from '@/core/ele'
+import Ele, { svg } from '@/core/ele'
 import className from '@/config/class-name'
 import { fetchDirListing, type DirEntry } from '@/core/dir-fetch'
 import { findRanges } from '@/core/doc-search'
 import { createDismissable } from '@/core/overlay'
+import settingsIcon from '@/images/icon_tree_settings.svg'
 
 type SortBy = 'name' | 'size' | 'date'
 
@@ -316,12 +317,15 @@ export function createFileTree({
   // radio-like (only one active at a time, shown via an --active class);
   // folders-first and show-hidden are simple toggle buttons.
   function buildToolbar(): Ele<HTMLElement> {
-    const settingsBtn = new Ele<HTMLElement>('button', {
-      className: className.TREE_SETTINGS_BTN,
-      title: localize('label_tree_settings'),
-      type: 'button',
-    })
-    settingsBtn.textContent = '⚙'
+    const settingsBtn = new Ele<HTMLElement>(
+      'button',
+      {
+        className: className.TREE_SETTINGS_BTN,
+        title: localize('label_tree_settings'),
+        type: 'button',
+      },
+      svg(settingsIcon),
+    )
 
     const menu = new Ele<HTMLElement>('div', {
       className: className.TREE_SETTINGS_MENU,
