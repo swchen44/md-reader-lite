@@ -321,10 +321,9 @@ function main(data: Data) {
     return filesPanel
   }
 
-  // PROTOTYPE: ask a hidden same-extension iframe (see the bottom of this
-  // file) to read a file:// directory's native Chrome listing on our
-  // behalf, avoiding the isolated-world XHR-to-directory block. Resolves
-  // null on timeout (4s) so callers can fall back to FSA.
+  // 本機 file:// 目錄列表：向同一擴充在隱藏 iframe 內執行的內容腳本要
+  // Chrome 原生目錄頁的解析結果，避免隔離世界對目錄網址的 XHR 必然被
+  // 網路層拒絕的問題。逾時（4s）回傳 null 讓呼叫端降級到 FSA。
   function probeDirViaFrame(dirUrl: string): Promise<DirEntry[] | null> {
     return new Promise(resolve => {
       let done = false
@@ -335,7 +334,17 @@ function main(data: Data) {
         ifr.remove()
       }
       const onMessage = (e: MessageEvent) => {
-        if (done || !e.data || e.data.__mdReaderDirProbe !== true) return
+        // 用 e.source 比對是否真的來自我們剛建立的這個 iframe——file://
+        // 頁面的 event.origin 恆為字串 "null"，對 origin 做字串比對沒有
+        //區辨力，改比對視窗參照才可靠。
+        if (
+          done ||
+          e.source !== ifr.contentWindow ||
+          !e.data ||
+          e.data.__mdReaderDirProbe !== true
+        ) {
+          return
+        }
         done = true
         cleanup()
         resolve(e.data.entries as DirEntry[])
@@ -364,45 +373,50 @@ function main(data: Data) {
       buildTree(createGithubLister(gh, rootDir), 'github', parentTreeUrl(gh))
       return
     }
-    if (!isFile && !isNetworkAllowed(configData.offlineMode)) {
+    if (isFile) {
+      // file:// 目錄：隔離世界對目錄網址的 XHR 在網路層必然失敗（已實測
+      // readyState:4 + onerror，非空回應那種失敗），且瀏覽器會在 console
+      // 印出無法被 JS 攔截的網路層錯誤——不再嘗試，直接走 frame-probe。
+      const probed = await probeDirViaFrame(rootDir)
+      if (probed) {
+        buildTree(u => probeDirViaFrame(u).then(r => r ?? []), 'default')
+        return
+      }
+      if (!isFsaSupported()) {
+        buildTree(undefined) // 維持原降級（樹內 dir_error 訊息）
+        return
+      }
+      const grant = (await loadGrant()) as {
+        handle: FsaDirectoryHandle
+        rootDirUrl: string
+      } | null
+      if (grant && rootDir.startsWith(grant.rootDirUrl)) {
+        const state = await verifyPermission(grant.handle).catch(() => 'denied')
+        if (state === 'granted') {
+          buildTree(createFsaLister(grant.handle, grant.rootDirUrl), 'fsa')
+          return
+        }
+        if (state === 'prompt') {
+          showFsaPanel('regrant', grant)
+          return
+        }
+        await clearGrant()
+      }
+      showFsaPanel('guide', null)
+      return
+    }
+    // 同伺服器 http(s)：offlineMode 的離線例外在 Task 2 處理，此任務先維持
+    // 既有行為（離線時封鎖）不變，避免與 Task 1 的重構混在一次 diff 裡。
+    if (!isNetworkAllowed(configData.offlineMode)) {
       buildTree(undefined, 'default', null, localize('offline_blocked'))
       return
     }
     try {
-      await fetchDirListing(rootDir) // 探測：http 及老 Chromium 成功
+      await fetchDirListing(rootDir)
       buildTree(undefined)
-      return
     } catch {
-      if (isFile) {
-        // PROTOTYPE: try the hidden-frame probe before falling to FSA.
-        const probed = await probeDirViaFrame(rootDir)
-        if (probed) {
-          buildTree(u => probeDirViaFrame(u).then(r => r ?? []), 'default')
-          return
-        }
-      }
-      if (!isFile || !isFsaSupported()) {
-        buildTree(undefined) // 維持原降級（樹內 dir_error 訊息）
-        return
-      }
+      buildTree(undefined)
     }
-    const grant = (await loadGrant()) as {
-      handle: FsaDirectoryHandle
-      rootDirUrl: string
-    } | null
-    if (grant && rootDir.startsWith(grant.rootDirUrl)) {
-      const state = await verifyPermission(grant.handle).catch(() => 'denied')
-      if (state === 'granted') {
-        buildTree(createFsaLister(grant.handle, grant.rootDirUrl), 'fsa')
-        return
-      }
-      if (state === 'prompt') {
-        showFsaPanel('regrant', grant)
-        return
-      }
-      await clearGrant()
-    }
-    showFsaPanel('guide', null)
   }
 
   function buildTree(
