@@ -337,14 +337,17 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
     await setStorage({ enable: true })
   })
 
-  test('沙盒頁面（如 GitHub raw 內容）：設定改開新分頁、列印停用並附提示', async t => {
+  test('沙盒頁面（如 GitHub raw 內容）：設定與列印都停用並附提示', async t => {
     if (unavailable) return t.skip(unavailable)
     // 迴歸鎖：raw.githubusercontent.com 送出的
     // `Content-Security-Policy: sandbox`（無 allow-* token）會讓瀏覽器把
     // 我們建立的設定 iframe 也一併當成沒有 allow-scripts 的沙盒——畫面
     // 變成一片空白；window.print() 需要 allow-modals token，被擋下時不會
-    // 有任何錯誤或對話框，看起來像按鈕壞掉。用 page.route 重現這組真實
-    // response header，確認兩個症狀都已修正。
+    // 有任何錯誤或對話框，看起來像按鈕壞掉。曾經讓「設定」在沙盒頁面改開
+    // 新分頁，但使用者回報瀏覽文件時突然跳出陌生分頁觀感很奇怪——改成
+    // 跟「列印」一致：直接停用、附提示告訴使用者去哪裡開設定（瀏覽器
+    // 工具列的擴充功能圖示）。用 page.route 重現這組真實 response
+    // header，確認兩個選項都已停用且都有提示文字。
     const sandboxedPage = await ctx.newPage()
     await sandboxedPage.route('https://raw.githubusercontent.com/**', route =>
       route.fulfill({
@@ -372,44 +375,49 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
 
     await sandboxedPage.click('.md-reader__float-menu-btn')
     await sandboxedPage.waitForTimeout(300)
+    const state = await sandboxedPage.evaluate(() => {
+      const items = [
+        ...document.querySelectorAll('.md-reader__float-menu-item'),
+      ]
+      const settings = items.find(e =>
+        /設定|Settings|设置/.test(e.textContent || ''),
+      )
+      const print = items.find(e =>
+        /列印|Print|打印|印刷|인쇄/.test(e.textContent || ''),
+      )
+      return {
+        settingsDisabled: settings ? settings.disabled : null,
+        settingsTitle: settings ? settings.title : null,
+        printDisabled: print ? print.disabled : null,
+        printTitle: print ? print.title : null,
+      }
+    })
+    assert.equal(state.settingsDisabled, true, '沙盒頁面的設定選項應該停用')
+    assert.ok(
+      state.settingsTitle && state.settingsTitle.length > 0,
+      '停用的設定選項應該附上說明提示',
+    )
+    assert.equal(state.printDisabled, true, '沙盒頁面的列印選項應該停用')
+    assert.ok(
+      state.printTitle && state.printTitle.length > 0,
+      '停用的列印選項應該附上說明提示',
+    )
+
+    // 停用的選項點下去不該有任何動作（不彈內嵌浮層、不開新分頁）。
     await sandboxedPage.evaluate(() => {
-      const it = [
+      const settings = [
         ...document.querySelectorAll('.md-reader__float-menu-item'),
       ].find(e => /設定|Settings|设置/.test(e.textContent || ''))
-      it && it.click()
+      settings && settings.click()
     })
-    await sandboxedPage.waitForTimeout(1000)
-
+    await sandboxedPage.waitForTimeout(500)
     const overlayOpenedInline = await sandboxedPage.evaluate(() => {
       const overlay = document.querySelector('.md-reader__settings-overlay')
       return !!overlay && getComputedStyle(overlay).display !== 'none'
     })
-    assert.equal(
-      overlayOpenedInline,
-      false,
-      '沙盒頁面不應該打開內嵌設定浮層（會是空白的）',
-    )
-    assert.equal(pagesOpened.length, 1, '應該改開一個新分頁載入設定')
-    await pagesOpened[0].waitForLoadState('domcontentloaded')
-    const settingsRendered = await pagesOpened[0].evaluate(
-      () => !!document.querySelector('.form-item'),
-    )
-    assert.ok(settingsRendered, '新分頁裡的設定表單應該正常渲染出來')
-    await pagesOpened[0].close()
+    assert.equal(overlayOpenedInline, false, '停用的設定選項不應該打開內嵌浮層')
+    assert.equal(pagesOpened.length, 0, '停用的設定選項不應該再開新分頁')
 
-    await sandboxedPage.click('.md-reader__float-menu-btn')
-    await sandboxedPage.waitForTimeout(300)
-    const printState = await sandboxedPage.evaluate(() => {
-      const it = [
-        ...document.querySelectorAll('.md-reader__float-menu-item'),
-      ].find(e => /列印|Print|打印|印刷|인쇄/.test(e.textContent || ''))
-      return { disabled: it ? it.disabled : null, title: it ? it.title : null }
-    })
-    assert.equal(printState.disabled, true, '沙盒頁面的列印選項應該停用')
-    assert.ok(
-      printState.title && printState.title.length > 0,
-      '停用的列印選項應該附上說明提示',
-    )
     await sandboxedPage.close()
   })
 })

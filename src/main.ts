@@ -773,6 +773,24 @@ function main(data: Data) {
     return item
   }
 
+  /** 沙盒頁面（見下方 isPageSandboxed 註解）上直接停用、附提示，而不是
+   *  讓使用者點下去後才發現行為怪怪的（例如突然跳出一個陌生分頁）。 */
+  function sandboxAwareMenuItem(
+    labelKey: string,
+    sandboxedHintKey: string,
+    onSelect: () => void,
+  ) {
+    const item = floatMenuItem(labelKey, () => {
+      if (pageSandboxed) return
+      onSelect()
+    })
+    if (pageSandboxed) {
+      ;(item.ele as HTMLButtonElement).disabled = true
+      item.ele.title = localize(sandboxedHintKey)
+    }
+    return item
+  }
+
   // GitHub raw content 頁（raw.githubusercontent.com）會送出
   // `Content-Security-Policy: sandbox`（不帶任何 allow-* token）。這會讓
   // 瀏覽器把「這份文件建立的任何子瀏覽環境」也一併當成沒有 allow-scripts
@@ -850,27 +868,19 @@ function main(data: Data) {
           ? document.exitFullscreen()
           : document.documentElement.requestFullscreen().catch(() => {})
       }),
-      (() => {
-        const item = floatMenuItem('menu_print', () => {
-          if (pageSandboxed) return
-          window.print()
-        })
-        if (pageSandboxed) {
-          ;(item.ele as HTMLButtonElement).disabled = true
-          item.ele.title = localize('menu_print_sandboxed_hint')
-        }
-        return item
-      })(),
-      floatMenuItem('menu_settings', () => {
-        // 沙盒頁面上 iframe 版設定會是一片空白（見上方 isPageSandboxed
-        // 註解），改走既有的 options_ui（open_in_tab: true）開新分頁，
-        // 該分頁是全新的頂層瀏覽環境，不受目前這份文件的沙盒限制影響。
-        if (pageSandboxed) {
-          chrome.runtime.sendMessage({ action: 'openOptions' })
-          return
-        }
-        getSettingsOverlay().toggle()
-      }),
+      sandboxAwareMenuItem('menu_print', 'menu_print_sandboxed_hint', () =>
+        window.print(),
+      ),
+      // 沙盒頁面（見上方 isPageSandboxed 註解）點「設定」曾經改成開一個
+      // 新分頁——但對使用者來說，在瀏覽這份文件時突然跳出一個陌生分頁
+      // 觀感很奇怪。改成跟「列印」一致：直接停用、用提示告訴使用者去
+      // 哪裡開設定（瀏覽器工具列的擴充功能圖示——那是獨立的瀏覽器 UI
+      // 介面，本來就不受目前頁面的沙盒限制影響）。
+      sandboxAwareMenuItem(
+        'menu_settings',
+        'menu_settings_sandboxed_hint',
+        () => getSettingsOverlay().toggle(),
+      ),
       floatMenuItem('menu_about', () => getAboutOverlay().open()),
     ],
   )
