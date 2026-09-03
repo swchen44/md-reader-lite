@@ -52,6 +52,9 @@ export interface SearchPanel {
   focus(): void
   clear(): void
   rebuild(): void
+  /** 只設定輸入框顯示的文字，不觸發過濾／搜尋——用於換頁後還原查詢字串
+   *  時，讓後續 focus()/route() 依照這個值運作。 */
+  setQuery(value: string): void
 }
 
 export function createSearchPanel(opts: Options): SearchPanel {
@@ -364,6 +367,9 @@ export function createSearchPanel(opts: Options): SearchPanel {
       if (input.ele.value.trim() && panel.ele.style.display !== 'none') {
         run(input.ele.value)
       }
+    },
+    setQuery(value: string) {
+      input.ele.value = value
     },
   }
 }

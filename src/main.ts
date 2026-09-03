@@ -327,13 +327,16 @@ function main(data: Data) {
   let activeTab: 'outline' | 'files' = readStoredActiveTab()
   let rawShown = false
 
+  // 記錄 initFilesContent() 的 promise，讓「還原檔名搜尋框」這種必須等
+  // fileTree 真的建好才能動作的邏輯有東西可以掛（見本檔尾端的還原區塊）。
+  let filesReadyPromise: Promise<void> | null = null
   function ensureFilesPanel(): Ele<HTMLElement> {
     if (!filesPanel) {
       filesPanel = new Ele<HTMLElement>('div', {
         className: className.FILES_PANEL,
       })
       lifecycle.mount([filesPanel])
-      void initFilesContent()
+      filesReadyPromise = initFilesContent()
     }
     return filesPanel
   }
@@ -911,6 +914,27 @@ function main(data: Data) {
   setFolderTree(configData.folderTree !== false)
   updateAnchorPosition()
   if (configData.sideWidth != null) applySideWidth()
+
+  // 還原檔名搜尋：點擊搜尋結果裡的檔案連結會整份導覽，若查詢字串沒有跟
+  // 著記住，畫面會從「已過濾」瞬間跳回「全部展開」，使用者會覺得搜尋
+  // 結果憑空消失了。查詢字串本身由 file-tree.ts 的 applyFilter() 寫入
+  // sessionStorage；這裡只負責在還原到 Files 頁籤時，把搜尋框本身也
+  // 一併重新打開（等 fileTree 真的建好才能呼叫 openSearch()，否則它的
+  // 「fileTree 還沒建好」防呆會直接把這次還原吃掉）。
+  if (activeTab === 'files') {
+    let storedTreeQuery = ''
+    try {
+      storedTreeQuery = sessionStorage.getItem('md-reader:treeSearch') || ''
+    } catch {
+      // 沙盒文件拋錯就當作沒有要還原的查詢字串。
+    }
+    if (storedTreeQuery) {
+      filesReadyPromise?.then(() => {
+        searchPanel.setQuery(storedTreeQuery)
+        openSearch()
+      })
+    }
+  }
 
   darkMediaQuery.addEventListener('change', (e: MediaQueryListEvent) => {
     if (configData.pageTheme === 'auto') {

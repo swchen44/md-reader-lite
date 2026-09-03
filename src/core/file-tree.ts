@@ -106,13 +106,34 @@ export function createFileTree({
     }
   }
   const expandedDirs = readStoredExpanded()
+  // 同樣道理：記住檔名搜尋字串。點擊搜尋結果裡的檔案連結會整份導覽，
+  // 若查詢字串沒有跟著記住，畫面會從「已過濾」瞬間跳回「全部展開」，
+  // 使用者會覺得搜尋結果憑空消失了。applyFilter() 每次執行都會同步寫回
+  // 這裡；main.ts 在還原 activeTab==='files' 時會讀這個值把搜尋框本身
+  // 也一併重新打開（見 main.ts 對 SEARCH_QUERY_KEY 的讀取）。
+  const SEARCH_QUERY_KEY = 'md-reader:treeSearch'
+  function readStoredQuery(): string {
+    try {
+      return sessionStorage.getItem(SEARCH_QUERY_KEY) ?? ''
+    } catch {
+      return ''
+    }
+  }
+  function writeStoredQuery(query: string) {
+    try {
+      if (query) sessionStorage.setItem(SEARCH_QUERY_KEY, query)
+      else sessionStorage.removeItem(SEARCH_QUERY_KEY)
+    } catch {
+      // 同上：沙盒文件拋錯就忽略。
+    }
+  }
   const listDir = listDirOpt ?? fetchDirListing
   const container = new Ele<HTMLElement>('div', {
     className: className.FILE_TREE,
   })
   const cache = new Map<string, Promise<DirEntry[]>>()
   const records: NodeRecord[] = []
-  let currentQuery = ''
+  let currentQuery = readStoredQuery()
   let hintEle: Ele<HTMLElement> | null = null
   let emptyEle: Ele<HTMLElement> | null = null
 
@@ -330,6 +351,7 @@ export function createFileTree({
   function applyFilter(query: string) {
     const q = query.trim()
     currentQuery = q
+    writeStoredQuery(q)
     const live = records.filter(r => r.li.isConnected)
     /* phase 1：比對 + label 重建（每次都從 plainName 重建，避免巢狀 span） */
     for (const rec of live) {

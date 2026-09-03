@@ -531,4 +531,63 @@ describe('file-tree browsing (e2e)', { timeout: 120000 }, () => {
     assert.ok(hit.isInsideSubmenu, '該座標應命中子選單本身')
     await p.close()
   })
+
+  test('search persistence: clicking a filtered file keeps the search box open and the tree filtered', async t => {
+    if (unavailable) return t.skip(unavailable)
+    // 迴歸鎖：用檔名搜尋過濾出結果後點裡面的檔案連結（file:// 是完整
+    // 導覽），若查詢字串跟搜尋框開啟狀態沒有跟著記住，畫面會瞬間從
+    // 「已過濾」跳回「全部展開、搜尋框關閉」，看起來像搜尋結果憑空消失。
+    const dir = makeFileFixture()
+    writeFileSync(join(dir, 'cscope-bugs.md'), '# Bug doc\n')
+    await setStorage({ enable: true, offlineMode: false, folderTree: true })
+    const p = await ctx.newPage()
+    p.setDefaultTimeout(10000)
+    await p.goto(`file://${dir}/main.md`, { waitUntil: 'domcontentloaded' })
+    await p.waitForSelector('.md-reader__markdown-content', {
+      timeout: 12000,
+    })
+    await p.evaluate(clickFilesTab)
+    await p.waitForTimeout(1000)
+    await p.click('.md-reader__side-search-btn')
+    await p.waitForTimeout(300)
+    await p.fill('.md-reader__search-input', 'bug')
+    await p.waitForTimeout(500)
+
+    await p.evaluate(() => {
+      const link = [
+        ...document.querySelectorAll('.md-reader__tree-file a'),
+      ].find(a => a.textContent.trim() === 'cscope-bugs.md')
+      link && link.click()
+    })
+    await p.waitForURL(/cscope-bugs\.md$/, { timeout: 10000 })
+    await p.waitForSelector('.md-reader__markdown-content', {
+      timeout: 12000,
+    })
+    await p.waitForTimeout(1500)
+
+    const after = await p.evaluate(() => {
+      const bar = document.querySelector('.md-reader__search-bar')
+      const input = document.querySelector('.md-reader__search-input')
+      return {
+        barVisible: !!bar && getComputedStyle(bar).display !== 'none',
+        inputValue: input ? input.value : null,
+        visibleFiles: [...document.querySelectorAll('.md-reader__tree-file a')]
+          .filter(
+            a =>
+              !a
+                .closest('.md-reader__tree-file')
+                ?.classList.contains('md-reader__tree-filtered-hidden'),
+          )
+          .map(a => a.textContent.trim()),
+      }
+    })
+    assert.ok(after.barVisible, '搜尋框應在還原後仍是開啟狀態')
+    assert.equal(after.inputValue, 'bug', '搜尋框應保留原本輸入的查詢字串')
+    assert.deepEqual(
+      after.visibleFiles,
+      ['../', 'cscope-bugs.md'],
+      '導覽後樹狀結構應維持過濾結果，而不是跳回全部展開',
+    )
+    await p.close()
+  })
 })
