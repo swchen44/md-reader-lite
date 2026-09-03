@@ -4,7 +4,7 @@
     "description": "Розширення для читання markdown для Chrome."
   },
   "ext_desc": {
-    "message": "Легке розширення для читання markdown для Chrome.",
+    "message": "Markdown-рідер з пріоритетом приватності — офлайн за замовчуванням, без відстеження. Швидкий перегляд .md файлів.",
     "description": "Підтримка перегляду file://, http://, https:// посилань та файлів розширення *.md, *.mkd, *.markdown."
   },
   "command_toggle_side": {

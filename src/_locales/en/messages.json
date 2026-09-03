@@ -4,7 +4,7 @@
     "description": "A markdown reader extension for Chrome."
   },
   "ext_desc": {
-    "message": "A lightweight markdown reader extension for Chrome.",
+    "message": "Privacy-first Markdown reader — offline by default, zero tracking. Renders local & online .md files instantly.",
     "description": "Support view file://, http://, https:// URL and *.md, *.mkd, *.markdown extension files."
   },
   "command_toggle_side": {

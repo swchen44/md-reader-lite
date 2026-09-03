@@ -4,7 +4,7 @@
     "description": "크롬을 위한 마크다운 리더 확장 프로그램."
   },
   "ext_desc": {
-    "message": "크롬용 경량 마크다운 리더 확장 프로그램."
+    "message": "프라이버시 우선 Markdown 리더 — 기본적으로 오프라인, 추적 없음. 로컬 및 온라인 .md 파일을 즉시 렌더링합니다."
   },
   "command_toggle_side": {
     "message": "토글 사이드바"

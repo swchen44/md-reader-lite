@@ -4,7 +4,7 @@
     "description": "一个可以使 Chrome 预览 markdown 文件的浏览器扩展。"
   },
   "ext_desc": {
-    "message": "轻量级 Markdown 阅读器扩展，本地与在线 .md 文件即开即读。"
+    "message": "隐私优先的 Markdown 阅读器——预设离线、零追踪。本地与在线 .md 文件即开即读。"
   },
   "command_toggle_side": {
     "message": "切换侧边栏"

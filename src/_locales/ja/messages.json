@@ -1,0 +1,21 @@
+{
+  "ext_name": {
+    "message": "MD Reader Lite",
+    "description": "Chrome 用の Markdown リーダー拡張機能。"
+  },
+  "ext_desc": {
+    "message": "プライバシー優先の Markdown リーダー——デフォルトでオフライン、追跡なし。ローカルおよびオンラインの .md ファイルを即座に表示します。"
+  },
+  "command_toggle_side": {
+    "message": "サイドバー切り替え"
+  },
+  "command_toggle_centered": {
+    "message": "中央揃え切り替え"
+  },
+  "command_toggle_refresh": {
+    "message": "自動更新切り替え"
+  },
+  "command_toggle_theme": {
+    "message": "テーマ切り替え"
+  }
+}

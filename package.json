@@ -3,7 +3,7 @@
   "version": "1.7.3",
   "author": "swchen44",
   "license": "MIT",
-  "description": "A lightweight markdown reader extension for Chrome (fork of md-reader)",
+  "description": "Privacy-first Markdown reader for Chrome — offline by default, zero tracking (fork of md-reader)",
   "homepage": "https://github.com/swchen44/md-reader-lite",
   "repository": {
     "type": "git",
