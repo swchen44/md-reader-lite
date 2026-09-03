@@ -2,6 +2,9 @@ import Ele from '@/core/ele'
 import className from '@/config/class-name'
 import { fetchDirListing, type DirEntry } from '@/core/dir-fetch'
 import { findRanges } from '@/core/doc-search'
+import { createDismissable } from '@/core/overlay'
+
+type SortBy = 'name' | 'size' | 'date'
 
 interface FileTreeOptions {
   currentUrl: string
@@ -61,6 +64,48 @@ export function createFileTree({
   let hintEle: Ele<HTMLElement> | null = null
   let emptyEle: Ele<HTMLElement> | null = null
 
+  // PROTOTYPE: sort/filter settings (not yet persisted to storage — resets
+  // per page load). Changing any of these re-renders from the cached root
+  // listing; already-expanded subfolders collapse (re-expanding re-applies
+  // the new settings via the same cache, no re-fetch).
+  let sortBy: SortBy = 'name'
+  let sortDesc = false
+  let foldersFirst = true
+  let showHidden = true
+
+  function sortAndFilter(entries: DirEntry[]): DirEntry[] {
+    const filtered = showHidden
+      ? entries
+      : entries.filter(e => !e.name.startsWith('.'))
+    return [...filtered].sort((a, b) => {
+      if (foldersFirst && a.isDir !== b.isDir) return a.isDir ? -1 : 1
+      let cmp = 0
+      if (sortBy === 'name') cmp = a.name.localeCompare(b.name)
+      else if (sortBy === 'size') cmp = (a.sizeBytes ?? 0) - (b.sizeBytes ?? 0)
+      else if (sortBy === 'date') cmp = (a.mtimeMs ?? 0) - (b.mtimeMs ?? 0)
+      return sortDesc ? -cmp : cmp
+    })
+  }
+
+  function collapseAll() {
+    for (const li of container.queryAll(`.${className.TREE_DIR_OPEN}`)) {
+      li.classList.remove(className.TREE_DIR_OPEN)
+      const childBox = li.querySelector('div')
+      if (childBox) (childBox as HTMLElement).style.display = 'none'
+    }
+  }
+
+  function rerenderRoot() {
+    collapseAll()
+    const list = container.query('ul')
+    list?.remove()
+    loadDir(rootDir).then(entries => {
+      if (entries.length) renderEntries(container, entries)
+      pinFooterRows()
+      if (currentQuery) applyFilter(currentQuery)
+    })
+  }
+
   const loadDir = (dirUrl: string) => {
     if (!cache.has(dirUrl)) {
       const p = listDir(dirUrl)
@@ -82,7 +127,7 @@ export function createFileTree({
 
   function renderEntries(target: Ele<HTMLElement>, entries: DirEntry[]) {
     const list = new Ele<HTMLElement>('ul')
-    entries.forEach(entry => {
+    sortAndFilter(entries).forEach(entry => {
       list.append(entry.isDir ? renderDirNode(entry) : renderFileNode(entry))
     })
     target.append(list)
@@ -264,6 +309,124 @@ export function createFileTree({
     if (hintEle) container.append(hintEle)
     if (emptyEle) container.append(emptyEle)
   }
+
+  // PROTOTYPE: sort/filter toolbar. A single settings button opens a
+  // dismissable dropdown (reuses the same point-outside-to-close helper as
+  // the page-level ≡ menu / settings overlay). Sort-by and order are
+  // radio-like (only one active at a time, shown via an --active class);
+  // folders-first and show-hidden are simple toggle buttons.
+  function buildToolbar(): Ele<HTMLElement> {
+    const settingsBtn = new Ele<HTMLElement>('button', {
+      className: className.TREE_SETTINGS_BTN,
+      title: localize('label_tree_settings'),
+      type: 'button',
+    })
+    settingsBtn.textContent = '⚙'
+
+    const menu = new Ele<HTMLElement>('div', {
+      className: className.TREE_SETTINGS_MENU,
+    })
+    menu.hide()
+    const dismissable = createDismissable(menu)
+
+    const optionButtons: { el: Ele<HTMLElement>; isActive: () => boolean }[] =
+      []
+    function refreshActiveStates() {
+      for (const { el, isActive } of optionButtons) {
+        el.classList.toggle(className.TREE_SETTINGS_OPTION_ACTIVE, isActive())
+      }
+    }
+
+    function optionButton(
+      label: string,
+      isActive: () => boolean,
+      onClick: () => void,
+    ) {
+      const btn = new Ele<HTMLElement>('button', {
+        className: className.TREE_SETTINGS_OPTION,
+        type: 'button',
+      })
+      btn.textContent = label
+      btn.on('click', () => {
+        onClick()
+        refreshActiveStates()
+        rerenderRoot()
+      })
+      optionButtons.push({ el: btn, isActive })
+      return btn
+    }
+
+    const collapseBtn = new Ele<HTMLElement>('button', {
+      className: className.TREE_SETTINGS_ITEM,
+      type: 'button',
+    })
+    collapseBtn.textContent = localize('label_collapse_all')
+    collapseBtn.on('click', () => {
+      collapseAll()
+      dismissable.close()
+    })
+    menu.append(collapseBtn)
+
+    const sortRow = new Ele<HTMLElement>('div', {
+      className: className.TREE_SETTINGS_ROW,
+    })
+    ;(['name', 'size', 'date'] as SortBy[]).forEach(key => {
+      sortRow.append(
+        optionButton(
+          localize(`label_sort_${key}`),
+          () => sortBy === key,
+          () => (sortBy = key),
+        ),
+      )
+    })
+    menu.append(sortRow)
+
+    const orderRow = new Ele<HTMLElement>('div', {
+      className: className.TREE_SETTINGS_ROW,
+    })
+    orderRow.append(
+      optionButton(
+        localize('label_sort_asc'),
+        () => !sortDesc,
+        () => (sortDesc = false),
+      ),
+    )
+    orderRow.append(
+      optionButton(
+        localize('label_sort_desc'),
+        () => sortDesc,
+        () => (sortDesc = true),
+      ),
+    )
+    menu.append(orderRow)
+
+    const foldersFirstBtn = optionButton(
+      localize('label_folders_first'),
+      () => foldersFirst,
+      () => (foldersFirst = !foldersFirst),
+    )
+    menu.append(foldersFirstBtn)
+
+    const showHiddenBtn = optionButton(
+      localize('label_show_hidden'),
+      () => showHidden,
+      () => (showHidden = !showHidden),
+    )
+    menu.append(showHiddenBtn)
+
+    refreshActiveStates()
+
+    settingsBtn.on('click', e => {
+      e.stopPropagation()
+      dismissable.toggle()
+    })
+
+    return new Ele<HTMLElement>('div', { className: className.TREE_TOOLBAR }, [
+      settingsBtn,
+      menu,
+    ])
+  }
+  container.append(buildToolbar())
 
   /* 首層：../ + 目前資料夾內容 */
   const parent = parentHref !== undefined ? parentHref : parentOf(rootDir)

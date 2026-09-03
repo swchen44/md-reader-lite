@@ -30,7 +30,7 @@ import {
 } from '@/core/settings'
 import { mdRender, type MdOptions } from '@/core/markdown'
 import { fetchDirListing } from '@/core/dir-fetch'
-import type { DirEntry } from '@/core/dir-listing'
+import { parseDirListing, type DirEntry } from '@/core/dir-listing'
 import {
   createFsaLister,
   isFsaSupported,
@@ -321,6 +321,37 @@ function main(data: Data) {
     return filesPanel
   }
 
+  // PROTOTYPE: ask a hidden same-extension iframe (see the bottom of this
+  // file) to read a file:// directory's native Chrome listing on our
+  // behalf, avoiding the isolated-world XHR-to-directory block. Resolves
+  // null on timeout (4s) so callers can fall back to FSA.
+  function probeDirViaFrame(dirUrl: string): Promise<DirEntry[] | null> {
+    return new Promise(resolve => {
+      let done = false
+      const ifr = document.createElement('iframe')
+      ifr.style.display = 'none'
+      const cleanup = () => {
+        window.removeEventListener('message', onMessage)
+        ifr.remove()
+      }
+      const onMessage = (e: MessageEvent) => {
+        if (done || !e.data || e.data.__mdReaderDirProbe !== true) return
+        done = true
+        cleanup()
+        resolve(e.data.entries as DirEntry[])
+      }
+      window.addEventListener('message', onMessage)
+      ifr.src = dirUrl + '#md-reader-dir-probe'
+      document.body.appendChild(ifr)
+      setTimeout(() => {
+        if (done) return
+        done = true
+        cleanup()
+        resolve(null)
+      }, 4000)
+    })
+  }
+
   async function initFilesContent() {
     const rootDir = dirOf(window.location.href.replace(/[?#].*$/, ''))
     const isFile = rootDir.startsWith('file:')
@@ -342,6 +373,14 @@ function main(data: Data) {
       buildTree(undefined)
       return
     } catch {
+      if (isFile) {
+        // PROTOTYPE: try the hidden-frame probe before falling to FSA.
+        const probed = await probeDirViaFrame(rootDir)
+        if (probed) {
+          buildTree(u => probeDirViaFrame(u).then(r => r ?? []), 'default')
+          return
+        }
+      }
       if (!isFile || !isFsaSupported()) {
         buildTree(undefined) // 維持原降級（樹內 dir_error 訊息）
         return
@@ -1029,4 +1068,28 @@ function main(data: Data) {
   }
 }
 
-storage.get().then(main)
+// PROTOTYPE (not yet wired to a real feature): directory-listing probe
+// frame. When a hidden iframe is navigated to a file:// directory URL,
+// Chrome renders its own native addRow()-based listing page — but content
+// scripts only inject into the top frame by default, so nothing of ours
+// would normally run inside that iframe to read it (and reading it via
+// contentDocument from the parent is blocked as cross-origin). This branch
+// only exists because manifest.json declares a SEPARATE content_scripts
+// entry matching file:// directory patterns with all_frames:true, so THIS
+// same bundle also runs inside such iframes — where it's reading its own
+// document (no cross-origin issue) and can postMessage the parsed result
+// back to the parent. Gated on a URL hash marker we control so it never
+// fires on a real user-navigated file:// folder page.
+if (
+  window.location.protocol === 'file:' &&
+  window.location.hash === '#md-reader-dir-probe' &&
+  window.parent !== window
+) {
+  const entries = parseDirListing(
+    document.documentElement.outerHTML,
+    window.location.href,
+  )
+  window.parent.postMessage({ __mdReaderDirProbe: true, entries }, '*')
+} else {
+  storage.get().then(main)
+}

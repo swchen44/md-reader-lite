@@ -2,6 +2,10 @@ export interface DirEntry {
   name: string
   isDir: boolean
   url: string
+  /** 位元組數；僅 Chrome 原生 file:// 列表（addRow 格式）提供 */
+  sizeBytes?: number
+  /** 修改時間（epoch ms）；僅 Chrome 原生 file:// 列表（addRow 格式）提供 */
+  mtimeMs?: number
 }
 
 export const MD_EXT_RE = /\.(md|mdx|mkd|markdown)$/i
@@ -10,8 +14,11 @@ export function isMarkdownFile(name: string): boolean {
   return MD_EXT_RE.test(name)
 }
 
+// Chrome 原生 file:// 目錄列表簽章：
+// addRow(name, url, isdir, size, size_string, date_modified, date_modified_string)
+// size/date_modified 為裸數字（bytes／epoch 秒），size_string 為在地化字串（略過）。
 const ADD_ROW_RE =
-  /addRow\((".*?(?<!\\)")\s*,\s*(".*?(?<!\\)")\s*,\s*(0|1)\s*,/g
+  /addRow\((".*?(?<!\\)")\s*,\s*(".*?(?<!\\)")\s*,\s*(0|1)\s*,\s*(\d+)\s*,\s*".*?(?<!\\)"\s*,\s*(\d+)\s*,/g
 const ANCHOR_RE = /<a\s+[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi
 
 function parseChromeListing(html: string, baseUrl: string): DirEntry[] {
@@ -36,7 +43,15 @@ function parseChromeListing(html: string, baseUrl: string): DirEntry[] {
       continue
     }
     if (!/^(https?|file):$/.test(u.protocol)) continue
-    entries.push({ name, isDir, url: u.href })
+    const sizeBytes = Number(match[4])
+    const mtimeMs = Number(match[5]) * 1000
+    entries.push({
+      name,
+      isDir,
+      url: u.href,
+      sizeBytes: isFinite(sizeBytes) ? sizeBytes : undefined,
+      mtimeMs: isFinite(mtimeMs) ? mtimeMs : undefined,
+    })
   }
   return entries
 }
