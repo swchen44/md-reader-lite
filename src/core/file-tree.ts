@@ -54,7 +54,36 @@ export function createFileTree({
   // currentUrl 可能帶 #hash 或 ?query（例如錨點跳轉後的頁面網址），
   // 兩者都與檔案樹的目錄／作用中檔案判斷無關，先去除再使用。
   const cleanUrl = currentUrl.replace(/[?#].*$/, '')
-  const rootDir = dirOf(cleanUrl)
+  const naturalRootDir = dirOf(cleanUrl)
+  // 點擊子資料夾裡的檔案連結（file:// 為完整導覽、http(s)/GitHub 為換頁）
+  // 都會讓內容腳本整份重跑，若每次都用 dirOf(目前網址) 當根目錄，樹會
+  // 「跟著跑進子樹」──使用者展開的上層結構整個消失。用 sessionStorage
+  // 記住使用者最初展開的根目錄；只要目前檔案仍在那個根目錄底下（字串前
+  // 綴比對即可，file/http(s)/GitHub 的網址都是階層式路徑），就沿用舊根，
+  // 樹狀結構的可見範圍才不會被單純的檔案切換打斷。真的離開該根目錄範圍
+  // （例如點「../」跳出去，或另外開一個不相干的檔案）才自然改採新根目錄。
+  const ROOT_KEY = 'md-reader:treeRoot'
+  function readStoredRoot(): string | null {
+    try {
+      return sessionStorage.getItem(ROOT_KEY)
+    } catch {
+      return null
+    }
+  }
+  function writeStoredRoot(root: string) {
+    try {
+      sessionStorage.setItem(ROOT_KEY, root)
+    } catch {
+      // 沙盒文件等場景會拋 SecurityError；根目錄記憶只是錦上添花，
+      // 忽略即可，退化成「每次都用目前檔案所在資料夾」的舊行為。
+    }
+  }
+  const storedRootDir = readStoredRoot()
+  const rootDir =
+    storedRootDir && cleanUrl.startsWith(storedRootDir)
+      ? storedRootDir
+      : naturalRootDir
+  if (rootDir !== storedRootDir) writeStoredRoot(rootDir)
   const listDir = listDirOpt ?? fetchDirListing
   const container = new Ele<HTMLElement>('div', {
     className: className.FILE_TREE,

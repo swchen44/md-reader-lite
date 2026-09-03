@@ -325,4 +325,122 @@ describe('file-tree browsing (e2e)', { timeout: 120000 }, () => {
     assert.equal(openAfter, 0, 'collapse all should close the subfolder')
     await p.close()
   })
+
+  test('root persistence: clicking a file inside an expanded subfolder must not re-root the tree', async t => {
+    if (unavailable) return t.skip(unavailable)
+    // 迴歸鎖：createFileTree() 過去每次都用 dirOf(目前網址) 當根目錄，
+    // 點進子資料夾裡的檔案（file:// 是完整導覽，內容腳本整份重跑）就會
+    // 讓子資料夾變成新的根，使用者原本展開的上層結構整個消失。
+    const dir = makeFileFixture()
+    await setStorage({ enable: true, offlineMode: false, folderTree: true })
+    const p = await ctx.newPage()
+    p.setDefaultTimeout(10000)
+    await p.goto(`file://${dir}/main.md`, { waitUntil: 'domcontentloaded' })
+    await p.waitForSelector('.md-reader__markdown-content', {
+      timeout: 12000,
+    })
+    await p.evaluate(clickFilesTab)
+    await p.waitForTimeout(1200)
+    await p.evaluate(() => {
+      const dirSpan = [
+        ...document.querySelectorAll('.md-reader__tree-dir span'),
+      ].find(e => /subfolder/.test(e.textContent || ''))
+      dirSpan && dirSpan.click()
+    })
+    await p.waitForTimeout(1000)
+    await p.evaluate(() => {
+      const link = [
+        ...document.querySelectorAll('.md-reader__tree-file a'),
+      ].find(a => a.textContent.trim() === 'child.md')
+      link && link.click()
+    })
+    await p.waitForURL(/child\.md$/, { timeout: 10000 })
+    await p.waitForSelector('.md-reader__markdown-content', {
+      timeout: 12000,
+    })
+    await p.waitForTimeout(1200)
+    const entries = await p.evaluate(treeEntryTexts)
+    assert.ok(
+      entries.some(t => t === 'main.md'),
+      `root-level main.md should still be visible after entering subfolder/child.md, got ${JSON.stringify(
+        entries,
+      )}`,
+    )
+    await p.close()
+  })
+
+  test('tree-settings menu font size matches the ≡ float menu (visual symmetry)', async t => {
+    if (unavailable) return t.skip(unavailable)
+    const dir = makeFileFixture()
+    await setStorage({ enable: true, offlineMode: false, folderTree: true })
+    const p = await ctx.newPage()
+    p.setDefaultTimeout(10000)
+    await p.goto(`file://${dir}/main.md`, { waitUntil: 'domcontentloaded' })
+    await p.waitForSelector('.md-reader__markdown-content', {
+      timeout: 12000,
+    })
+    await p.evaluate(clickFilesTab)
+    await p.waitForTimeout(1000)
+    await p.click('.md-reader__tree-settings-btn')
+    await p.waitForTimeout(300)
+    await p.click('.md-reader__float-menu-btn')
+    await p.waitForTimeout(300)
+    const sizes = await p.evaluate(() => ({
+      tree: getComputedStyle(
+        document.querySelector('.md-reader__tree-settings-item'),
+      ).fontSize,
+      float: getComputedStyle(
+        document.querySelector('.md-reader__float-menu-item'),
+      ).fontSize,
+    }))
+    assert.equal(
+      sizes.tree,
+      sizes.float,
+      `tree-settings menu font-size (${sizes.tree}) should match the ≡ menu (${sizes.float})`,
+    )
+    await p.close()
+  })
+
+  test('side resizer must not intercept clicks under an open tree-settings submenu', async t => {
+    if (unavailable) return t.skip(unavailable)
+    // 迴歸鎖：子選單開啟時視覺上蓋住側欄拖曳把手的範圍，滑鼠事件也必須
+    // 真的落在選單上（z-index 蓋過把手），不能被底下的把手搶走。
+    const dir = makeFileFixture()
+    await setStorage({
+      enable: true,
+      offlineMode: false,
+      folderTree: true,
+      sideWidth: 260,
+    })
+    const p = await ctx.newPage()
+    p.setDefaultTimeout(10000)
+    await p.goto(`file://${dir}/main.md`, { waitUntil: 'domcontentloaded' })
+    await p.waitForSelector('.md-reader__markdown-content', {
+      timeout: 12000,
+    })
+    await p.evaluate(clickFilesTab)
+    await p.waitForTimeout(1000)
+    await p.click('.md-reader__tree-settings-btn')
+    await p.waitForTimeout(300)
+    await p.click('.md-reader__tree-settings-submenu-trigger')
+    await p.waitForTimeout(300)
+    const hit = await p.evaluate(() => {
+      const resizer = document.querySelector('.md-reader__side-resizer')
+      const submenu = document.querySelector(
+        '.md-reader__tree-settings-submenu',
+      )
+      const rr = resizer.getBoundingClientRect()
+      const sr = submenu.getBoundingClientRect()
+      const x = Math.max(rr.left, sr.left) + 2
+      const y = sr.top + 10
+      const el = document.elementFromPoint(x, y)
+      return {
+        isResizer: el === resizer,
+        isInsideSubmenu: submenu.contains(el),
+      }
+    })
+    assert.equal(hit.isResizer, false, '拖曳把手不應搶走子選單範圍內的滑鼠事件')
+    assert.ok(hit.isInsideSubmenu, '該座標應命中子選單本身')
+    await p.close()
+  })
 })
