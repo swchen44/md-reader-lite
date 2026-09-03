@@ -309,9 +309,16 @@ function main(data: Data) {
   let filesPanel: Ele<HTMLElement> | null = null
   const ACTIVE_TAB_KEY = 'md-reader:activeTab'
   function readStoredActiveTab(): 'outline' | 'files' {
-    return sessionStorage.getItem(ACTIVE_TAB_KEY) === 'files'
-      ? 'files'
-      : 'outline'
+    // 部分頁面（例如把 md 內容嵌進缺 allow-same-origin 的沙盒 iframe）存取
+    // sessionStorage 會直接拋 SecurityError；頁籤記憶只是錦上添花，失敗就
+    // 安全退回預設值，不能讓它連累整個 main() 中斷、畫面渲染不出來。
+    try {
+      return sessionStorage.getItem(ACTIVE_TAB_KEY) === 'files'
+        ? 'files'
+        : 'outline'
+    } catch {
+      return 'outline'
+    }
   }
   let activeTab: 'outline' | 'files' = readStoredActiveTab()
   let rawShown = false
@@ -586,7 +593,13 @@ function main(data: Data) {
 
   function activateTab(tab: 'outline' | 'files', persist = true) {
     activeTab = tab
-    if (persist) sessionStorage.setItem(ACTIVE_TAB_KEY, tab)
+    if (persist) {
+      try {
+        sessionStorage.setItem(ACTIVE_TAB_KEY, tab)
+      } catch {
+        // 同上：沙盒文件會拋 SecurityError，忽略即可，頁籤切換本身不受影響。
+      }
+    }
     const isFiles = tab === 'files'
     outlineTabBtn.ele.classList.toggle(className.SIDE_TAB_ACTIVE, !isFiles)
     filesTabBtn.ele.classList.toggle(className.SIDE_TAB_ACTIVE, isFiles)

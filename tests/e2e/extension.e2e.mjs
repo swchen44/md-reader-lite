@@ -67,6 +67,35 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
     assert.ok(page, 'page should exist')
   })
 
+  test('sessionStorage 被拋 SecurityError（沙盒文件）也不能讓 main() 中斷渲染', async t => {
+    if (unavailable) return t.skip(unavailable)
+    // 頁籤記憶功能會讀寫 sessionStorage；某些頁面（例如把 md 內容嵌進缺
+    // allow-same-origin 的沙盒 iframe）存取 sessionStorage 會直接拋
+    // SecurityError。這裡在 content script 執行前就讓 sessionStorage
+    // getter 拋錯，模擬那個情境，確認畫面仍然渲染出來（迴歸鎖：曾經因為
+    // 這個未防護的呼叫讓整個 main() 中斷、內容完全顯示不出來）。
+    const sandboxedPage = await ctx.newPage()
+    await sandboxedPage.addInitScript(() => {
+      Object.defineProperty(window, 'sessionStorage', {
+        get() {
+          throw new DOMException(
+            "Failed to read the 'sessionStorage' property from 'Window': The document is sandboxed and lacks the 'allow-same-origin' flag.",
+            'SecurityError',
+          )
+        },
+      })
+    })
+    await sandboxedPage.goto(`http://localhost:${port}/x.md`, {
+      waitUntil: 'domcontentloaded',
+    })
+    await sandboxedPage.waitForSelector('.md-reader__markdown-content', {
+      timeout: 12000,
+    })
+    const text = await sandboxedPage.textContent('.md-reader__markdown-content')
+    assert.ok(text.trim().length > 0, 'sessionStorage 拋錯時內容仍應渲染')
+    await sandboxedPage.close()
+  })
+
   test('設定: 頁內浮層開啟、不開新分頁、浮層內開關可 toggle、點外部關閉', async t => {
     if (unavailable) return t.skip(unavailable)
     const pagesBefore = ctx.pages().length
