@@ -84,6 +84,28 @@ export function createFileTree({
       ? storedRootDir
       : naturalRootDir
   if (rootDir !== storedRootDir) writeStoredRoot(rootDir)
+  // 同樣道理：記住哪些子資料夾「展開中」（存絕對網址的集合），這樣切到
+  // 子資料夾裡的檔案後，原本展開的路徑才不會每次都摺疊回去、要重新點開。
+  // 換根目錄時刻意不清空這個集合——展開過的子資料夾網址不會因為根目錄
+  // 往上層移動而失效，繼續沿用反而是好事；真正不再相關的項目就只是留在
+  // 集合裡不會再命中任何節點，對單一分頁的一次瀏覽階段而言無傷大雅。
+  const EXPANDED_KEY = 'md-reader:treeExpanded'
+  function readStoredExpanded(): Set<string> {
+    try {
+      const raw = sessionStorage.getItem(EXPANDED_KEY)
+      return raw ? new Set(JSON.parse(raw)) : new Set()
+    } catch {
+      return new Set()
+    }
+  }
+  function writeStoredExpanded(expanded: Set<string>) {
+    try {
+      sessionStorage.setItem(EXPANDED_KEY, JSON.stringify([...expanded]))
+    } catch {
+      // 同上：沙盒文件拋錯就忽略，退化成「每次都重新展開」的舊行為。
+    }
+  }
+  const expandedDirs = readStoredExpanded()
   const listDir = listDirOpt ?? fetchDirListing
   const container = new Ele<HTMLElement>('div', {
     className: className.FILE_TREE,
@@ -96,8 +118,8 @@ export function createFileTree({
 
   // PROTOTYPE: sort/filter settings (not yet persisted to storage — resets
   // per page load). Changing any of these re-renders from the cached root
-  // listing; already-expanded subfolders collapse (re-expanding re-applies
-  // the new settings via the same cache, no re-fetch).
+  // listing; expanded subfolders are restored from expandedDirs right after
+  // (see rerenderRoot), so the visible tree shape survives the re-render.
   let sortBy: SortBy = 'name'
   let sortDesc = false
   let foldersFirst = true
@@ -117,16 +139,25 @@ export function createFileTree({
     })
   }
 
-  function collapseAll() {
+  /**
+   * persist=true（工具列「摺疊全部」按鈕）：使用者明確要求全部收起，連
+   * 展開狀態的記憶也一併清掉。persist=false（rerenderRoot 內部呼叫）：
+   * 只是重繪前的畫面清空，展開狀態要保留，重繪後才能照樣自動展開回來。
+   */
+  function collapseAll(persist = true) {
     for (const li of container.queryAll(`.${className.TREE_DIR_OPEN}`)) {
       li.classList.remove(className.TREE_DIR_OPEN)
       const childBox = li.querySelector('div')
       if (childBox) (childBox as HTMLElement).style.display = 'none'
     }
+    if (persist) {
+      expandedDirs.clear()
+      writeStoredExpanded(expandedDirs)
+    }
   }
 
   function rerenderRoot() {
-    collapseAll()
+    collapseAll(false)
     const list = container.query('ul')
     list?.remove()
     // 重繪根節點時舊的節點紀錄已全數 detach，清空避免無上限累積
@@ -201,12 +232,11 @@ export function createFileTree({
     })
     li.append(label)
     let childBox: Ele<HTMLElement> | null = null
-    label.on('click', async () => {
-      const open = li.classList.toggle(className.TREE_DIR_OPEN)
-      if (!open) {
-        childBox?.hide()
-        return
-      }
+
+    async function expand() {
+      li.classList.add(className.TREE_DIR_OPEN)
+      expandedDirs.add(entry.url)
+      writeStoredExpanded(expandedDirs)
       if (childBox) {
         childBox.show()
         return
@@ -237,8 +267,26 @@ export function createFileTree({
         li.append(errMsg)
         label.on('click', () => errMsg.remove(), { once: true })
         li.classList.remove(className.TREE_DIR_OPEN)
+        expandedDirs.delete(entry.url)
+        writeStoredExpanded(expandedDirs)
       }
+    }
+
+    function collapse() {
+      li.classList.remove(className.TREE_DIR_OPEN)
+      childBox?.hide()
+      expandedDirs.delete(entry.url)
+      writeStoredExpanded(expandedDirs)
+    }
+
+    label.on('click', () => {
+      li.classList.contains(className.TREE_DIR_OPEN) ? collapse() : expand()
     })
+
+    // 重繪／換檔案後，若這個資料夾先前是展開狀態，直接自動展開回來
+    // （不等使用者點擊）；loadDir 有快取，同一階段內不會重新發請求。
+    if (expandedDirs.has(entry.url)) expand()
+
     return li
   }
 

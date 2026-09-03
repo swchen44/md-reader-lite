@@ -369,6 +369,94 @@ describe('file-tree browsing (e2e)', { timeout: 120000 }, () => {
     await p.close()
   })
 
+  test('expand-state persistence: entering a subfolder file keeps that subfolder expanded (no re-click needed)', async t => {
+    if (unavailable) return t.skip(unavailable)
+    // 迴歸鎖：只記住根目錄還不夠——若展開狀態每次重繪都重置，使用者點進
+    // 子資料夾裡的檔案後，那個子資料夾會摺疊回去，還是得重新點開才看得
+    // 到裡面其他檔案（例如 subfolder/child.md 的手足檔案）。
+    const dir = makeFileFixture()
+    await setStorage({ enable: true, offlineMode: false, folderTree: true })
+    const p = await ctx.newPage()
+    p.setDefaultTimeout(10000)
+    await p.goto(`file://${dir}/main.md`, { waitUntil: 'domcontentloaded' })
+    await p.waitForSelector('.md-reader__markdown-content', {
+      timeout: 12000,
+    })
+    await p.evaluate(clickFilesTab)
+    await p.waitForTimeout(1200)
+    await p.evaluate(() => {
+      const dirSpan = [
+        ...document.querySelectorAll('.md-reader__tree-dir span'),
+      ].find(e => /subfolder/.test(e.textContent || ''))
+      dirSpan && dirSpan.click()
+    })
+    await p.waitForTimeout(1000)
+    await p.evaluate(() => {
+      const link = [
+        ...document.querySelectorAll('.md-reader__tree-file a'),
+      ].find(a => a.textContent.trim() === 'child.md')
+      link && link.click()
+    })
+    await p.waitForURL(/child\.md$/, { timeout: 10000 })
+    await p.waitForSelector('.md-reader__markdown-content', {
+      timeout: 12000,
+    })
+    await p.waitForTimeout(1500)
+    const openCount = await p.evaluate(
+      () => document.querySelectorAll('.md-reader__tree-dir--open').length,
+    )
+    assert.equal(
+      openCount,
+      1,
+      'subfolder should still be expanded after navigating into its child.md, without re-clicking',
+    )
+    await p.close()
+  })
+
+  test('collapse-all clears the expand-state memory, not just the current view', async t => {
+    if (unavailable) return t.skip(unavailable)
+    const dir = makeFileFixture()
+    await setStorage({ enable: true, offlineMode: false, folderTree: true })
+    const p = await ctx.newPage()
+    p.setDefaultTimeout(10000)
+    await p.goto(`file://${dir}/main.md`, { waitUntil: 'domcontentloaded' })
+    await p.waitForSelector('.md-reader__markdown-content', {
+      timeout: 12000,
+    })
+    await p.evaluate(clickFilesTab)
+    await p.waitForTimeout(1000)
+    await p.evaluate(() => {
+      const dirSpan = [
+        ...document.querySelectorAll('.md-reader__tree-dir span'),
+      ].find(e => /subfolder/.test(e.textContent || ''))
+      dirSpan && dirSpan.click()
+    })
+    await p.waitForTimeout(1000)
+    await p.click('.md-reader__tree-settings-btn')
+    await p.waitForTimeout(300)
+    await p.evaluate(() => {
+      const btn = [
+        ...document.querySelectorAll('.md-reader__tree-settings-item'),
+      ].find(b => /摺疊全部|Collapse/.test(b.textContent || ''))
+      btn && btn.click()
+    })
+    await p.waitForTimeout(500)
+
+    await p.goto(`file://${dir}/subfolder/child.md`, {
+      waitUntil: 'domcontentloaded',
+    })
+    await p.waitForSelector('.md-reader__markdown-content', {
+      timeout: 12000,
+    })
+    await p.evaluate(clickFilesTab)
+    await p.waitForTimeout(1200)
+    const openCount = await p.evaluate(
+      () => document.querySelectorAll('.md-reader__tree-dir--open').length,
+    )
+    assert.equal(openCount, 0, '摺疊全部後，重新導覽不應該又自動展開回來')
+    await p.close()
+  })
+
   test('tree-settings menu font size matches the ≡ float menu (visual symmetry)', async t => {
     if (unavailable) return t.skip(unavailable)
     const dir = makeFileFixture()
