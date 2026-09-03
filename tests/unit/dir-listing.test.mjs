@@ -72,14 +72,40 @@ test('parses chrome file:// addRow listing', async () => {
   const { parseDirListing } = await load()
   const entries = parseDirListing(CHROME_FILE_HTML, 'file:///Users/dev/docs/')
   assert.deepEqual(entries, [
-    { name: 'api', isDir: true, url: 'file:///Users/dev/docs/api/' },
-    { name: 'intro.md', isDir: false, url: 'file:///Users/dev/docs/intro.md' },
+    {
+      name: 'api',
+      isDir: true,
+      url: 'file:///Users/dev/docs/api/',
+      sizeBytes: 0,
+      mtimeMs: 1756346400000,
+    },
+    {
+      name: 'intro.md',
+      isDir: false,
+      url: 'file:///Users/dev/docs/intro.md',
+      sizeBytes: 1024,
+      mtimeMs: 1756346400000,
+    },
     {
       name: 'Setup Guide.md',
       isDir: false,
       url: 'file:///Users/dev/docs/Setup%20Guide.md',
+      sizeBytes: 512,
+      mtimeMs: 1756346400000,
     },
   ])
+})
+
+test('parses chrome file:// addRow size/mtime for sort features', async () => {
+  const { parseDirListing } = await load()
+  const entries = parseDirListing(CHROME_FILE_HTML, 'file:///Users/dev/docs/')
+  const bySize = [...entries].sort(
+    (a, b) => (a.sizeBytes ?? 0) - (b.sizeBytes ?? 0),
+  )
+  assert.deepEqual(
+    bySize.map(e => e.name),
+    ['api', 'Setup Guide.md', 'intro.md'],
+  )
 })
 
 test('unknown html yields empty list', async () => {

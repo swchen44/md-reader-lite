@@ -101,6 +101,11 @@
         "file://*/*.plantuml?*",
         "file://*/*.PLANTUML?*"
       ]
+    },
+    {
+      "js": ["js/content.js"],
+      "matches": ["file://*/*/", "file:///"],
+      "all_frames": true
     }
   ],
   "commands": {

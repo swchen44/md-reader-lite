@@ -30,7 +30,7 @@ import {
 } from '@/core/settings'
 import { mdRender, type MdOptions } from '@/core/markdown'
 import { fetchDirListing } from '@/core/dir-fetch'
-import type { DirEntry } from '@/core/dir-listing'
+import { parseDirListing, type DirEntry } from '@/core/dir-listing'
 import {
   createFsaLister,
   isFsaSupported,
@@ -307,7 +307,13 @@ function main(data: Data) {
   /* render folder tree tab */
   let fileTree: ReturnType<typeof createFileTree> | null = null
   let filesPanel: Ele<HTMLElement> | null = null
-  let activeTab: 'outline' | 'files' = 'outline'
+  const ACTIVE_TAB_KEY = 'md-reader:activeTab'
+  function readStoredActiveTab(): 'outline' | 'files' {
+    return sessionStorage.getItem(ACTIVE_TAB_KEY) === 'files'
+      ? 'files'
+      : 'outline'
+  }
+  let activeTab: 'outline' | 'files' = readStoredActiveTab()
   let rawShown = false
 
   function ensureFilesPanel(): Ele<HTMLElement> {
@@ -319,6 +325,46 @@ function main(data: Data) {
       void initFilesContent()
     }
     return filesPanel
+  }
+
+  // 本機 file:// 目錄列表：向同一擴充在隱藏 iframe 內執行的內容腳本要
+  // Chrome 原生目錄頁的解析結果，避免隔離世界對目錄網址的 XHR 必然被
+  // 網路層拒絕的問題。逾時（4s）回傳 null 讓呼叫端降級到 FSA。
+  function probeDirViaFrame(dirUrl: string): Promise<DirEntry[] | null> {
+    return new Promise(resolve => {
+      let done = false
+      const ifr = document.createElement('iframe')
+      ifr.style.display = 'none'
+      const cleanup = () => {
+        window.removeEventListener('message', onMessage)
+        ifr.remove()
+      }
+      const onMessage = (e: MessageEvent) => {
+        // 用 e.source 比對是否真的來自我們剛建立的這個 iframe——file://
+        // 頁面的 event.origin 恆為字串 "null"，對 origin 做字串比對沒有
+        //區辨力，改比對視窗參照才可靠。
+        if (
+          done ||
+          e.source !== ifr.contentWindow ||
+          !e.data ||
+          e.data.__mdReaderDirProbe !== true
+        ) {
+          return
+        }
+        done = true
+        cleanup()
+        resolve(e.data.entries as DirEntry[])
+      }
+      window.addEventListener('message', onMessage)
+      ifr.src = dirUrl + '#md-reader-dir-probe'
+      document.body.appendChild(ifr)
+      setTimeout(() => {
+        if (done) return
+        done = true
+        cleanup()
+        resolve(null)
+      }, 4000)
+    })
   }
 
   async function initFilesContent() {
@@ -333,37 +379,49 @@ function main(data: Data) {
       buildTree(createGithubLister(gh, rootDir), 'github', parentTreeUrl(gh))
       return
     }
-    if (!isFile && !isNetworkAllowed(configData.offlineMode)) {
-      buildTree(undefined, 'default', null, localize('offline_blocked'))
-      return
-    }
-    try {
-      await fetchDirListing(rootDir) // 探測：http 及老 Chromium 成功
-      buildTree(undefined)
-      return
-    } catch {
-      if (!isFile || !isFsaSupported()) {
+    if (isFile) {
+      // file:// 目錄：隔離世界對目錄網址的 XHR 在網路層必然失敗（已實測
+      // readyState:4 + onerror，非空回應那種失敗），且瀏覽器會在 console
+      // 印出無法被 JS 攔截的網路層錯誤——不再嘗試，直接走 frame-probe。
+      const probed = await probeDirViaFrame(rootDir)
+      if (probed) {
+        buildTree(u => probeDirViaFrame(u).then(r => r ?? []), 'default')
+        return
+      }
+      if (!isFsaSupported()) {
         buildTree(undefined) // 維持原降級（樹內 dir_error 訊息）
         return
       }
-    }
-    const grant = (await loadGrant()) as {
-      handle: FsaDirectoryHandle
-      rootDirUrl: string
-    } | null
-    if (grant && rootDir.startsWith(grant.rootDirUrl)) {
-      const state = await verifyPermission(grant.handle).catch(() => 'denied')
-      if (state === 'granted') {
-        buildTree(createFsaLister(grant.handle, grant.rootDirUrl), 'fsa')
-        return
+      const grant = (await loadGrant()) as {
+        handle: FsaDirectoryHandle
+        rootDirUrl: string
+      } | null
+      if (grant && rootDir.startsWith(grant.rootDirUrl)) {
+        const state = await verifyPermission(grant.handle).catch(() => 'denied')
+        if (state === 'granted') {
+          buildTree(createFsaLister(grant.handle, grant.rootDirUrl), 'fsa')
+          return
+        }
+        if (state === 'prompt') {
+          showFsaPanel('regrant', grant)
+          return
+        }
+        await clearGrant()
       }
-      if (state === 'prompt') {
-        showFsaPanel('regrant', grant)
-        return
-      }
-      await clearGrant()
+      showFsaPanel('guide', null)
+      return
     }
-    showFsaPanel('guide', null)
+    // 同伺服器 http(s)：不受離線模式限制。載入目前這份文件本身即已是對
+    // 這台伺服器的一次網路請求，該伺服器已知道使用者存在；使用者主動
+    // 瀏覽同一伺服器的目錄清單是既有信任關係的延伸，不是新增暴露面
+    // （GitHub 分支請求的是不同主機 api.github.com，不適用此推論，仍受
+    // isNetworkAllowed 把關，見本函式上方）。
+    try {
+      await fetchDirListing(rootDir)
+      buildTree(undefined)
+    } catch {
+      buildTree(undefined)
+    }
   }
 
   function buildTree(
@@ -526,8 +584,9 @@ function main(data: Data) {
     [outlineTabBtn, filesTabBtn, searchPanel.button, searchPanel.bar],
   )
 
-  function activateTab(tab: 'outline' | 'files') {
+  function activateTab(tab: 'outline' | 'files', persist = true) {
     activeTab = tab
+    if (persist) sessionStorage.setItem(ACTIVE_TAB_KEY, tab)
     const isFiles = tab === 'files'
     outlineTabBtn.ele.classList.toggle(className.SIDE_TAB_ACTIVE, !isFiles)
     filesTabBtn.ele.classList.toggle(className.SIDE_TAB_ACTIVE, isFiles)
@@ -544,7 +603,18 @@ function main(data: Data) {
     if (rawShown) return
     if (!enabled && searchOpen) closeSearch()
     if (!searchOpen) filesTabBtn.toggle(enabled)
-    if (!enabled) activateTab('outline')
+    if (!enabled) {
+      // 強制切回大綱是設定關閉造成的、非使用者的頁籤選擇，不覆蓋
+      // sessionStorage 記憶（避免之後重新打開 folderTree 卻發現頁籤記憶
+      // 被覆蓋成大綱）。
+      activateTab('outline', false)
+    } else if (activeTab === 'files') {
+      // 頁面初始化時 activeTab 若已從 sessionStorage 還原為 'files'，
+      // 但尚未真正套用（初始 DOM 建構預設是大綱），這裡補套用一次。
+      // persist:false 因為值本來就是從 sessionStorage 讀來的，不需要
+      // 重寫一次相同的值。
+      activateTab('files', false)
+    }
   }
 
   renderSide()
@@ -1029,4 +1099,28 @@ function main(data: Data) {
   }
 }
 
-storage.get().then(main)
+// PROTOTYPE (not yet wired to a real feature): directory-listing probe
+// frame. When a hidden iframe is navigated to a file:// directory URL,
+// Chrome renders its own native addRow()-based listing page — but content
+// scripts only inject into the top frame by default, so nothing of ours
+// would normally run inside that iframe to read it (and reading it via
+// contentDocument from the parent is blocked as cross-origin). This branch
+// only exists because manifest.json declares a SEPARATE content_scripts
+// entry matching file:// directory patterns with all_frames:true, so THIS
+// same bundle also runs inside such iframes — where it's reading its own
+// document (no cross-origin issue) and can postMessage the parsed result
+// back to the parent. Gated on a URL hash marker we control so it never
+// fires on a real user-navigated file:// folder page.
+if (
+  window.location.protocol === 'file:' &&
+  window.location.hash === '#md-reader-dir-probe' &&
+  window.parent !== window
+) {
+  const entries = parseDirListing(
+    document.documentElement.outerHTML,
+    window.location.href,
+  )
+  window.parent.postMessage({ __mdReaderDirProbe: true, entries }, '*')
+} else {
+  storage.get().then(main)
+}
