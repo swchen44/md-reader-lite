@@ -773,6 +773,25 @@ function main(data: Data) {
     return item
   }
 
+  // GitHub raw content 頁（raw.githubusercontent.com）會送出
+  // `Content-Security-Policy: sandbox`（不帶任何 allow-* token）。這會讓
+  // 瀏覽器把「這份文件建立的任何子瀏覽環境」也一併當成沒有 allow-scripts
+  // 的沙盒——包含我們建立的設定 iframe（畫面因此變成一片空白，因為
+  // popup.html 自己的 JS 完全跑不起來），也包含 window.print()（需要
+  // sandbox 的 allow-modals token，被擋下時不會有任何錯誤或對話框，
+  // 看起來像按鈕壞掉）。腳本本身讀不到頁面的 CSP 標頭，沿用既有那個
+  // 「sessionStorage 存取拋 SecurityError＝文件被沙盒」的偵測方式（見
+  // ACTIVE_TAB_KEY 等處），同一份沙盒設定同時觸發這兩個症狀。
+  function isPageSandboxed(): boolean {
+    try {
+      sessionStorage.getItem('__md_reader_sandbox_probe__')
+      return false
+    } catch {
+      return true
+    }
+  }
+  const pageSandboxed = isPageSandboxed()
+
   let settingsOverlay: ReturnType<typeof createDismissable> | null = null
   function getSettingsOverlay() {
     if (settingsOverlay) return settingsOverlay
@@ -831,8 +850,27 @@ function main(data: Data) {
           ? document.exitFullscreen()
           : document.documentElement.requestFullscreen().catch(() => {})
       }),
-      floatMenuItem('menu_print', () => window.print()),
-      floatMenuItem('menu_settings', () => getSettingsOverlay().toggle()),
+      (() => {
+        const item = floatMenuItem('menu_print', () => {
+          if (pageSandboxed) return
+          window.print()
+        })
+        if (pageSandboxed) {
+          ;(item.ele as HTMLButtonElement).disabled = true
+          item.ele.title = localize('menu_print_sandboxed_hint')
+        }
+        return item
+      })(),
+      floatMenuItem('menu_settings', () => {
+        // 沙盒頁面上 iframe 版設定會是一片空白（見上方 isPageSandboxed
+        // 註解），改走既有的 options_ui（open_in_tab: true）開新分頁，
+        // 該分頁是全新的頂層瀏覽環境，不受目前這份文件的沙盒限制影響。
+        if (pageSandboxed) {
+          chrome.runtime.sendMessage({ action: 'openOptions' })
+          return
+        }
+        getSettingsOverlay().toggle()
+      }),
       floatMenuItem('menu_about', () => getAboutOverlay().open()),
     ],
   )

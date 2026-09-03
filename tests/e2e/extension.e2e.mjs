@@ -336,4 +336,80 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
     await disabledPage.close()
     await setStorage({ enable: true })
   })
+
+  test('沙盒頁面（如 GitHub raw 內容）：設定改開新分頁、列印停用並附提示', async t => {
+    if (unavailable) return t.skip(unavailable)
+    // 迴歸鎖：raw.githubusercontent.com 送出的
+    // `Content-Security-Policy: sandbox`（無 allow-* token）會讓瀏覽器把
+    // 我們建立的設定 iframe 也一併當成沒有 allow-scripts 的沙盒——畫面
+    // 變成一片空白；window.print() 需要 allow-modals token，被擋下時不會
+    // 有任何錯誤或對話框，看起來像按鈕壞掉。用 page.route 重現這組真實
+    // response header，確認兩個症狀都已修正。
+    const sandboxedPage = await ctx.newPage()
+    await sandboxedPage.route('https://raw.githubusercontent.com/**', route =>
+      route.fulfill({
+        status: 200,
+        headers: {
+          'content-type': 'text/plain; charset=utf-8',
+          'content-security-policy':
+            "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+          'x-content-type-options': 'nosniff',
+          'x-frame-options': 'deny',
+        },
+        body: '# Architecture\n\nSome content.\n',
+      }),
+    )
+    const pagesOpened = []
+    ctx.on('page', pg => pagesOpened.push(pg))
+    await sandboxedPage.goto(
+      'https://raw.githubusercontent.com/swchen44/md-reader-lite/main/docs/ARCHITECTURE.md',
+      { waitUntil: 'domcontentloaded' },
+    )
+    await sandboxedPage.waitForSelector('.md-reader__markdown-content', {
+      timeout: 12000,
+    })
+    await sandboxedPage.waitForTimeout(500)
+
+    await sandboxedPage.click('.md-reader__float-menu-btn')
+    await sandboxedPage.waitForTimeout(300)
+    await sandboxedPage.evaluate(() => {
+      const it = [
+        ...document.querySelectorAll('.md-reader__float-menu-item'),
+      ].find(e => /設定|Settings|设置/.test(e.textContent || ''))
+      it && it.click()
+    })
+    await sandboxedPage.waitForTimeout(1000)
+
+    const overlayOpenedInline = await sandboxedPage.evaluate(() => {
+      const overlay = document.querySelector('.md-reader__settings-overlay')
+      return !!overlay && getComputedStyle(overlay).display !== 'none'
+    })
+    assert.equal(
+      overlayOpenedInline,
+      false,
+      '沙盒頁面不應該打開內嵌設定浮層（會是空白的）',
+    )
+    assert.equal(pagesOpened.length, 1, '應該改開一個新分頁載入設定')
+    await pagesOpened[0].waitForLoadState('domcontentloaded')
+    const settingsRendered = await pagesOpened[0].evaluate(
+      () => !!document.querySelector('.form-item'),
+    )
+    assert.ok(settingsRendered, '新分頁裡的設定表單應該正常渲染出來')
+    await pagesOpened[0].close()
+
+    await sandboxedPage.click('.md-reader__float-menu-btn')
+    await sandboxedPage.waitForTimeout(300)
+    const printState = await sandboxedPage.evaluate(() => {
+      const it = [
+        ...document.querySelectorAll('.md-reader__float-menu-item'),
+      ].find(e => /列印|Print|打印|印刷|인쇄/.test(e.textContent || ''))
+      return { disabled: it ? it.disabled : null, title: it ? it.title : null }
+    })
+    assert.equal(printState.disabled, true, '沙盒頁面的列印選項應該停用')
+    assert.ok(
+      printState.title && printState.title.length > 0,
+      '停用的列印選項應該附上說明提示',
+    )
+    await sandboxedPage.close()
+  })
 })

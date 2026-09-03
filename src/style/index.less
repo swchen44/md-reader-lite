@@ -958,6 +958,14 @@ body.md-reader {
       color: var(--color-primary);
       background: var(--color-button-bg-hover);
     }
+    &:disabled {
+      color: var(--color-disabled);
+      cursor: not-allowed;
+      &:hover {
+        color: var(--color-disabled);
+        background: transparent;
+      }
+    }
   }
   @media print {
     &__float-menu {
