@@ -315,11 +315,12 @@ export function createFileTree({
     if (emptyEle) container.append(emptyEle)
   }
 
-  // PROTOTYPE: sort/filter toolbar. A single settings button opens a
-  // dismissable dropdown (reuses the same point-outside-to-close helper as
-  // the page-level ≡ menu / settings overlay). Sort-by and order are
-  // radio-like (only one active at a time, shown via an --active class);
-  // folders-first and show-hidden are simple toggle buttons.
+  // Settings button opens a dismissable dropdown (reuses the same
+  // point-outside-to-close helper as the page-level ≡ menu / settings
+  // overlay). "排序順序" is a submenu trigger that flies out a second panel
+  // to the right, mirroring the store CRX's nested sort/filter menu.
+  // Sort-by and order are radio-like (only one checked at a time);
+  // folders-first and show-hidden are independent checked toggles.
   function buildToolbar(): Ele<HTMLElement> {
     const settingsBtn = new Ele<HTMLElement>(
       'button',
@@ -335,33 +336,76 @@ export function createFileTree({
       className: className.TREE_SETTINGS_MENU,
     })
     menu.hide()
-    const dismissable = createDismissable(menu)
 
-    const optionButtons: { el: Ele<HTMLElement>; isActive: () => boolean }[] =
-      []
+    // .md-reader__file-tree（子選單的原生祖先）同時有 overflow:auto 與
+    // will-change:transform，後者會讓它變成 fixed 定位子孫的 containing
+    // block——單純把子選單改成 position:fixed 仍會被裁切。因此子選單改為
+    // 開啟時才搬到 document.body（脫離該祖先），關閉時移除，並手動計算
+    // 貼齊觸發列右側的座標。
+    const submenu = new Ele<HTMLElement>('div', {
+      className: className.TREE_SETTINGS_SUBMENU,
+    })
+    submenu.hide()
+
+    function openSubmenu() {
+      const rect = submenuTrigger.ele.getBoundingClientRect()
+      submenu.setStyle({
+        position: 'fixed',
+        top: `${rect.top}px`,
+        left: `${rect.right + 4}px`,
+      })
+      document.body.appendChild(submenu.ele)
+      submenu.show()
+    }
+    function closeSubmenu() {
+      submenu.hide()
+      submenu.remove()
+    }
+
+    const dismissable = createDismissable(menu, {
+      onClose: () => closeSubmenu(),
+      extraContains: target => submenu.ele.contains(target),
+    })
+
+    const checkOptions: {
+      check: Ele<HTMLElement>
+      isActive: () => boolean
+    }[] = []
     function refreshActiveStates() {
-      for (const { el, isActive } of optionButtons) {
-        el.classList.toggle(className.TREE_SETTINGS_OPTION_ACTIVE, isActive())
+      for (const { check, isActive } of checkOptions) {
+        check.toggle(isActive())
       }
     }
 
-    function optionButton(
+    function checkOption(
       label: string,
       isActive: () => boolean,
       onClick: () => void,
     ) {
-      const btn = new Ele<HTMLElement>('button', {
-        className: className.TREE_SETTINGS_OPTION,
-        type: 'button',
+      const check = new Ele<HTMLElement>('span', {
+        className: className.TREE_SETTINGS_CHECK,
       })
-      btn.textContent = label
+      check.textContent = '✓'
+      const text = new Ele<HTMLElement>('span')
+      text.textContent = label
+      const btn = new Ele<HTMLElement>(
+        'button',
+        { className: className.TREE_SETTINGS_CHECK_OPTION, type: 'button' },
+        [check, text],
+      )
       btn.on('click', () => {
         onClick()
         refreshActiveStates()
         rerenderRoot()
       })
-      optionButtons.push({ el: btn, isActive })
+      checkOptions.push({ check, isActive })
       return btn
+    }
+
+    function divider() {
+      return new Ele<HTMLElement>('div', {
+        className: className.TREE_SETTINGS_DIVIDER,
+      })
     }
 
     const collapseBtn = new Ele<HTMLElement>('button', {
@@ -375,52 +419,56 @@ export function createFileTree({
     })
     menu.append(collapseBtn)
 
-    const sortRow = new Ele<HTMLElement>('div', {
-      className: className.TREE_SETTINGS_ROW,
+    const submenuTrigger = new Ele<HTMLElement>('button', {
+      className: className.TREE_SETTINGS_SUBMENU_TRIGGER,
+      type: 'button',
+    })
+    submenuTrigger.textContent = localize('label_sort_order')
+    submenuTrigger.on('click', e => {
+      e.stopPropagation()
+      submenu.ele.isConnected ? closeSubmenu() : openSubmenu()
     })
     ;(['name', 'size', 'date'] as SortBy[]).forEach(key => {
-      sortRow.append(
-        optionButton(
+      submenu.append(
+        checkOption(
           localize(`label_sort_${key}`),
           () => sortBy === key,
           () => (sortBy = key),
         ),
       )
     })
-    menu.append(sortRow)
-
-    const orderRow = new Ele<HTMLElement>('div', {
-      className: className.TREE_SETTINGS_ROW,
-    })
-    orderRow.append(
-      optionButton(
+    submenu.append(divider())
+    submenu.append(
+      checkOption(
         localize('label_sort_asc'),
         () => !sortDesc,
         () => (sortDesc = false),
       ),
     )
-    orderRow.append(
-      optionButton(
+    submenu.append(
+      checkOption(
         localize('label_sort_desc'),
         () => sortDesc,
         () => (sortDesc = true),
       ),
     )
-    menu.append(orderRow)
-
-    const foldersFirstBtn = optionButton(
-      localize('label_folders_first'),
-      () => foldersFirst,
-      () => (foldersFirst = !foldersFirst),
+    submenu.append(divider())
+    submenu.append(
+      checkOption(
+        localize('label_folders_first'),
+        () => foldersFirst,
+        () => (foldersFirst = !foldersFirst),
+      ),
     )
-    menu.append(foldersFirstBtn)
-
-    const showHiddenBtn = optionButton(
-      localize('label_show_hidden'),
-      () => showHidden,
-      () => (showHidden = !showHidden),
+    submenu.append(
+      checkOption(
+        localize('label_show_hidden'),
+        () => showHidden,
+        () => (showHidden = !showHidden),
+      ),
     )
-    menu.append(showHiddenBtn)
+
+    menu.append(submenuTrigger)
 
     refreshActiveStates()
 

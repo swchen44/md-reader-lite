@@ -227,9 +227,11 @@ describe('file-tree browsing (e2e)', { timeout: 120000 }, () => {
     await p.waitForTimeout(1500)
     await p.click('.md-reader__tree-settings-btn')
     await p.waitForTimeout(300)
+    await p.click('.md-reader__tree-settings-submenu-trigger')
+    await p.waitForTimeout(300)
     await p.evaluate(() => {
       const btn = [
-        ...document.querySelectorAll('.md-reader__tree-settings-option'),
+        ...document.querySelectorAll('.md-reader__tree-settings-check-option'),
       ].find(b => /大小|Size/.test(b.textContent || ''))
       btn && btn.click()
     })
@@ -271,9 +273,11 @@ describe('file-tree browsing (e2e)', { timeout: 120000 }, () => {
     )
     await p.click('.md-reader__tree-settings-btn')
     await p.waitForTimeout(300)
+    await p.click('.md-reader__tree-settings-submenu-trigger')
+    await p.waitForTimeout(300)
     await p.evaluate(() => {
       const btn = [
-        ...document.querySelectorAll('.md-reader__tree-settings-option'),
+        ...document.querySelectorAll('.md-reader__tree-settings-check-option'),
       ].find(b => /隱藏|Hidden/.test(b.textContent || ''))
       btn && btn.click()
     })
