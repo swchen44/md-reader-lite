@@ -307,7 +307,13 @@ function main(data: Data) {
   /* render folder tree tab */
   let fileTree: ReturnType<typeof createFileTree> | null = null
   let filesPanel: Ele<HTMLElement> | null = null
-  let activeTab: 'outline' | 'files' = 'outline'
+  const ACTIVE_TAB_KEY = 'md-reader:activeTab'
+  function readStoredActiveTab(): 'outline' | 'files' {
+    return sessionStorage.getItem(ACTIVE_TAB_KEY) === 'files'
+      ? 'files'
+      : 'outline'
+  }
+  let activeTab: 'outline' | 'files' = readStoredActiveTab()
   let rawShown = false
 
   function ensureFilesPanel(): Ele<HTMLElement> {
@@ -578,8 +584,9 @@ function main(data: Data) {
     [outlineTabBtn, filesTabBtn, searchPanel.button, searchPanel.bar],
   )
 
-  function activateTab(tab: 'outline' | 'files') {
+  function activateTab(tab: 'outline' | 'files', persist = true) {
     activeTab = tab
+    if (persist) sessionStorage.setItem(ACTIVE_TAB_KEY, tab)
     const isFiles = tab === 'files'
     outlineTabBtn.ele.classList.toggle(className.SIDE_TAB_ACTIVE, !isFiles)
     filesTabBtn.ele.classList.toggle(className.SIDE_TAB_ACTIVE, isFiles)
@@ -596,7 +603,18 @@ function main(data: Data) {
     if (rawShown) return
     if (!enabled && searchOpen) closeSearch()
     if (!searchOpen) filesTabBtn.toggle(enabled)
-    if (!enabled) activateTab('outline')
+    if (!enabled) {
+      // 強制切回大綱是設定關閉造成的、非使用者的頁籤選擇，不覆蓋
+      // sessionStorage 記憶（避免之後重新打開 folderTree 卻發現頁籤記憶
+      // 被覆蓋成大綱）。
+      activateTab('outline', false)
+    } else if (activeTab === 'files') {
+      // 頁面初始化時 activeTab 若已從 sessionStorage 還原為 'files'，
+      // 但尚未真正套用（初始 DOM 建構預設是大綱），這裡補套用一次。
+      // persist:false 因為值本來就是從 sessionStorage 讀來的，不需要
+      // 重寫一次相同的值。
+      activateTab('files', false)
+    }
   }
 
   renderSide()
