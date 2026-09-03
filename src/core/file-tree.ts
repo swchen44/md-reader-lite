@@ -100,6 +100,10 @@ export function createFileTree({
     collapseAll()
     const list = container.query('ul')
     list?.remove()
+    // 重繪根節點時舊的節點紀錄已全數 detach，清空避免無上限累積
+    // （applyFilter 靠 li.isConnected 過濾掉它們，功能不受影響，但陣列
+    // 與其引用的 detached DOM 會持續佔記憶體）。
+    records.length = 0
     loadDir(rootDir).then(entries => {
       if (entries.length) renderEntries(container, entries)
       pinFooterRows()
