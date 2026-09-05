@@ -24,6 +24,7 @@ import {
   clampRefreshInterval,
   clampSideWidth,
   formatContentWidth,
+  formatDisplayPath,
   isTxtUrl,
   isMermaidFileUrl,
   FONT_STACKS,
@@ -56,6 +57,7 @@ import {
   darkMediaQuery,
   getMediaQueryTheme,
   toTheme,
+  writeText,
 } from '@/shared'
 import codeIcon from '@/images/icon_code.svg'
 import sideIcon from '@/images/icon_side.svg'
@@ -874,6 +876,42 @@ function main(data: Data) {
     return aboutOverlay
   }
 
+  let pathOverlay: ReturnType<typeof createDismissable> | null = null
+  function getPathOverlay() {
+    if (pathOverlay) return pathOverlay
+    const text = new Ele<HTMLElement>('div', {
+      className: className.PATH_MODAL_TEXT,
+    })
+    const copyBtn = new Ele<HTMLButtonElement>('button', {
+      className: className.PATH_MODAL_COPY_BTN,
+    })
+    copyBtn.textContent = localize('label_copy')
+    copyBtn.on('click', async () => {
+      try {
+        await writeText(text.textContent || '')
+        copyBtn.textContent = localize('label_copied')
+      } catch {
+        copyBtn.textContent = localize('label_copy_failed')
+      }
+      setTimeout(() => {
+        copyBtn.textContent = localize('label_copy')
+      }, 1500)
+    })
+    const modal = new Ele<HTMLElement>(
+      'div',
+      { className: className.PATH_MODAL },
+      [text, copyBtn],
+    )
+    modal.hide()
+    lifecycle.mount([modal])
+    pathOverlay = createDismissable(modal, {
+      onOpen: () => {
+        text.textContent = formatDisplayPath(window.location.href)
+      },
+    })
+    return pathOverlay
+  }
+
   const floatMenuDropdown = new Ele<HTMLElement>(
     'div',
     { className: className.FLOAT_MENU_DROPDOWN },
@@ -884,6 +922,7 @@ function main(data: Data) {
           ? document.exitFullscreen()
           : document.documentElement.requestFullscreen().catch(() => {})
       }),
+      floatMenuItem('menu_path', () => getPathOverlay().open()),
       sandboxAwareMenuItem('menu_print', 'menu_print_sandboxed_hint', () =>
         window.print(),
       ),

@@ -231,7 +231,7 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
     )
     await page.mouse.click(600, 850)
     await page.waitForTimeout(200)
-    assert.equal(order.length, 5, '選單應有 5 個項目')
+    assert.equal(order.length, 6, '選單應有 6 個項目')
     const settingsIdx = order.length - 2
     const aboutIdx = order.length - 1
     assert.match(
@@ -240,6 +240,38 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
       '倒數第二項應是「設定」',
     )
     assert.match(order[aboutIdx], /關於|About|关于/, '最後一項應是「關於」')
+  })
+
+  test('≡ 選單: 「顯示路徑」開啟 modal、顯示目前網址、複製按鈕給出回饋', async t => {
+    if (unavailable) return t.skip(unavailable)
+    const pathUrl = `http://localhost:${port}/x.md?q=hello%20world`
+    await page.goto(pathUrl, { waitUntil: 'domcontentloaded' })
+    await page.waitForSelector('.md-reader__markdown-content', {
+      timeout: 12000,
+    })
+    await clickMenuItem(/顯示路徑|显示路径|Show Path/)
+    const shownText = await page.textContent('.md-reader__path-modal-text')
+    assert.equal(
+      shownText,
+      pathUrl,
+      'http(s) 網址應原樣顯示，不做 decode（避免破壞查詢字串語意）',
+    )
+    await page.click('.md-reader__path-modal-copy-btn')
+    await page.waitForTimeout(100)
+    const copiedText = await page.textContent('.md-reader__path-modal-copy-btn')
+    assert.match(
+      copiedText,
+      /已複製|已复制|Copied/,
+      '點擊複製後按鈕文字應變成「已複製」',
+    )
+    await page.mouse.click(600, 850)
+    await page.waitForTimeout(200)
+    await page.goto(`http://localhost:${port}/x.md`, {
+      waitUntil: 'domcontentloaded',
+    })
+    await page.waitForSelector('.md-reader__markdown-content', {
+      timeout: 12000,
+    })
   })
 
   test('設定: 切換語言（頁面重整）後再次打開不應閃退', async t => {

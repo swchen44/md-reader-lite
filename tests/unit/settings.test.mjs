@@ -125,6 +125,27 @@ test('isMermaidFileUrl: non-.mmd extension and bad url are false', async () => {
   assert.equal(isMermaidFileUrl(''), false)
 })
 
+test('formatDisplayPath: decodes percent-encoding for file:// urls', async () => {
+  const { formatDisplayPath } = await load()
+  assert.equal(
+    formatDisplayPath('file:///Users/a/%E6%B8%AC%E8%A9%A6%20b.md'),
+    'file:///Users/a/測試 b.md',
+  )
+})
+
+test('formatDisplayPath: leaves http(s) urls untouched (preserve query string)', async () => {
+  const { formatDisplayPath } = await load()
+  assert.equal(
+    formatDisplayPath('https://example.com/a.md?x=%E6%B8%AC%E8%A9%A6'),
+    'https://example.com/a.md?x=%E6%B8%AC%E8%A9%A6',
+  )
+})
+
+test('formatDisplayPath: falls back to raw href on invalid percent-encoding', async () => {
+  const { formatDisplayPath } = await load()
+  assert.equal(formatDisplayPath('file:///a%.md'), 'file:///a%.md')
+})
+
 test('clampCustomWidthPercent: min/max boundaries', async () => {
   const { clampCustomWidthPercent } = await load()
   assert.equal(clampCustomWidthPercent(20), 20)

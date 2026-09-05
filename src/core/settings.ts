@@ -96,3 +96,14 @@ export function isMermaidFileUrl(url: string): boolean {
     return false
   }
 }
+
+// file:// 網址是 percent-encoded（空白變 %20、中文檔名變 %E4%B8...），顯示前
+// 先解碼成人類可讀路徑；http(s) 網址維持原樣，避免破壞合法的查詢字串語意。
+export function formatDisplayPath(href: string): string {
+  if (!href.startsWith('file://')) return href
+  try {
+    return decodeURIComponent(href)
+  } catch {
+    return href
+  }
+}
