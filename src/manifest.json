@@ -99,7 +99,15 @@
         "*://*/*.plantuml?*",
         "*://*/*.PLANTUML?*",
         "file://*/*.plantuml?*",
-        "file://*/*.PLANTUML?*"
+        "file://*/*.PLANTUML?*",
+        "*://*/*.mmd",
+        "*://*/*.MMD",
+        "file://*/*.mmd",
+        "file://*/*.MMD",
+        "*://*/*.mmd?*",
+        "*://*/*.MMD?*",
+        "file://*/*.mmd?*",
+        "file://*/*.MMD?*"
       ]
     },
     {

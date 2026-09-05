@@ -25,6 +25,7 @@ import {
   clampSideWidth,
   formatContentWidth,
   isTxtUrl,
+  isMermaidFileUrl,
   FONT_STACKS,
   resolveCodeTheme,
 } from '@/core/settings'
@@ -147,15 +148,25 @@ function main(data: Data) {
   }
 
   const isPuml = isPlantumlUrl(window.location.href)
+  const isMmd = isMermaidFileUrl(window.location.href)
   if (!configData.enable) {
     document.body.classList.add(className.MD_READY)
     return
   }
   if (isPuml) {
-    // .puml/.plantuml：本擴充明確認得的副檔名。放行條件縮窄為 text/* 且非
-    // text/html——保留對「某網站 .puml 動態路由實回 HTML」誤命中的防線。
+    // .puml/.plantuml：本擴充明確認得的副檔名。放行條件縮窄為 text/*
+    // 且非 text/html——保留對「某網站動態路由實回 HTML」誤命中的防線。
     const ct = document.contentType
     if (!ct.startsWith('text/') || ct === 'text/html') {
+      document.body.classList.add(className.MD_READY)
+      return
+    }
+  } else if (isMmd) {
+    // .mmd：許多伺服器（含 Python http.server 等依賴系統 mimetypes 資料庫者）
+    // 會誤判為 application/vnd.chipnuts.karaoke-mmd 之類非 text/* 的舊 MIME
+    // 登記（與 Mermaid 無關的另一種「karaoke MMD」格式撞副檔名），故只排除
+    // 確定為 HTML 的情況，不比照 .puml 要求 text/* 前綴。
+    if (document.contentType === 'text/html') {
       document.body.classList.add(className.MD_READY)
       return
     }
@@ -196,6 +207,11 @@ function main(data: Data) {
     // fence 走既有 markdown→plantuml 插件管線（離線/啟用管制、關閉顯示原碼
     // 全部自動沿用站點 4 機制）。
     mdRaw = '```plantuml\n' + mdRaw.trim() + '\n```'
+  }
+  if (isMmd && mdRaw) {
+    // .mmd 獨立檔：整份內容即一張 Mermaid 圖，包成單一 mermaid fence走既有
+    // markdown-it-mermaid 管線。純前端渲染，不連外、不受離線模式管制。
+    mdRaw = '```mermaid\n' + mdRaw.trim() + '\n```'
   }
 
   /* render content */

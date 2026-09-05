@@ -87,3 +87,12 @@ export function isTxtUrl(url: string): boolean {
     return false
   }
 }
+
+export function isMermaidFileUrl(url: string): boolean {
+  try {
+    const pathname = new URL(url).pathname
+    return /\.mmd$/i.test(pathname)
+  } catch {
+    return false
+  }
+}

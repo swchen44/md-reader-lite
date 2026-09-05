@@ -105,6 +105,26 @@ test('isTxtUrl: non-.txt extension and relative string are false', async () => {
   assert.equal(isTxtUrl('relative/a.txt'), false)
 })
 
+test('isMermaidFileUrl: .mmd and .MMD extensions are true', async () => {
+  const { isMermaidFileUrl } = await load()
+  assert.equal(isMermaidFileUrl('https://example.com/a.mmd'), true)
+  assert.equal(isMermaidFileUrl('https://example.com/a.MMD'), true)
+  assert.equal(isMermaidFileUrl('file:///x/A.mmd'), true)
+})
+
+test('isMermaidFileUrl: query string after extension still matches', async () => {
+  const { isMermaidFileUrl } = await load()
+  assert.equal(isMermaidFileUrl('https://example.com/a.mmd?x=1'), true)
+})
+
+test('isMermaidFileUrl: non-.mmd extension and bad url are false', async () => {
+  const { isMermaidFileUrl } = await load()
+  assert.equal(isMermaidFileUrl('https://example.com/a.md'), false)
+  assert.equal(isMermaidFileUrl('relative/a.mmd'), false)
+  assert.equal(isMermaidFileUrl('not a url'), false)
+  assert.equal(isMermaidFileUrl(''), false)
+})
+
 test('clampCustomWidthPercent: min/max boundaries', async () => {
   const { clampCustomWidthPercent } = await load()
   assert.equal(clampCustomWidthPercent(20), 20)

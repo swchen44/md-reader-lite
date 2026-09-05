@@ -6,12 +6,12 @@ A lightweight, **privacy-first** Chrome extension that renders local and online 
 
 ## Features
 
-- CommonMark + GFM-style rendering (tables, task lists, footnotes, KaTeX, Mermaid, Graphviz)
+- CommonMark + GFM-style rendering (tables, task lists, footnotes, KaTeX, Mermaid, Graphviz); `.mmd` files render whole as one Mermaid diagram — client-side only, no server, unaffected by offline mode
 - Obsidian syntax: `![[image|300]]` embeds, `[[wikilinks|alias]]`, `%%comments%%`, callouts, front matter table
 - Outline (TOC) side panel, light/dark/auto themes, custom plugins toggle, per-plugin options
 - Folder tree side panel for browsing sibling markdown files — **on by default** (http/https autoindex, `file://` via folder picker, GitHub raw pages); the listing itself is still lazy-loaded, only fetched when you open the Files tab
 - PlantUML diagrams via a configurable server — **opt-in, off by default, and disabled whenever offline mode is on** (self-hostable; `.puml`/`.plantuml` files render whole as one diagram — [self-host guide](docs/plantuml-server-setup.md))
-- Recognizes `.md` / `.markdown` / `.mkd` / `.mdx` / `.mdc` / `.txt` (opt-in) / `.puml` / `.plantuml`
+- Recognizes `.md` / `.markdown` / `.mkd` / `.mdx` / `.mdc` / `.txt` (opt-in) / `.puml` / `.plantuml` / `.mmd`
 - Works on `file://`, intranet servers, and raw URLs
 
 ## Privacy — our defining feature

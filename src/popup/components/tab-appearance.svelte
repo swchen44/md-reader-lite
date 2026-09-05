@@ -4,6 +4,7 @@
   import Radio from '@smui/radio'
   import Select, { Option } from '@smui/select'
   import PAGE_THEMES from '@/config/page-themes'
+  import { CUSTOM_CSS_PRESETS } from '@/config/custom-css-presets'
   import type { Data } from '@/core/data'
   import {
     TEXT_SIZES,
@@ -26,6 +27,7 @@
   const WIDTH_UNITS = ['px', 'percent'] as const
 
   let customCssDraft = data.customCss || ''
+  let cssPresetId = ''
 
   $: widthMin =
     data.customWidthUnit === 'percent'
@@ -86,6 +88,11 @@
   function applyCustomCss() {
     data.customCss = customCssDraft
     updateConfig('customCss', data.customCss)
+  }
+
+  function onCssPresetChange(e: CustomEvent<{ value: string; index: number }>) {
+    const preset = CUSTOM_CSS_PRESETS.find((p) => p.id === e.detail.value)
+    if (preset) customCssDraft = preset.css
   }
 </script>
 
@@ -224,6 +231,24 @@
     </div>
   {/if}
 {/if}
+
+<div class="form-item">
+  <div class="label-item">{localize('label_custom-css-preset')}:</div>
+  <FormField style="padding-left: 10px">
+    <Select
+      bind:value={cssPresetId}
+      disabled={!data.enable}
+      on:MDCSelect:change={onCssPresetChange}
+    >
+      <Option value="">{localize('custom-css-preset_none')}</Option>
+      {#each CUSTOM_CSS_PRESETS as preset}
+        <Option value={preset.id}>
+          {localize(`custom-css-preset_${preset.id}`)}
+        </Option>
+      {/each}
+    </Select>
+  </FormField>
+</div>
 
 <div class="form-item">
   <div class="label-item">{localize('label_custom-css')}:</div>
