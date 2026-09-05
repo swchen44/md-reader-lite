@@ -20,6 +20,6 @@ Key features:
 - 🖱️ Floating menu, resizable sidebar
 - 🔎 PlantUML diagram rendering (opt-in, off by default, automatically disabled under Offline Mode; self-hostable on your own intranet)
 
-Supports local (file://) and online (http://, https://) Markdown files, covering .md, .markdown, .mkd, .mdx, .mdc extensions (.txt opt-in).
+Works with local (file://) and online (http://, https://) Markdown files, including several common Markdown file extensions and, if you opt in, plain .txt files.
 
 Built for engineers, writers, and note-takers who don't want to upload files to the cloud or worry about their reading activity leaking out.
