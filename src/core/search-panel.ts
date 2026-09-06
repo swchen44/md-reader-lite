@@ -1,5 +1,6 @@
 import Ele from '@/core/ele'
 import className from '@/config/class-name'
+import { matchSearchHistory, recordSearchHistory } from '@/core/settings'
 import {
   buildIndex,
   makeSnippet,
@@ -43,6 +44,9 @@ interface Options {
   onRequestClose: () => void
   getMode: () => 'outline' | 'files'
   onFilesQuery: (q: string) => void
+  getSearchHistory: () => string[]
+  getSearchHistoryLimit: () => number
+  onSearchHistoryChange: (history: string[]) => void
 }
 
 export interface SearchPanel {
@@ -65,6 +69,9 @@ export function createSearchPanel(opts: Options): SearchPanel {
     onRequestClose,
     getMode,
     onFilesQuery,
+    getSearchHistory,
+    getSearchHistoryLimit,
+    onSearchHistoryChange,
   } = opts
 
   const button = new Ele<HTMLElement>('button', {
@@ -82,15 +89,20 @@ export function createSearchPanel(opts: Options): SearchPanel {
     title: 'Esc',
   })
   closeBtn.textContent = '✕'
+  const suggestions = new Ele<HTMLElement>('div', {
+    className: className.SEARCH_SUGGESTIONS,
+  })
   const bar = new Ele<HTMLElement>('div', { className: className.SEARCH_BAR }, [
     input,
     closeBtn,
+    suggestions,
   ])
   const panel = new Ele<HTMLElement>('div', {
     className: className.SEARCH_PANEL,
   })
   bar.hide()
   panel.hide()
+  suggestions.hide()
 
   let entries: SearchEntry[] | null = null
   /* 完整標題序列（含層級），供祖先脈絡推導；buildIndex() 會過濾掉空白標
@@ -100,6 +112,8 @@ export function createSearchPanel(opts: Options): SearchPanel {
   let headingSeq: Array<{ entry: SearchEntry; level: number }> = []
   let debounceTimer = 0
   let flashTimer = 0
+  let suggestionItems: string[] = []
+  let activeSuggestion = -1
 
   function collect(): SearchEntry[] {
     const heads = getHeads()
@@ -148,6 +162,67 @@ export function createSearchPanel(opts: Options): SearchPanel {
       return
     }
     run(value)
+  }
+
+  function hideSuggestions() {
+    suggestionItems = []
+    activeSuggestion = -1
+    suggestions.innerHTML = null
+    suggestions.hide()
+  }
+
+  function setActiveSuggestion(index: number) {
+    activeSuggestion = index
+    suggestions
+      .queryAll(`.${className.SEARCH_SUGGESTION}`)
+      .forEach((item, itemIndex) =>
+        item.classList.toggle(
+          className.SEARCH_SUGGESTION_ACTIVE,
+          itemIndex === activeSuggestion,
+        ),
+      )
+  }
+
+  function recordQuery(value: string) {
+    const history = recordSearchHistory(
+      getSearchHistory(),
+      value,
+      getSearchHistoryLimit(),
+    )
+    onSearchHistoryChange(history)
+  }
+
+  function selectSuggestion(value: string) {
+    input.ele.value = value
+    hideSuggestions()
+    clearTimeout(debounceTimer)
+    route(value)
+    recordQuery(value)
+    input.ele.focus()
+  }
+
+  function renderSuggestions(query: string) {
+    suggestionItems = matchSearchHistory(
+      getSearchHistory(),
+      query,
+      getSearchHistoryLimit(),
+    )
+    activeSuggestion = -1
+    suggestions.innerHTML = null
+    if (!suggestionItems.length) {
+      suggestions.hide()
+      return
+    }
+    suggestionItems.forEach(value => {
+      const item = new Ele<HTMLButtonElement>('button', {
+        className: className.SEARCH_SUGGESTION,
+        type: 'button',
+      })
+      item.textContent = value
+      item.on('click', () => selectSuggestion(value))
+      suggestions.append(item)
+    })
+    suggestions.show()
   }
 
   function run(query: string) {
@@ -329,13 +404,49 @@ export function createSearchPanel(opts: Options): SearchPanel {
   }
 
   input.on('input', () => {
+    renderSuggestions(input.ele.value)
     clearTimeout(debounceTimer)
     debounceTimer = window.setTimeout(() => route(input.ele.value), DEBOUNCE_MS)
   })
   input.on('keydown', (e: KeyboardEvent) => {
     if (e.code === 'Escape' && !e.isComposing) {
       e.stopPropagation()
+      hideSuggestions()
       onRequestClose()
+      return
+    }
+    if (e.isComposing) return
+    if (e.code === 'ArrowDown' && suggestionItems.length) {
+      e.preventDefault()
+      setActiveSuggestion((activeSuggestion + 1) % suggestionItems.length)
+      return
+    }
+    if (e.code === 'ArrowUp' && suggestionItems.length) {
+      e.preventDefault()
+      setActiveSuggestion(
+        activeSuggestion <= 0
+          ? suggestionItems.length - 1
+          : activeSuggestion - 1,
+      )
+      return
+    }
+    if (e.code === 'Tab' && suggestionItems.length) {
+      e.preventDefault()
+      selectSuggestion(
+        suggestionItems[activeSuggestion < 0 ? 0 : activeSuggestion],
+      )
+      return
+    }
+    if (e.code === 'Enter') {
+      e.preventDefault()
+      if (activeSuggestion >= 0) {
+        selectSuggestion(suggestionItems[activeSuggestion])
+        return
+      }
+      clearTimeout(debounceTimer)
+      route(input.ele.value)
+      recordQuery(input.ele.value)
+      hideSuggestions()
     }
   })
   closeBtn.on('click', () => onRequestClose())
@@ -352,6 +463,7 @@ export function createSearchPanel(opts: Options): SearchPanel {
       if (getMode() === 'files') onFilesQuery('')
       clearTimeout(debounceTimer)
       input.ele.value = ''
+      hideSuggestions()
       panel.innerHTML = null
       if (typeof CSS !== 'undefined' && CSS.highlights) {
         CSS.highlights.delete(HIGHLIGHT_NAME)

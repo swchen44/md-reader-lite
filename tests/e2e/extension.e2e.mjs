@@ -395,6 +395,83 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
     await page.waitForTimeout(200)
   })
 
+  test('側欄搜尋: 歷史候選可用鍵盤補完、點選，並會記錄 Enter 查詢', async t => {
+    if (unavailable) return t.skip(unavailable)
+    await setStorage({
+      searchHistory: ['Architecture', 'Folder tree', 'PlantUML'],
+      searchHistoryLimit: 10,
+    })
+    await page.goto(`http://localhost:${port}/x.md`, {
+      waitUntil: 'domcontentloaded',
+    })
+    await page.waitForSelector('.md-reader__markdown-content', {
+      timeout: 12000,
+    })
+    await page.click('.md-reader__side-search-btn')
+
+    await page.fill('.md-reader__search-input', 'pla')
+    await page.waitForSelector('.md-reader__search-suggestion')
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('Tab')
+    assert.equal(
+      await page.inputValue('.md-reader__search-input'),
+      'PlantUML',
+      'ArrowDown 後按 Tab 應補完歷史候選',
+    )
+
+    await page.fill('.md-reader__search-input', 'tree')
+    await page.click('.md-reader__search-suggestion')
+    assert.equal(
+      await page.inputValue('.md-reader__search-input'),
+      'Folder tree',
+      '點選歷史候選應套用到搜尋輸入框',
+    )
+
+    await page.fill('.md-reader__search-input', 'Section A')
+    await page.keyboard.press('Enter')
+    await page.waitForTimeout(300)
+    assert.equal(
+      (await getStorage('searchHistory')).searchHistory[0],
+      'Section A',
+      'Enter 搜尋應將查詢記為最新歷史',
+    )
+  })
+
+  test('搜尋歷史: 設定清除後，已開啟頁面的候選應同步消失', async t => {
+    if (unavailable) return t.skip(unavailable)
+    await setStorage({
+      searchHistory: ['PlantUML'],
+      searchHistoryLimit: 10,
+    })
+    await page.goto(`http://localhost:${port}/x.md`, {
+      waitUntil: 'domcontentloaded',
+    })
+    await page.waitForSelector('.md-reader__markdown-content', {
+      timeout: 12000,
+    })
+    await clickMenuItem(/設定|Settings|设置/)
+    const frame = page.frames().find(f => /popup\.html/.test(f.url()))
+    await frame.evaluate(() => {
+      const tab = [...document.querySelectorAll('.tab-btn')].find(button =>
+        /一般|General|常规|일반/.test(button.textContent || ''),
+      )
+      tab && tab.click()
+    })
+    await frame.waitForTimeout(200)
+    await frame.click('.btn-clear-search-history')
+    await page.waitForTimeout(300)
+    await page.mouse.click(600, 850)
+    await page.waitForTimeout(200)
+
+    await page.click('.md-reader__side-search-btn')
+    await page.fill('.md-reader__search-input', 'pla')
+    assert.equal(
+      await page.locator('.md-reader__search-suggestion').count(),
+      0,
+      'popup 清除後，頁內不可再顯示舊的歷史候選',
+    )
+  })
+
   test('設定: 切換語言（頁面重整）後再次打開不應閃退', async t => {
     if (unavailable) return t.skip(unavailable)
     // 迴歸鎖：頁籤記憶功能上線前，SMUI <Select> 在 storage.get() 回填語言

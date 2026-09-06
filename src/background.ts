@@ -66,6 +66,8 @@ const actionMap = {
   folderTree: 'toggleFolderTree',
   language: 'reload',
   refreshInterval: 'applySetting',
+  searchHistory: 'applySetting',
+  searchHistoryLimit: 'applySetting',
   codeWrap: 'applySetting',
   codeBlockDayTheme: 'applySetting',
   codeBlockNightTheme: 'applySetting',

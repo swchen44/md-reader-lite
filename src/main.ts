@@ -565,6 +565,15 @@ function main(data: Data) {
     onRequestClose: () => closeSearch(),
     getMode: () => activeTab,
     onFilesQuery: q => fileTree?.applyFilter(q),
+    getSearchHistory: () => configData.searchHistory || [],
+    getSearchHistoryLimit: () => configData.searchHistoryLimit ?? 10,
+    onSearchHistoryChange: history => {
+      configData.searchHistory = history
+      chrome.runtime.sendMessage({
+        action: 'storage',
+        data: { key: 'searchHistory', value: history },
+      })
+    },
   })
   searchPanel.button.on('click', () => openSearch())
   // Registered here (after searchPanel exists), not right after

@@ -196,6 +196,7 @@ body.md-reader {
       }
       .md-reader__search-bar {
         flex: 1;
+        position: relative;
         display: flex;
         align-items: center;
         padding: 6px 8px;
@@ -222,6 +223,34 @@ body.md-reader {
           background: transparent;
           &:hover {
             color: var(--color-primary);
+          }
+        }
+        .md-reader__search-suggestions {
+          position: absolute;
+          top: calc(100% + 4px);
+          right: 28px;
+          left: 0;
+          z-index: 4;
+          max-height: 180px;
+          overflow: auto;
+          border: 1px solid var(--color-side-border);
+          border-radius: 4px;
+          box-shadow: 0 8px 20px rgba(36, 49, 88, 0.16);
+          background: var(--color-side-bg);
+        }
+        .md-reader__search-suggestion {
+          display: block;
+          width: 100%;
+          padding: 6px 8px;
+          border: 0;
+          cursor: pointer;
+          color: var(--color-side);
+          background: transparent;
+          font: inherit;
+          text-align: left;
+          &:hover,
+          &--active {
+            background: rgba(96, 124, 210, 0.12);
           }
         }
       }
