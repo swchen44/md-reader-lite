@@ -20,7 +20,7 @@
 
   export let data: Data
   export let localize: (field: string) => string
-  export let updateConfig: (key: string, value: any) => void
+  export let updateConfig: (key: string, value: any, force?: boolean) => void
 
   const CODE_THEMES = ['light', 'dark'] as const
   const FONT_KEYS = Object.keys(FONT_STACKS)
@@ -103,7 +103,7 @@
   }
 
   function applyCustomCss() {
-    if (cssReadonly) return
+    if (!data.customCssEnabled) return
     if (cssChoice === 'user1') {
       data.customCssUser1 = customCssDraft
       updateConfig('customCssUser1', data.customCssUser1)
@@ -112,8 +112,12 @@
       updateConfig('customCssUser2', data.customCssUser2)
     }
     data.customCss = customCssDraft
-    updateConfig('customCss', data.customCss)
+    updateConfig('customCss', data.customCss, true)
     updateConfig('customCssChoice', cssChoice)
+  }
+
+  function onCustomCssEnabledChange() {
+    updateConfig('customCssEnabled', data.customCssEnabled)
   }
 
   function onCssChoiceChange(e: CustomEvent<{ value: string; index: number }>) {
@@ -124,10 +128,6 @@
     cssChoice = resolved.choice
     customCssDraft = resolved.draft
     cssReadonly = resolved.readonly
-    if (resolved.readonly) {
-      data.customCss = resolved.draft
-      updateConfig('customCss', data.customCss)
-    }
   }
 </script>
 
@@ -267,12 +267,24 @@
   {/if}
 {/if}
 
+<div class="form-item inline">
+  <span class="label-item">{localize('label_custom-css-enabled')}:</span>
+  <FormField align="end">
+    <Switch
+      disabled={!data.enable}
+      bind:checked={data.customCssEnabled}
+      color="primary"
+      on:change={onCustomCssEnabledChange}
+    />
+  </FormField>
+</div>
+
 <div class="form-item">
   <div class="label-item">{localize('label_custom-css-preset')}:</div>
   <FormField style="padding-left: 10px">
     <Select
       bind:value={cssChoice}
-      disabled={!data.enable}
+      disabled={!data.enable || !data.customCssEnabled}
       on:MDCSelect:change={onCssChoiceChange}
     >
       {#each CSS_CHOICES as choice}
@@ -287,7 +299,7 @@
 <div class="form-item">
   <div class="label-item">{localize('label_custom-css')}:</div>
   <textarea
-    disabled={!data.enable}
+    disabled={!data.enable || !data.customCssEnabled}
     readonly={cssReadonly}
     bind:value={customCssDraft}
     placeholder="/* custom CSS */"
@@ -296,7 +308,7 @@
   <button
     type="button"
     class="btn-apply"
-    disabled={!data.enable || cssReadonly}
+    disabled={!data.enable || !data.customCssEnabled}
     on:click={applyCustomCss}
   >
     {localize('label_apply')}

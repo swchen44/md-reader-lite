@@ -126,6 +126,11 @@ function main(data: Data) {
         case 'customCss':
           applyCustomCss()
           break
+        case 'customCssEnabled':
+          // Re-enabling only unlocks the editor. A deliberate Apply is
+          // required before an old draft can affect the page again.
+          if (!value) applyCustomCss()
+          break
         case 'mdPluginOptions':
         case 'plantumlEnabled':
         case 'plantumlServer':
@@ -257,7 +262,7 @@ function main(data: Data) {
     let styleEle = document.getElementById(
       CUSTOM_CSS_ID,
     ) as HTMLStyleElement | null
-    if (!configData.customCss) {
+    if (!configData.customCssEnabled || !configData.customCss) {
       styleEle?.remove()
       return
     }

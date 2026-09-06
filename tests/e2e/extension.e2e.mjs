@@ -277,6 +277,7 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
   test('外觀: built-in CSS 唯讀，User 2 可儲存並套用', async t => {
     if (unavailable) return t.skip(unavailable)
     await setStorage({
+      customCssEnabled: true,
       customCssChoice: 'editorial',
       customCss: '',
       customCssUser1: '',
@@ -306,8 +307,8 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
     )
     assert.equal(
       builtIn.applyDisabled,
-      true,
-      'built-in preset should not apply from the editor',
+      false,
+      'enabled custom CSS should allow applying a readonly preset',
     )
 
     await frame.evaluate(() => {
@@ -332,10 +333,17 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
       (await getStorage('customCssChoice')).customCssChoice,
       'developer',
     )
+    assert.equal(
+      (await getStorage('customCss')).customCss,
+      '',
+      'selecting a preset alone must not make it effective',
+    )
+    await frame.click('.btn-apply')
+    await page.waitForTimeout(300)
     assert.match(
       (await getStorage('customCss')).customCss,
       /Developer/,
-      'selecting a built-in preset should make it the effective CSS',
+      'applying a built-in preset should make it the effective CSS',
     )
 
     await frame.evaluate(() => {
@@ -363,6 +371,93 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
     assert.equal((await getStorage('customCssUser2')).customCssUser2, css)
     assert.equal((await getStorage('customCss')).customCss, css)
     assert.equal((await getStorage('customCssChoice')).customCssChoice, 'user2')
+    await page.mouse.click(600, 850)
+    await page.waitForTimeout(200)
+  })
+
+  test('外觀: 關閉 CSS 客製化會移除樣式，重新開啟後需按套用', async t => {
+    if (unavailable) return t.skip(unavailable)
+    const css = '.md-reader__markdown-content { color: tomato; }'
+    await setStorage({
+      customCssEnabled: true,
+      customCssChoice: 'user2',
+      customCss: css,
+      customCssUser1: '',
+      customCssUser2: css,
+    })
+    await page.goto(`http://localhost:${port}/x.md`, {
+      waitUntil: 'domcontentloaded',
+    })
+    await page.waitForSelector('.md-reader__markdown-content', {
+      timeout: 12000,
+    })
+    assert.equal(
+      await page.locator('#md-reader-custom-css').count(),
+      1,
+      '啟用時應注入已套用的 CSS',
+    )
+    await clickMenuItem(/設定|Settings|设置/)
+    const frame = page.frames().find(f => /popup\.html/.test(f.url()))
+    await frame.evaluate(() => {
+      const tab = [...document.querySelectorAll('.tab-btn')].find(button =>
+        /外觀|Appearance|外观/.test(button.textContent || ''),
+      )
+      tab && tab.click()
+    })
+    await frame.waitForTimeout(200)
+    const switchPoint = await frame.evaluate(() => {
+      const row = [...document.querySelectorAll('.form-item.inline')].find(
+        item =>
+          /啟用 CSS 客製化|Enable Custom CSS|启用 CSS 自定义|사용자 지정 CSS 사용|カスタム CSS を有効/.test(
+            item.querySelector('.label-item')?.textContent || '',
+          ),
+      )
+      const control = row?.querySelector('.mdc-switch')
+      if (!control) return null
+      const box = control.getBoundingClientRect()
+      return { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+    })
+    assert.ok(switchPoint, '應顯示 CSS 客製化開關')
+    const iframeBox = await (
+      await page.evaluateHandle(() =>
+        document.querySelector('.md-reader__settings-overlay iframe'),
+      )
+    )
+      .asElement()
+      .boundingBox()
+    await page.mouse.click(
+      iframeBox.x + switchPoint.x,
+      iframeBox.y + switchPoint.y,
+    )
+    await page.waitForTimeout(300)
+    assert.equal((await getStorage('customCssEnabled')).customCssEnabled, false)
+    assert.equal(
+      (await getStorage('customCss')).customCss,
+      css,
+      '關閉不可清除已編輯或已套用的 CSS 內容',
+    )
+    assert.equal(await page.locator('#md-reader-custom-css').count(), 0)
+    const disabled = await frame.evaluate(() => ({
+      textarea: document.querySelector('textarea')?.disabled,
+      apply: document.querySelector('.btn-apply')?.disabled,
+    }))
+    assert.equal(disabled.textarea, true)
+    assert.equal(disabled.apply, true)
+
+    await page.mouse.click(
+      iframeBox.x + switchPoint.x,
+      iframeBox.y + switchPoint.y,
+    )
+    await page.waitForTimeout(300)
+    assert.equal((await getStorage('customCssEnabled')).customCssEnabled, true)
+    assert.equal(
+      await page.locator('#md-reader-custom-css').count(),
+      0,
+      '重新開啟不可自動恢復 CSS，必須再次按套用',
+    )
+    await frame.click('.btn-apply')
+    await page.waitForTimeout(300)
+    assert.equal(await page.locator('#md-reader-custom-css').count(), 1)
     await page.mouse.click(600, 850)
     await page.waitForTimeout(200)
   })
@@ -411,6 +506,28 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
 
     await page.fill('.md-reader__search-input', 'pla')
     await page.waitForSelector('.md-reader__search-suggestion')
+    const searchFontSizes = await page.evaluate(() => {
+      const input = document.querySelector('.md-reader__search-input')
+      const suggestion = document.querySelector('.md-reader__search-suggestion')
+      return {
+        input: input ? getComputedStyle(input).fontSize : null,
+        suggestion: suggestion ? getComputedStyle(suggestion).fontSize : null,
+        inputFamily: input ? getComputedStyle(input).fontFamily : null,
+        suggestionFamily: suggestion
+          ? getComputedStyle(suggestion).fontFamily
+          : null,
+      }
+    })
+    assert.equal(
+      searchFontSizes.suggestion,
+      searchFontSizes.input,
+      '搜尋歷史候選字型大小應與搜尋欄一致',
+    )
+    assert.equal(
+      searchFontSizes.suggestionFamily,
+      searchFontSizes.inputFamily,
+      '搜尋歷史候選字型應與搜尋欄一致',
+    )
     await page.keyboard.press('ArrowDown')
     await page.keyboard.press('Tab')
     assert.equal(

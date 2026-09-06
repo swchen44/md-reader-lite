@@ -843,7 +843,7 @@ Boundary: 文件與索引，不修改 runtime behavior。
 ### Automated Coverage
 
 - `tests/unit/settings.test.mjs` covers history limit defaults and bounds, normalization, dedupe, newest-first recording, case-insensitive matching, `0` disabling history, readonly built-in CSS choices, editable user slots, and legacy `customCss` migration.
-- `tests/e2e/extension.e2e.mjs` covers readonly built-in CSS, User 2 persistence and effective CSS application, history-limit persistence, history clearing, ArrowUp/ArrowDown selection, Tab completion, click selection, Enter recording, and clearing history from popup while the content page is already open.
+- `tests/e2e/extension.e2e.mjs` covers readonly built-in CSS, User 2 persistence and effective CSS application, disabling CSS customization without losing drafts, deliberate re-apply after re-enabling, history-limit persistence, history clearing, matching search-input and history-suggestion typography, ArrowUp/ArrowDown selection, Tab completion, click selection, Enter recording, and clearing history from popup while the content page is already open.
 - `tests/unit/manifest.test.mjs` guards match-pattern validity and the zero-permission policy. This feature must not add host permissions or network behavior.
 
 ### Repeatable Commands
@@ -860,15 +860,15 @@ node --test tests/unit/manifest.test.mjs
 
 ### Manual Acceptance
 
-1. Open Settings > Appearance. Verify Editorial and Developer show CSS but cannot be edited or applied; verify User 1 and User 2 can be edited and applied independently.
+1. Open Settings > Appearance. Toggle CSS Customization off and confirm page styles are removed while all slot content remains. Toggle it back on and confirm CSS is not restored until Apply. Verify Editorial and Developer stay readonly but can be applied, and User 1/User 2 can be edited and applied independently.
 2. Open Settings > General. Change Search History Limit, reload the page, and confirm the setting persists. Set it to `0` and confirm no history candidate appears. Clear history and confirm candidates disappear without reloading the markdown page.
-3. Open sidebar search, type a stored partial query, and verify the candidate list. Use ArrowUp/ArrowDown then Tab, click a candidate, and press Enter on a new query. Reopen search and confirm the new query is first in history.
+3. Open sidebar search, type a stored partial query, and verify candidates use the same font and size as the input. Use ArrowUp/ArrowDown then Tab, click a candidate, and press Enter on a new query. Reopen search and confirm the new query is first in history.
 
 ## Regression Plan
 
 - Search: outline mode still returns heading/content hits and clears highlights on Escape.
 - Files tab search: still filters only the file tree and does not create document highlights.
-- Popup: settings overlay still opens inside the page when not sandboxed, switches remain clickable, outside click dismisses it, and search-history updates are delivered to an already-open content page.
+- Popup: settings overlay still opens inside the page when not sandboxed, switches remain clickable, outside click dismisses it, CSS customization stays disabled until Apply, and search-history updates are delivered to an already-open content page.
 - Existing path modal dirty work: keep the current `Show Path` menu item, modal, copy feedback, and e2e coverage intact.
 - Privacy: no new fetch, no background proxy, no host permission, no manifest permission, no offline-mode exception.
 - Build: after `npm run build`, e2e must load the rebuilt `extension/`; if browser launch hangs, follow `docs/developer_guide.md` and inspect manifest validity first.
@@ -878,7 +878,7 @@ node --test tests/unit/manifest.test.mjs
 - `npm run test:unit`: 203 passed.
 - `npm run typecheck`: passed.
 - `npm run build`: passed; webpack reported only existing asset-size recommendations.
-- `npm run test:e2e`: 32 passed in a headed Chromium session.
+- `npm run test:e2e`: 33 passed in a headed Chromium session.
 - `node --test tests/unit/manifest.test.mjs`: 6 passed; `src/manifest.json` has no change in this feature series.
 
 ## Recent Git History Notes
@@ -886,4 +886,4 @@ node --test tests/unit/manifest.test.mjs
 - Recent commits use long commit bodies with `Why / What / How / Boundary`; follow the same style for every segment.
 - UI regressions are normally locked with Playwright e2e, not manual-only notes.
 - Search/file-tree state recently moved through `sessionStorage`; this feature uses `chrome.storage.local` because it is a user preference/history feature rather than one-page navigation state.
-- The most recent CSS preset feature kept preset selection as "fill textarea, then apply"; this plan changes that behavior only enough to enforce readonly built-ins and editable user slots.
+- CSS customization keeps built-ins readonly and user slots editable. The separate enable switch removes effective CSS without erasing stored slots; re-enabling requires an explicit Apply.

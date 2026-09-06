@@ -46,8 +46,8 @@
   // NOT call updateConfig (which previously fired on every unrelated data change).
   $: localize = i18n(data.language || i18n().locale)
 
-  function updateConfig(key, value) {
-    if (persisted[key] === value) return
+  function updateConfig(key, value, force = false) {
+    if (!force && persisted[key] === value) return
     persisted[key] = value
     setTimeout(() => {
       chrome.runtime.sendMessage({ action: 'storage', data: { key, value } })

@@ -24,6 +24,7 @@ export interface Data {
   breaks?: boolean
   customWidth?: number | null
   customCss?: string
+  customCssEnabled?: boolean
   customCssChoice?: CustomCssChoice
   customCssUser1?: string
   customCssUser2?: string
@@ -39,6 +40,7 @@ export interface Data {
 }
 
 export function getDefaultData(mergeData: Data = {}): Data {
+  const { customCssEnabled, ...restData } = mergeData
   return {
     enable: true,
     refresh: false,
@@ -59,6 +61,12 @@ export function getDefaultData(mergeData: Data = {}): Data {
     breaks: false,
     customWidth: null,
     customCss: '',
+    // Existing users had custom CSS applied without an explicit enable flag.
+    // Preserve that appearance on upgrade; new installs start disabled.
+    customCssEnabled:
+      typeof customCssEnabled === 'boolean'
+        ? customCssEnabled
+        : Boolean(mergeData.customCss),
     customCssChoice: 'user1',
     customCssUser1: '',
     customCssUser2: '',
@@ -70,6 +78,6 @@ export function getDefaultData(mergeData: Data = {}): Data {
     offlineMode: true,
     plantumlEnabled: false,
     plantumlServer: 'https://www.plantuml.com/plantuml',
-    ...mergeData,
+    ...restData,
   }
 }
