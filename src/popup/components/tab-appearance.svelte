@@ -4,7 +4,7 @@
   import Radio from '@smui/radio'
   import Select, { Option } from '@smui/select'
   import PAGE_THEMES from '@/config/page-themes'
-  import { CUSTOM_CSS_PRESETS } from '@/config/custom-css-presets'
+  import type { CustomCssChoice } from '@/config/custom-css-presets'
   import type { Data } from '@/core/data'
   import {
     TEXT_SIZES,
@@ -15,6 +15,7 @@
     CUSTOM_WIDTH_PERCENT_MAX,
     textSizeIndex,
     clampCustomWidthValue,
+    resolveCustomCssChoice,
   } from '@/core/settings'
 
   export let data: Data
@@ -25,9 +26,25 @@
   const FONT_KEYS = Object.keys(FONT_STACKS)
   const DEFAULT_CUSTOM_WIDTH = 800
   const WIDTH_UNITS = ['px', 'percent'] as const
+  const CSS_CHOICES: CustomCssChoice[] = [
+    'editorial',
+    'developer',
+    'user1',
+    'user2',
+  ]
 
-  let customCssDraft = data.customCss || ''
-  let cssPresetId = ''
+  let customCssDraft = ''
+  let cssChoice: CustomCssChoice = 'user1'
+  let cssReadonly = false
+  let renderedData: Data | undefined
+
+  $: if (data !== renderedData) {
+    renderedData = data
+    const resolved = resolveCustomCssChoice(data)
+    cssChoice = resolved.choice
+    customCssDraft = resolved.draft
+    cssReadonly = resolved.readonly
+  }
 
   $: widthMin =
     data.customWidthUnit === 'percent'
@@ -86,13 +103,31 @@
   }
 
   function applyCustomCss() {
+    if (cssReadonly) return
+    if (cssChoice === 'user1') {
+      data.customCssUser1 = customCssDraft
+      updateConfig('customCssUser1', data.customCssUser1)
+    } else if (cssChoice === 'user2') {
+      data.customCssUser2 = customCssDraft
+      updateConfig('customCssUser2', data.customCssUser2)
+    }
     data.customCss = customCssDraft
     updateConfig('customCss', data.customCss)
+    updateConfig('customCssChoice', cssChoice)
   }
 
-  function onCssPresetChange(e: CustomEvent<{ value: string; index: number }>) {
-    const preset = CUSTOM_CSS_PRESETS.find((p) => p.id === e.detail.value)
-    if (preset) customCssDraft = preset.css
+  function onCssChoiceChange(e: CustomEvent<{ value: string; index: number }>) {
+    const choice = e.detail.value as CustomCssChoice
+    data.customCssChoice = choice
+    updateConfig('customCssChoice', choice)
+    const resolved = resolveCustomCssChoice(data)
+    cssChoice = resolved.choice
+    customCssDraft = resolved.draft
+    cssReadonly = resolved.readonly
+    if (resolved.readonly) {
+      data.customCss = resolved.draft
+      updateConfig('customCss', data.customCss)
+    }
   }
 </script>
 
@@ -236,14 +271,13 @@
   <div class="label-item">{localize('label_custom-css-preset')}:</div>
   <FormField style="padding-left: 10px">
     <Select
-      bind:value={cssPresetId}
+      bind:value={cssChoice}
       disabled={!data.enable}
-      on:MDCSelect:change={onCssPresetChange}
+      on:MDCSelect:change={onCssChoiceChange}
     >
-      <Option value="">{localize('custom-css-preset_none')}</Option>
-      {#each CUSTOM_CSS_PRESETS as preset}
-        <Option value={preset.id}>
-          {localize(`custom-css-preset_${preset.id}`)}
+      {#each CSS_CHOICES as choice}
+        <Option value={choice}>
+          {localize(`custom-css-choice_${choice}`)}
         </Option>
       {/each}
     </Select>
@@ -254,13 +288,15 @@
   <div class="label-item">{localize('label_custom-css')}:</div>
   <textarea
     disabled={!data.enable}
+    readonly={cssReadonly}
     bind:value={customCssDraft}
     placeholder="/* custom CSS */"
+    title={cssReadonly ? localize('hint_custom-css-readonly') : undefined}
   ></textarea>
   <button
     type="button"
     class="btn-apply"
-    disabled={!data.enable}
+    disabled={!data.enable || cssReadonly}
     on:click={applyCustomCss}
   >
     {localize('label_apply')}

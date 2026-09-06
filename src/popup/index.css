@@ -101,6 +101,12 @@ body {
   resize: vertical;
 }
 
+.form-item textarea[readonly] {
+  color: #52607e;
+  background: #f4f6fb;
+  cursor: text;
+}
+
 .btn-apply,
 .btn-reset {
   padding: 6px 14px;

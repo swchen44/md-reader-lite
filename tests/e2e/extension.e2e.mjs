@@ -274,6 +274,99 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
     })
   })
 
+  test('外觀: built-in CSS 唯讀，User 2 可儲存並套用', async t => {
+    if (unavailable) return t.skip(unavailable)
+    await setStorage({
+      customCssChoice: 'editorial',
+      customCss: '',
+      customCssUser1: '',
+      customCssUser2: '',
+    })
+    await clickMenuItem(/設定|Settings|设置/)
+    const frame = page.frames().find(f => /popup\.html/.test(f.url()))
+    await frame.evaluate(() => {
+      const tab = [...document.querySelectorAll('.tab-btn')].find(b =>
+        /外觀|Appearance|外观/.test(b.textContent || ''),
+      )
+      tab && tab.click()
+    })
+    await frame.waitForTimeout(300)
+    const builtIn = await frame.evaluate(() => {
+      const textarea = document.querySelector('textarea')
+      const apply = document.querySelector('.btn-apply')
+      return {
+        readonly: textarea?.readOnly,
+        applyDisabled: apply?.disabled,
+      }
+    })
+    assert.equal(
+      builtIn.readonly,
+      true,
+      'built-in preset textarea should be readonly',
+    )
+    assert.equal(
+      builtIn.applyDisabled,
+      true,
+      'built-in preset should not apply from the editor',
+    )
+
+    await frame.evaluate(() => {
+      const row = [...document.querySelectorAll('.form-item')].find(r =>
+        /CSS/.test(r.querySelector('.label-item')?.textContent || ''),
+      )
+      row?.querySelector('.mdc-select__anchor, .mdc-select')?.click()
+    })
+    await frame.waitForTimeout(200)
+    await frame.evaluate(() => {
+      const option = [
+        ...document.querySelectorAll(
+          '.mdc-deprecated-list-item, [role="option"]',
+        ),
+      ].find(e =>
+        /Developer|開發者|开发者|개발자|デベロッパー/.test(e.textContent || ''),
+      )
+      option && option.click()
+    })
+    await page.waitForTimeout(300)
+    assert.equal(
+      (await getStorage('customCssChoice')).customCssChoice,
+      'developer',
+    )
+    assert.match(
+      (await getStorage('customCss')).customCss,
+      /Developer/,
+      'selecting a built-in preset should make it the effective CSS',
+    )
+
+    await frame.evaluate(() => {
+      const row = [...document.querySelectorAll('.form-item')].find(r =>
+        /CSS/.test(r.querySelector('.label-item')?.textContent || ''),
+      )
+      row?.querySelector('.mdc-select__anchor, .mdc-select')?.click()
+    })
+    await frame.waitForTimeout(200)
+    await frame.evaluate(() => {
+      const option = [
+        ...document.querySelectorAll(
+          '.mdc-deprecated-list-item, [role="option"]',
+        ),
+      ].find(e =>
+        /User 2|使用者 2|用户 2|사용자 2|ユーザー 2/.test(e.textContent || ''),
+      )
+      option && option.click()
+    })
+    await frame.waitForTimeout(200)
+    const css = '.md-reader__markdown-content { color: tomato; }'
+    await frame.fill('textarea', css)
+    await frame.click('.btn-apply')
+    await page.waitForTimeout(300)
+    assert.equal((await getStorage('customCssUser2')).customCssUser2, css)
+    assert.equal((await getStorage('customCss')).customCss, css)
+    assert.equal((await getStorage('customCssChoice')).customCssChoice, 'user2')
+    await page.mouse.click(600, 850)
+    await page.waitForTimeout(200)
+  })
+
   test('設定: 切換語言（頁面重整）後再次打開不應閃退', async t => {
     if (unavailable) return t.skip(unavailable)
     // 迴歸鎖：頁籤記憶功能上線前，SMUI <Select> 在 storage.get() 回填語言
