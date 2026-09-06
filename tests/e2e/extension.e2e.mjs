@@ -367,6 +367,34 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
     await page.waitForTimeout(200)
   })
 
+  test('一般: 搜尋歷史筆數可設定並可清除', async t => {
+    if (unavailable) return t.skip(unavailable)
+    await setStorage({
+      searchHistory: ['Architecture', 'Folder tree'],
+      searchHistoryLimit: 10,
+    })
+    await clickMenuItem(/設定|Settings|设置/)
+    const frame = page.frames().find(f => /popup\.html/.test(f.url()))
+    await frame.evaluate(() => {
+      const tab = [...document.querySelectorAll('.tab-btn')].find(button =>
+        /一般|General|常规|일반/.test(button.textContent || ''),
+      )
+      tab && tab.click()
+    })
+    await frame.waitForTimeout(200)
+    await frame.fill('input[type="number"]', '3')
+    await frame.evaluate(() =>
+      document.querySelector('input[type="number"]')?.blur(),
+    )
+    await page.waitForTimeout(300)
+    assert.equal((await getStorage('searchHistoryLimit')).searchHistoryLimit, 3)
+    await frame.click('.btn-clear-search-history')
+    await page.waitForTimeout(300)
+    assert.deepEqual((await getStorage('searchHistory')).searchHistory, [])
+    await page.mouse.click(600, 850)
+    await page.waitForTimeout(200)
+  })
+
   test('設定: 切換語言（頁面重整）後再次打開不應閃退', async t => {
     if (unavailable) return t.skip(unavailable)
     // 迴歸鎖：頁籤記憶功能上線前，SMUI <Select> 在 storage.get() 回填語言

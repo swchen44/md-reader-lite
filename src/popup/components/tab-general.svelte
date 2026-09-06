@@ -6,6 +6,7 @@
   import { getDefaultData, type Data } from '@/core/data'
   import {
     clampRefreshInterval,
+    clampSearchHistoryLimit,
     REFRESH_INTERVAL_MIN,
     REFRESH_INTERVAL_MAX,
   } from '@/core/settings'
@@ -58,6 +59,16 @@
   function onRefreshIntervalBlur() {
     data.refreshInterval = clampRefreshInterval(data.refreshInterval)
     updateConfig('refreshInterval', data.refreshInterval)
+  }
+
+  function onSearchHistoryLimitBlur() {
+    data.searchHistoryLimit = clampSearchHistoryLimit(data.searchHistoryLimit)
+    updateConfig('searchHistoryLimit', data.searchHistoryLimit)
+  }
+
+  function clearSearchHistory() {
+    data.searchHistory = []
+    updateConfig('searchHistory', data.searchHistory)
   }
 </script>
 
@@ -128,6 +139,30 @@
   </FormField>
 </div>
 <div class="hint-item">{localize('hint_reload')}</div>
+
+<div class="form-item inline">
+  <span class="label-item">{localize('label_search-history-limit')}:</span>
+  <input
+    type="number"
+    min="0"
+    max="100"
+    step="1"
+    disabled={!data.enable}
+    bind:value={data.searchHistoryLimit}
+    on:blur={onSearchHistoryLimitBlur}
+  />
+</div>
+<div class="hint-item">{localize('hint_search-history-limit')}</div>
+<div class="form-item">
+  <button
+    type="button"
+    class="btn-reset btn-clear-search-history"
+    disabled={!data.enable}
+    on:click={clearSearchHistory}
+  >
+    {localize('label_search-history-clear')}
+  </button>
+</div>
 
 <div class="form-item inline">
   <span class="label-item">{localize('label_txt-as-md')}:</span>
