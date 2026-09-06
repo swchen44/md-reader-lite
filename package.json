@@ -13,7 +13,8 @@
     "url": "https://github.com/swchen44/md-reader-lite/issues"
   },
   "imports": {
-    "#core/*": "./src/core/*.ts"
+    "#core/*": "./src/core/*.ts",
+    "#config/*": "./src/config/*.ts"
   },
   "keywords": [
     "md-reader-lite",

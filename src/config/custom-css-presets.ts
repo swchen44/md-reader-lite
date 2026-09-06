@@ -217,3 +217,4 @@ export const CUSTOM_CSS_PRESETS = [
 ] as const
 
 export type CustomCssPresetId = typeof CUSTOM_CSS_PRESETS[number]['id']
+export type CustomCssChoice = CustomCssPresetId | 'user1' | 'user2'

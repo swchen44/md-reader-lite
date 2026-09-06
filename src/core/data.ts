@@ -1,4 +1,5 @@
 import MD_PLUGINS from '@/config/md-plugins'
+import type { CustomCssChoice } from '@/config/custom-css-presets'
 import type PAGE_THEMES from '@/config/page-themes'
 import i18n from '@/config/i18n'
 import { getDefaultPluginOptions } from './plugin-options'
@@ -23,6 +24,9 @@ export interface Data {
   breaks?: boolean
   customWidth?: number | null
   customCss?: string
+  customCssChoice?: CustomCssChoice
+  customCssUser1?: string
+  customCssUser2?: string
   searchHistory?: string[]
   searchHistoryLimit?: number
   mdPluginOptions?: Record<string, Record<string, unknown>>
@@ -55,6 +59,9 @@ export function getDefaultData(mergeData: Data = {}): Data {
     breaks: false,
     customWidth: null,
     customCss: '',
+    customCssChoice: 'user1',
+    customCssUser1: '',
+    customCssUser2: '',
     searchHistory: [],
     searchHistoryLimit: 10,
     mdPluginOptions: getDefaultPluginOptions(),

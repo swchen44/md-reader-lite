@@ -181,6 +181,45 @@ test('matchSearchHistory: suggests case-insensitive matches only when enabled', 
   assert.deepEqual(matchSearchHistory(['alpha'], 'a', 0), [])
 })
 
+test('resolveCustomCssChoice: built-in choices are readonly', async () => {
+  const { resolveCustomCssChoice } = await load()
+  const editorial = resolveCustomCssChoice({
+    customCssChoice: 'editorial',
+    customCss: 'legacy',
+    customCssUser1: '',
+    customCssUser2: '',
+  })
+  assert.equal(editorial.choice, 'editorial')
+  assert.equal(editorial.readonly, true)
+  assert.match(editorial.draft, /Little Might/)
+})
+
+test('resolveCustomCssChoice: user choices are editable and preserve slot text', async () => {
+  const { resolveCustomCssChoice } = await load()
+  assert.deepEqual(
+    resolveCustomCssChoice({
+      customCssChoice: 'user2',
+      customCss: '',
+      customCssUser1: 'one',
+      customCssUser2: 'two',
+    }),
+    { choice: 'user2', draft: 'two', readonly: false },
+  )
+})
+
+test('resolveCustomCssChoice: legacy customCss migrates to user1 display', async () => {
+  const { resolveCustomCssChoice } = await load()
+  assert.deepEqual(
+    resolveCustomCssChoice({
+      customCssChoice: undefined,
+      customCss: '.x { color: red }',
+      customCssUser1: '',
+      customCssUser2: '',
+    }),
+    { choice: 'user1', draft: '.x { color: red }', readonly: false },
+  )
+})
+
 test('clampCustomWidthPercent: min/max boundaries', async () => {
   const { clampCustomWidthPercent } = await load()
   assert.equal(clampCustomWidthPercent(20), 20)

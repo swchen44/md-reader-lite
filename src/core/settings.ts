@@ -1,3 +1,9 @@
+import {
+  CUSTOM_CSS_PRESETS,
+  type CustomCssChoice,
+} from '#config/custom-css-presets'
+import type { Data } from './data'
+
 export const REFRESH_INTERVAL_MIN = 0.5
 export const REFRESH_INTERVAL_MAX = 600
 export const CUSTOM_WIDTH_MIN = 500
@@ -64,6 +70,30 @@ export function matchSearchHistory(
   return normalizeSearchHistory(history, max).filter(item =>
     item.toLowerCase().includes(normalizedQuery),
   )
+}
+
+export function resolveCustomCssChoice(
+  data: Pick<
+    Data,
+    'customCssChoice' | 'customCss' | 'customCssUser1' | 'customCssUser2'
+  >,
+): { choice: CustomCssChoice; draft: string; readonly: boolean } {
+  const choice = data.customCssChoice
+  if (choice === 'editorial' || choice === 'developer') {
+    return {
+      choice,
+      draft: CUSTOM_CSS_PRESETS.find(preset => preset.id === choice)?.css || '',
+      readonly: true,
+    }
+  }
+  if (choice === 'user2') {
+    return { choice, draft: data.customCssUser2 || '', readonly: false }
+  }
+  return {
+    choice: 'user1',
+    draft: data.customCssUser1 || data.customCss || '',
+    readonly: false,
+  }
 }
 
 export function clampCustomWidth(v: unknown): number | null {
