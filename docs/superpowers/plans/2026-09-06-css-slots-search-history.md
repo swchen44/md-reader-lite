@@ -10,6 +10,10 @@
 
 **Spec:** Bounded in-chat design approved from the 2026-09-06 thread. Project constraints come from `docs/developer_guide.md`, `docs/ARCHITECTURE.md`, `docs/superpowers/specs/2026-08-31-settings-panel-and-diagram-viewer-design.md`, `docs/superpowers/specs/2026-08-30-sidebar-search-design.md`, and `docs/superpowers/specs/2026-08-30-search-parity-design.md`.
 
+**Status:** Completed on 2026-09-06 on `main`.
+
+**Implementation commits:** `0ceaae4`, `fd4d7fc`, `f6ee91b`, `aaa5b95`, `9b89617`.
+
 ## Global Constraints
 
 - Follow `docs/developer_guide.md`: pure logic goes in `tests/unit/`; popup and in-page UI behavior goes in `tests/e2e/`.
@@ -836,20 +840,46 @@ Boundary: 文件與索引，不修改 runtime behavior。
 
 ## Permanent TestPlan
 
-- `tests/unit/settings.test.mjs` permanently covers search-history limit, normalization, dedupe, recording, matching, and CSS slot resolution.
-- `tests/e2e/extension.e2e.mjs` permanently covers popup CSS slot readonly/editable behavior, storage persistence, custom CSS injection, search history limit setting, clear-history action, search suggestion rendering, keyboard selection, Tab completion, and click selection.
-- `tests/unit/manifest.test.mjs` remains the permission-surface guard. This feature must not change permissions.
-- `npm run test:unit` is the CI-friendly regression gate.
-- `npm run build && npm run test:e2e` is the local UI regression gate.
+### Automated Coverage
+
+- `tests/unit/settings.test.mjs` covers history limit defaults and bounds, normalization, dedupe, newest-first recording, case-insensitive matching, `0` disabling history, readonly built-in CSS choices, editable user slots, and legacy `customCss` migration.
+- `tests/e2e/extension.e2e.mjs` covers readonly built-in CSS, User 2 persistence and effective CSS application, history-limit persistence, history clearing, ArrowUp/ArrowDown selection, Tab completion, click selection, Enter recording, and clearing history from popup while the content page is already open.
+- `tests/unit/manifest.test.mjs` guards match-pattern validity and the zero-permission policy. This feature must not add host permissions or network behavior.
+
+### Repeatable Commands
+
+```bash
+npm run test:unit
+npm run typecheck
+npm run build
+npm run test:e2e
+node --test tests/unit/manifest.test.mjs
+```
+
+`npm run test:unit` is the CI-compatible gate. Run `npm run build` before `npm run test:e2e`, because e2e loads the built `extension/` directory into headed Chromium. Browser unavailability may skip e2e; a passing release requires real browser execution, not a skip.
+
+### Manual Acceptance
+
+1. Open Settings > Appearance. Verify Editorial and Developer show CSS but cannot be edited or applied; verify User 1 and User 2 can be edited and applied independently.
+2. Open Settings > General. Change Search History Limit, reload the page, and confirm the setting persists. Set it to `0` and confirm no history candidate appears. Clear history and confirm candidates disappear without reloading the markdown page.
+3. Open sidebar search, type a stored partial query, and verify the candidate list. Use ArrowUp/ArrowDown then Tab, click a candidate, and press Enter on a new query. Reopen search and confirm the new query is first in history.
 
 ## Regression Plan
 
 - Search: outline mode still returns heading/content hits and clears highlights on Escape.
 - Files tab search: still filters only the file tree and does not create document highlights.
-- Popup: settings overlay still opens inside the page when not sandboxed, switches remain clickable, and outside click dismisses the overlay.
+- Popup: settings overlay still opens inside the page when not sandboxed, switches remain clickable, outside click dismisses it, and search-history updates are delivered to an already-open content page.
 - Existing path modal dirty work: keep the current `Show Path` menu item, modal, copy feedback, and e2e coverage intact.
 - Privacy: no new fetch, no background proxy, no host permission, no manifest permission, no offline-mode exception.
 - Build: after `npm run build`, e2e must load the rebuilt `extension/`; if browser launch hangs, follow `docs/developer_guide.md` and inspect manifest validity first.
+
+## Completion Evidence
+
+- `npm run test:unit`: 203 passed.
+- `npm run typecheck`: passed.
+- `npm run build`: passed; webpack reported only existing asset-size recommendations.
+- `npm run test:e2e`: 32 passed in a headed Chromium session.
+- `node --test tests/unit/manifest.test.mjs`: 6 passed; `src/manifest.json` has no change in this feature series.
 
 ## Recent Git History Notes
 
