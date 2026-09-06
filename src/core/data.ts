@@ -23,6 +23,8 @@ export interface Data {
   breaks?: boolean
   customWidth?: number | null
   customCss?: string
+  searchHistory?: string[]
+  searchHistoryLimit?: number
   mdPluginOptions?: Record<string, Record<string, unknown>>
   customWidthUnit?: 'px' | 'percent'
   charsetCompat?: boolean
@@ -53,6 +55,8 @@ export function getDefaultData(mergeData: Data = {}): Data {
     breaks: false,
     customWidth: null,
     customCss: '',
+    searchHistory: [],
+    searchHistoryLimit: 10,
     mdPluginOptions: getDefaultPluginOptions(),
     customWidthUnit: 'px',
     charsetCompat: false,

@@ -2,12 +2,68 @@ export const REFRESH_INTERVAL_MIN = 0.5
 export const REFRESH_INTERVAL_MAX = 600
 export const CUSTOM_WIDTH_MIN = 500
 export const CUSTOM_WIDTH_MAX = 3000
+export const SEARCH_HISTORY_LIMIT_DEFAULT = 10
+export const SEARCH_HISTORY_LIMIT_MAX = 100
 export const TEXT_SIZES = [12, 14, 16, 18, 20, 24] as const
 
 export function clampRefreshInterval(v: unknown): number {
   const n = typeof v === 'number' ? v : parseFloat(String(v))
   if (!isFinite(n)) return REFRESH_INTERVAL_MIN
   return Math.min(REFRESH_INTERVAL_MAX, Math.max(REFRESH_INTERVAL_MIN, n))
+}
+
+export function clampSearchHistoryLimit(v: unknown): number {
+  if (v === undefined || v === null || v === '') {
+    return SEARCH_HISTORY_LIMIT_DEFAULT
+  }
+  const n = typeof v === 'number' ? v : parseFloat(String(v))
+  if (!isFinite(n)) return SEARCH_HISTORY_LIMIT_DEFAULT
+  return Math.round(Math.min(SEARCH_HISTORY_LIMIT_MAX, Math.max(0, n)))
+}
+
+export function normalizeSearchHistory(v: unknown, limit: number): string[] {
+  const max = clampSearchHistoryLimit(limit)
+  if (!max || !Array.isArray(v)) return []
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const item of v) {
+    const text = String(item ?? '').trim()
+    const key = text.toLowerCase()
+    if (!text || seen.has(key)) continue
+    seen.add(key)
+    out.push(text)
+    if (out.length >= max) break
+  }
+  return out
+}
+
+export function recordSearchHistory(
+  history: unknown,
+  query: unknown,
+  limit: unknown,
+): string[] {
+  const max = clampSearchHistoryLimit(limit)
+  if (!max) return []
+  const text = String(query ?? '').trim()
+  const base = normalizeSearchHistory(history, max)
+  if (!text) return base
+  return normalizeSearchHistory([text, ...base], max)
+}
+
+export function matchSearchHistory(
+  history: unknown,
+  query: unknown,
+  limit: unknown,
+): string[] {
+  const max = clampSearchHistoryLimit(limit)
+  if (!max) return []
+  const normalizedQuery = String(query ?? '')
+    .trim()
+    .toLowerCase()
+  if (!normalizedQuery) return []
+  return normalizeSearchHistory(history, max).filter(item =>
+    item.toLowerCase().includes(normalizedQuery),
+  )
 }
 
 export function clampCustomWidth(v: unknown): number | null {

@@ -146,6 +146,41 @@ test('formatDisplayPath: falls back to raw href on invalid percent-encoding', as
   assert.equal(formatDisplayPath('file:///a%.md'), 'file:///a%.md')
 })
 
+test('clampSearchHistoryLimit: defaults, clamps, and allows zero to disable history', async () => {
+  const { clampSearchHistoryLimit } = await load()
+  assert.equal(clampSearchHistoryLimit(undefined), 10)
+  assert.equal(clampSearchHistoryLimit('abc'), 10)
+  assert.equal(clampSearchHistoryLimit(-1), 0)
+  assert.equal(clampSearchHistoryLimit(0), 0)
+  assert.equal(clampSearchHistoryLimit(10), 10)
+  assert.equal(clampSearchHistoryLimit(999), 100)
+})
+
+test('recordSearchHistory: keeps a trimmed, deduped, newest-first bounded history', async () => {
+  const { recordSearchHistory } = await load()
+  assert.deepEqual(recordSearchHistory(['alpha', 'beta'], ' beta ', 10), [
+    'beta',
+    'alpha',
+  ])
+  assert.deepEqual(recordSearchHistory(['alpha', 'beta'], 'gamma', 2), [
+    'gamma',
+    'alpha',
+  ])
+  assert.deepEqual(recordSearchHistory(['alpha'], '   ', 10), ['alpha'])
+  assert.deepEqual(recordSearchHistory(['alpha'], 'beta', 0), [])
+})
+
+test('matchSearchHistory: suggests case-insensitive matches only when enabled', async () => {
+  const { matchSearchHistory } = await load()
+  assert.deepEqual(
+    matchSearchHistory(['Open Path', 'Find Heading', 'copy path'], 'path', 10),
+    ['Open Path', 'copy path'],
+  )
+  assert.deepEqual(matchSearchHistory(['alpha', 'beta'], '', 10), [])
+  assert.deepEqual(matchSearchHistory(['alpha', 'beta'], 'a', 1), ['alpha'])
+  assert.deepEqual(matchSearchHistory(['alpha'], 'a', 0), [])
+})
+
 test('clampCustomWidthPercent: min/max boundaries', async () => {
   const { clampCustomWidthPercent } = await load()
   assert.equal(clampCustomWidthPercent(20), 20)
