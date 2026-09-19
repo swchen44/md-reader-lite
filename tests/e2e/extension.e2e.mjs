@@ -316,6 +316,57 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
       false,
       'enabled custom CSS should allow applying a readonly preset',
     )
+    await frame.click('.btn-apply')
+    await page.waitForTimeout(300)
+    const editorialCss = (await getStorage('customCss')).customCss
+    assert.match(
+      editorialCss,
+      /Little Might/,
+      'applying the Editorial preset should make it the effective CSS',
+    )
+    assert.match(
+      editorialCss,
+      /\.md-reader__markdown-content table\s*\{/,
+      'Editorial preset should style Markdown tables',
+    )
+    assert.match(
+      editorialCss,
+      /blockquote\.info/,
+      'Editorial preset should style rendered callout boxes',
+    )
+    const editorialStyles = await page.evaluate(() => {
+      const table = document.querySelector('.md-reader__markdown-content table')
+      const callout = document.querySelector(
+        '.md-reader__markdown-content blockquote.info',
+      )
+      return {
+        tableRadius: table && getComputedStyle(table).borderTopLeftRadius,
+        tableDisplay: table && getComputedStyle(table).display,
+        tableWidth: table && table.getBoundingClientRect().width,
+        tableHeaderWidth: table?.querySelector('thead')?.getBoundingClientRect()
+          .width,
+        calloutRadius: callout && getComputedStyle(callout).borderTopLeftRadius,
+        calloutFontStyle: callout && getComputedStyle(callout).fontStyle,
+        calloutIcon: callout && getComputedStyle(callout, '::before').content,
+      }
+    })
+    assert.equal(editorialStyles.tableRadius, '8px')
+    assert.equal(
+      editorialStyles.tableDisplay,
+      'table',
+      'Editorial desktop table should retain native table layout',
+    )
+    assert.ok(
+      editorialStyles.tableHeaderWidth >= editorialStyles.tableWidth - 2,
+      'Editorial table header should fill the table width',
+    )
+    assert.equal(editorialStyles.calloutRadius, '8px')
+    assert.equal(editorialStyles.calloutFontStyle, 'normal')
+    assert.equal(
+      editorialStyles.calloutIcon,
+      'none',
+      'Editorial callout should use its color rail instead of the Alert icon',
+    )
 
     await frame.evaluate(() => {
       const row = [...document.querySelectorAll('.form-item')].find(r =>
@@ -341,8 +392,8 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
     )
     assert.equal(
       (await getStorage('customCss')).customCss,
-      '',
-      'selecting a preset alone must not make it effective',
+      editorialCss,
+      'selecting a preset alone must keep the previously applied CSS effective',
     )
     await frame.click('.btn-apply')
     await page.waitForTimeout(300)

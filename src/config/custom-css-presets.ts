@@ -1,7 +1,7 @@
 const EDITORIAL_CSS = `/*
  * 「Little Might」編輯風格範例
  * 參考網站：https://littlemight.com/fable-prompts-for-people-who-dont-code/
- * （米色背景、大型 serif 標題、灰階內文、卡片式程式碼區塊、橘色強調色）
+ * （米色背景、大型 serif 標題、灰階內文、圓潤白色卡片與表格、橘色強調色）
  *
  * 字體說明：範例網站用的是需要連網下載的 Google Fonts（Instrument Serif /
  * Geist / Geist Mono）。本擴充功能預設離線、零連線是核心賣點，所以這裡
@@ -61,11 +61,138 @@ body.md-reader {
 }
 
 .md-reader__markdown-content blockquote {
-  border-left: 3px solid #f7591f !important;
-  background: rgba(255, 255, 255, 0.5) !important;
+  margin: 1.2em 0 !important;
+  border: 1px solid rgba(135, 139, 134, 0.22) !important;
+  border-left: 4px solid #f7591f !important;
+  border-radius: 8px !important;
+  background: #fcfbf7 !important;
   color: #52534e !important;
   font-style: italic !important;
-  padding: 0.6em 1.2em !important;
+  padding: 0.8em 1em !important;
+}
+
+.md-reader__markdown-content blockquote > :first-child {
+  margin-top: 0 !important;
+}
+
+.md-reader__markdown-content blockquote > :last-child {
+  margin-bottom: 0 !important;
+}
+
+.md-reader__markdown-content blockquote.info,
+.md-reader__markdown-content blockquote.note,
+.md-reader__markdown-content blockquote.tip,
+.md-reader__markdown-content blockquote.tips,
+.md-reader__markdown-content blockquote.success,
+.md-reader__markdown-content blockquote.warning,
+.md-reader__markdown-content blockquote.danger {
+  border-radius: 8px !important;
+  font-style: normal !important;
+}
+
+.md-reader__markdown-content blockquote.info,
+.md-reader__markdown-content blockquote.note,
+.md-reader__markdown-content blockquote.tip,
+.md-reader__markdown-content blockquote.tips {
+  background: #fff7f0 !important;
+  border-left-color: #f7591f !important;
+}
+
+.md-reader__markdown-content blockquote.success {
+  background: #f3f8ef !important;
+  border-left-color: #6c8d5f !important;
+}
+
+.md-reader__markdown-content blockquote.warning {
+  background: #fff9e9 !important;
+  border-left-color: #bd8827 !important;
+}
+
+.md-reader__markdown-content blockquote.danger {
+  background: #fff0eb !important;
+  border-left-color: #bd5a49 !important;
+}
+
+.md-reader__markdown-content blockquote.info::before,
+.md-reader__markdown-content blockquote.note::before,
+.md-reader__markdown-content blockquote.tip::before,
+.md-reader__markdown-content blockquote.tips::before,
+.md-reader__markdown-content blockquote.success::before,
+.md-reader__markdown-content blockquote.warning::before,
+.md-reader__markdown-content blockquote.danger::before {
+  content: none !important;
+  display: none !important;
+}
+
+.md-reader__markdown-content details {
+  margin: 1.2em 0 !important;
+  border: 1px solid rgba(135, 139, 134, 0.22) !important;
+  border-radius: 8px !important;
+  background: #fcfbf7 !important;
+  padding: 0.8em 1em !important;
+}
+
+.md-reader__markdown-content details[open] summary {
+  margin-bottom: 0.8em !important;
+  padding-bottom: 0.7em !important;
+  border-bottom: 1px solid rgba(135, 139, 134, 0.22) !important;
+}
+
+.md-reader__markdown-content table {
+  display: table !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  border: 1px solid rgba(135, 139, 134, 0.22) !important;
+  border-radius: 8px !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  color: #52534e !important;
+  font-family: -apple-system, 'Segoe UI', system-ui, sans-serif !important;
+  font-size: 0.94em !important;
+}
+
+@media (max-width: 700px) {
+  .md-reader__markdown-content table {
+    display: block !important;
+    overflow-x: auto !important;
+  }
+
+  .md-reader__markdown-content table > thead,
+  .md-reader__markdown-content table > tbody {
+    display: table !important;
+    min-width: 560px !important;
+    width: 100% !important;
+  }
+}
+
+.md-reader__markdown-content th,
+.md-reader__markdown-content td {
+  border: 0 !important;
+  border-bottom: 1px solid rgba(135, 139, 134, 0.16) !important;
+  padding: 0.75em 0.9em !important;
+  vertical-align: middle !important;
+}
+
+.md-reader__markdown-content th {
+  background: #f1f0e9 !important;
+  color: #6f706b !important;
+  font-size: 0.78em !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  text-transform: uppercase !important;
+}
+
+.md-reader__markdown-content th:not(:first-child),
+.md-reader__markdown-content td:not(:first-child) {
+  text-align: center !important;
+}
+
+.md-reader__markdown-content tbody tr:nth-child(even) td {
+  background: #faf9f4 !important;
+}
+
+.md-reader__markdown-content tbody tr:last-child td {
+  border-bottom: 0 !important;
 }
 
 .md-reader__markdown-content pre.md-reader__code-block {

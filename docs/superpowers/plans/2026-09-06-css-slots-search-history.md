@@ -843,7 +843,7 @@ Boundary: 文件與索引，不修改 runtime behavior。
 ### Automated Coverage
 
 - `tests/unit/settings.test.mjs` covers history limit defaults and bounds, normalization, dedupe, newest-first recording, case-insensitive matching, `0` disabling history, readonly built-in CSS choices, editable user slots, and legacy `customCss` migration.
-- `tests/e2e/extension.e2e.mjs` covers readonly built-in CSS, User 2 persistence and effective CSS application, the Developer preset's table and callout rules, rounded rendered table/callout surfaces, native desktop table layout with a full-width header, disabling CSS customization without losing drafts, deliberate re-apply after re-enabling, history-limit persistence, history clearing, matching search-input and history-suggestion typography, ArrowUp/ArrowDown selection, Tab completion, click selection, Enter recording, and clearing history from popup while the content page is already open.
+- `tests/e2e/extension.e2e.mjs` covers readonly built-in CSS, User 2 persistence and effective CSS application, the Editorial and Developer presets' table and callout rules, rounded rendered table/callout surfaces, native desktop table layout with a full-width header, no Alert pseudo-element icon collision, disabling CSS customization without losing drafts, deliberate re-apply after re-enabling, history-limit persistence, history clearing, matching search-input and history-suggestion typography, ArrowUp/ArrowDown selection, Tab completion, click selection, Enter recording, and clearing history from popup while the content page is already open.
 - `tests/unit/manifest.test.mjs` guards match-pattern validity and the zero-permission policy. This feature must not add host permissions or network behavior.
 
 ### Repeatable Commands
@@ -860,7 +860,7 @@ node --test tests/unit/manifest.test.mjs
 
 ### Manual Acceptance
 
-1. Open Settings > Appearance. Toggle CSS Customization off and confirm page styles are removed while all slot content remains. Toggle it back on and confirm CSS is not restored until Apply. Verify Editorial and Developer stay readonly but can be applied, and User 1/User 2 can be edited and applied independently. With Developer selected, inspect a Markdown table, callout, frontmatter details, headings, and code block: table columns fill the desktop surface, small screens can scroll wide tables, and framed elements use the warm, rounded visual language.
+1. Open Settings > Appearance. Toggle CSS Customization off and confirm page styles are removed while all slot content remains. Toggle it back on and confirm CSS is not restored until Apply. Verify Editorial and Developer stay readonly but can be applied, and User 1/User 2 can be edited and applied independently. With each built-in preset selected, inspect a Markdown table, callout, frontmatter details, headings, and code block: table columns fill the desktop surface, small screens can scroll wide tables, and framed elements use that preset's rounded visual language without Alert icon/text collisions.
 2. Open Settings > General. Change Search History Limit, reload the page, and confirm the setting persists. Set it to `0` and confirm no history candidate appears. Clear history and confirm candidates disappear without reloading the markdown page.
 3. Open sidebar search, type a stored partial query, and verify candidates use the same font and size as the input. Use ArrowUp/ArrowDown then Tab, click a candidate, and press Enter on a new query. Reopen search and confirm the new query is first in history.
 
