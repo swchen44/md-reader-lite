@@ -3,6 +3,7 @@ import type { CustomCssChoice } from '@/config/custom-css-presets'
 import type PAGE_THEMES from '@/config/page-themes'
 import i18n from '@/config/i18n'
 import { getDefaultPluginOptions } from './plugin-options'
+import { resolveCustomCssDefaults } from './settings'
 
 export interface Data {
   enable?: boolean
@@ -28,6 +29,7 @@ export interface Data {
   customCssChoice?: CustomCssChoice
   customCssUser1?: string
   customCssUser2?: string
+  customCssDefaultPreset?: 'developer' | 'legacy'
   searchHistory?: string[]
   searchHistoryLimit?: number
   mdPluginOptions?: Record<string, Record<string, unknown>>
@@ -40,7 +42,23 @@ export interface Data {
 }
 
 export function getDefaultData(mergeData: Data = {}): Data {
-  const { customCssEnabled, ...restData } = mergeData
+  const {
+    customCss,
+    customCssEnabled,
+    customCssChoice,
+    customCssUser1,
+    customCssUser2,
+    customCssDefaultPreset,
+    ...restData
+  } = mergeData
+  const customCssDefaults = resolveCustomCssDefaults({
+    customCss,
+    customCssEnabled,
+    customCssChoice,
+    customCssUser1,
+    customCssUser2,
+    customCssDefaultPreset,
+  })
   return {
     enable: true,
     refresh: false,
@@ -60,16 +78,8 @@ export function getDefaultData(mergeData: Data = {}): Data {
     outlineCollapse: false,
     breaks: false,
     customWidth: null,
-    customCss: '',
-    // Existing users had custom CSS applied without an explicit enable flag.
-    // Preserve that appearance on upgrade; new installs start disabled.
-    customCssEnabled:
-      typeof customCssEnabled === 'boolean'
-        ? customCssEnabled
-        : Boolean(mergeData.customCss),
-    customCssChoice: 'user1',
-    customCssUser1: '',
-    customCssUser2: '',
+    customCssDefaultPreset: customCssDefaultPreset || 'developer',
+    ...customCssDefaults,
     searchHistory: [],
     searchHistoryLimit: 10,
     mdPluginOptions: getDefaultPluginOptions(),

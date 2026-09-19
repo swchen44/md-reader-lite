@@ -67,6 +67,21 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
     assert.ok(page, 'page should exist')
   })
 
+  test('預設: 全新安裝立即套用 Developer CSS', async t => {
+    if (unavailable) return t.skip(unavailable)
+    assert.equal(
+      (await getStorage('customCssDefaultPreset')).customCssDefaultPreset,
+      'developer',
+      '全新安裝應記錄新版 CSS 預設，避免更新既有使用者時誤套用',
+    )
+    assert.equal(await page.locator('#md-reader-custom-css').count(), 1)
+    assert.match(
+      await page.textContent('#md-reader-custom-css'),
+      /Developer/,
+      '全新安裝應立即把 Developer preset 套到內容頁',
+    )
+  })
+
   test('sessionStorage 被拋 SecurityError（沙盒文件）也不能讓 main() 中斷渲染', async t => {
     if (unavailable) return t.skip(unavailable)
     // 頁籤記憶功能會讀寫 sessionStorage；某些頁面（例如把 md 內容嵌進缺

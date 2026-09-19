@@ -220,6 +220,49 @@ test('resolveCustomCssChoice: legacy customCss migrates to user1 display', async
   )
 })
 
+test('resolveCustomCssDefaults: fresh configuration enables the Developer preset', async () => {
+  const { resolveCustomCssDefaults } = await load()
+  const defaults = resolveCustomCssDefaults?.({})
+
+  assert.equal(defaults?.customCssEnabled, true)
+  assert.equal(defaults?.customCssChoice, 'developer')
+  assert.match(defaults?.customCss || '', /Developer/)
+})
+
+test('resolveCustomCssDefaults: legacy configuration keeps CSS customization disabled', async () => {
+  const { resolveCustomCssDefaults } = await load()
+  const defaults = resolveCustomCssDefaults?.({
+    customCssDefaultPreset: 'legacy',
+  })
+
+  assert.deepEqual(defaults, {
+    customCss: '',
+    customCssEnabled: false,
+    customCssChoice: 'user1',
+    customCssUser1: '',
+    customCssUser2: '',
+  })
+})
+
+test('resolveCustomCssDefaults: legacy custom CSS stays effective and editable', async () => {
+  const { resolveCustomCssDefaults } = await load()
+  const defaults = resolveCustomCssDefaults?.({
+    customCssDefaultPreset: 'legacy',
+    customCss: '.legacy { color: tomato; }',
+    customCssChoice: 'user2',
+    customCssUser1: 'one',
+    customCssUser2: 'two',
+  })
+
+  assert.deepEqual(defaults, {
+    customCss: '.legacy { color: tomato; }',
+    customCssEnabled: true,
+    customCssChoice: 'user2',
+    customCssUser1: 'one',
+    customCssUser2: 'two',
+  })
+})
+
 test('clampCustomWidthPercent: min/max boundaries', async () => {
   const { clampCustomWidthPercent } = await load()
   assert.equal(clampCustomWidthPercent(20), 20)

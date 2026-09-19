@@ -2,6 +2,14 @@ import storage from '@/core/storage'
 import commands from '@/core/commands'
 import { canBgFetch } from '@/core/charset'
 
+chrome.runtime.onInstalled.addListener(async ({ reason }) => {
+  const { customCssDefaultPreset } = await storage.get('customCssDefaultPreset')
+  if (customCssDefaultPreset) return
+  await storage.set({
+    customCssDefaultPreset: reason === 'install' ? 'developer' : 'legacy',
+  })
+})
+
 chrome.runtime.onMessage.addListener(({ action, data }, sender, callback) => {
   messageHandler(action, data, sender, callback)
   return true

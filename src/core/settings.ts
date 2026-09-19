@@ -96,6 +96,50 @@ export function resolveCustomCssChoice(
   }
 }
 
+export function resolveCustomCssDefaults(
+  data: Pick<
+    Data,
+    | 'customCss'
+    | 'customCssEnabled'
+    | 'customCssChoice'
+    | 'customCssUser1'
+    | 'customCssUser2'
+    | 'customCssDefaultPreset'
+  >,
+): Required<
+  Pick<
+    Data,
+    | 'customCss'
+    | 'customCssEnabled'
+    | 'customCssChoice'
+    | 'customCssUser1'
+    | 'customCssUser2'
+  >
+> {
+  const useDeveloperDefault = data.customCssDefaultPreset !== 'legacy'
+  const developerCss = CUSTOM_CSS_PRESETS.find(
+    preset => preset.id === 'developer',
+  )?.css
+  const customCss =
+    typeof data.customCss === 'string'
+      ? data.customCss
+      : useDeveloperDefault
+      ? developerCss || ''
+      : ''
+
+  return {
+    customCss,
+    customCssEnabled:
+      typeof data.customCssEnabled === 'boolean'
+        ? data.customCssEnabled
+        : useDeveloperDefault || Boolean(customCss),
+    customCssChoice:
+      data.customCssChoice || (useDeveloperDefault ? 'developer' : 'user1'),
+    customCssUser1: data.customCssUser1 || '',
+    customCssUser2: data.customCssUser2 || '',
+  }
+}
+
 export function clampCustomWidth(v: unknown): number | null {
   if (v === null || v === undefined || v === '') return null
   const n = typeof v === 'number' ? v : parseFloat(String(v))
