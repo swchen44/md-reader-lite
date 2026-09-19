@@ -14,6 +14,6 @@
 | 2026-09-01 | 離線總開關（offlineMode）＋ PlantUML 圖表             | [superpowers/plans/2026-09-01-offline-mode-plantuml.md](superpowers/plans/2026-09-01-offline-mode-plantuml.md)                   | 完成（v1.4.0）      |
 
 | 2026-09-02 | .mdc/.puml/.plantuml + 關閉顯示原碼 + 伺服器教學 + language 修正 + 全按鈕測試 | [superpowers/plans/2026-09-02-plantuml-files-and-fixes.md](superpowers/plans/2026-09-02-plantuml-files-and-fixes.md) | 完成（v1.5.0） |
-| 2026-09-06 | CSS 四選一（兩個 readonly preset + User 1/User 2）＋側欄搜尋歷史與 Tab 補完 | [superpowers/plans/2026-09-06-css-slots-search-history.md](superpowers/plans/2026-09-06-css-slots-search-history.md) | 完成（main） |
+| 2026-09-06 | CSS 客製化四選一（新安裝預設 Developer、兩個 readonly preset + User 1/User 2）＋側欄搜尋歷史與 Tab 補完 | [superpowers/plans/2026-09-06-css-slots-search-history.md](superpowers/plans/2026-09-06-css-slots-search-history.md) | 完成（已併入 main） |
 
 新計畫請放 docs/superpowers/plans/ 並在此登錄。

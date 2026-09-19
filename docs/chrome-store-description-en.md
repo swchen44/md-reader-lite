@@ -15,7 +15,9 @@ Key features:
 - 🔒 Privacy-first: a master Offline Mode switch, blocking all outbound connections by default (auditable and independently verifiable)
 - 📁 File navigation: folder tree browsing, GitHub file tree, Obsidian-style backlinks
 - 🔍 Full-text search: instant filename search in the file tree, search results persist across file switches
+- 🕘 Navigation search history: local suggestions while typing, keyboard selection and Tab completion; configurable limit and clear control
 - 🎨 Multiple themes and adjustable font size
+- 🧩 CSS customization: Developer style is active by default on new installs; select two built-in read-only presets or edit either of two local CSS slots, then Apply
 - ⌨️ Keyboard shortcuts for faster navigation
 - 🖱️ Floating menu, resizable sidebar
 - 🔎 PlantUML diagram rendering (opt-in, off by default, automatically disabled under Offline Mode; self-hostable on your own intranet)

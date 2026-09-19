@@ -66,7 +66,7 @@
 
 指令：
 
-    npm test            # = test:unit，跑 tests/unit/ 全部（190 條）
+    npm test            # = test:unit，跑 tests/unit/ 全部（206 條）
     npm run test:unit   # node --test tests/unit/*.test.mjs
     npm run test:e2e    # 需先 npm run build；載入 extension/ 進真實瀏覽器
     npm run typecheck   # tsc --noEmit
@@ -93,6 +93,14 @@
 坑：headed 瀏覽器偶爾啟動卡住——**若自動化瀏覽器無故 hang，先懷疑 `extension/manifest.json` 無效**（無效的 `web_accessible_resources` match pattern 會讓擴充載入失敗、Chrome 一開就卡，表象像環境壞掉）。手動 `chrome://extensions → 載入未封裝項目` 會跳出真正的錯誤對話框（見 lesson_learn.md）。
 
 > **新增功能時**：碰網路/隱私的邏輯補 `tests/unit/`（可 CI 把關）；碰 popup／頁內 UI／點擊行為的補 `tests/e2e/`（本機驗收）。
+
+## CSS 客製化與搜尋歷史
+
+CSS 客製化與導覽搜尋歷史皆只存於 `chrome.storage.local`，不會增加網路請求。CSS 有兩個唯讀 preset（`editorial`、`developer`）與兩個可編輯欄位（`user1`、`user2`）。`customCssEnabled` 是實際注入 CSS 的開關；切換 preset 或編輯草稿本身不改變頁面，使用者按「套用」後才寫入 `customCss` 並生效。
+
+新安裝由 `src/background.ts` 的 `chrome.runtime.onInstalled` 寫入 `customCssDefaultPreset: 'developer'`，因此預設啟用並套用 Developer CSS。既有安裝若還沒有這個 marker，則寫入 `'legacy'`；`src/core/settings.ts` 依 marker 保留舊版的 CSS、選擇與開關狀態，避免升級時改變既有頁面外觀。`src/core/data.ts` 中 `searchHistory` 的預設為空陣列，`searchHistoryLimit` 預設為 `10`。
+
+這些行為由 `tests/unit/settings.test.mjs` 的預設／舊版相容測試，以及 `tests/e2e/extension.e2e.mjs` 的新設定檔、preset、啟用開關、套用與搜尋建議流程持續驗證；完整情境見 `docs/superpowers/plans/2026-09-06-css-slots-search-history.md` 的 Test Plan。
 
 ## 本機載入與驗收
 
@@ -131,3 +139,15 @@
 ## 發佈（Release）
 
 打 tag 即自動發佈：`git tag -a vX.Y.Z -m "..." && git push origin vX.Y.Z` → GitHub Actions（.github/workflows/release.yml）建置、跑測試、打包並建立附 zip 的 Release。手動觸發（workflow_dispatch）為乾跑：只建置與上傳 artifact，不發佈。tag 版本號（去掉 v）會寫入 manifest；打 tag 前記得同步 package.json 的 version。
+
+打 tag 前在本機執行完整 release gate：
+
+    npm run lint
+    npm run test:unit
+    npm run typecheck
+    npm run build
+    npm run test:e2e
+    git diff --check
+    git status --short
+
+最後一項必須沒有輸出；版本調整、文件更新與 release commit 均應先提交，再建立 tag。GitHub Actions 會重跑 unit test 與 typecheck，但不跑 lint 或 headed e2e，兩者須由本機 gate 保證。

@@ -22,7 +22,9 @@ MD Reader Lite turns .md files into clean, readable pages. Open a local file or 
 • GFM-style rendering: tables, task lists, footnotes, KaTeX math, Mermaid & Graphviz diagrams
 • Obsidian syntax: ![[image|300]] embeds, [[wikilinks|alias]], %%comments%%, callouts, front matter table
 • Folder tree side panel to browse sibling documents on http servers
+• Navigation search history with local suggestions, keyboard selection, Tab completion, configurable limit, and clear control
 • Outline panel, light/dark/auto themes, per-plugin toggles
+• CSS customization: Developer styling is active by default on new installs; select two read-only presets or edit either of two local CSS slots, then Apply
 • Optional: render .txt files as Markdown
 • Works on intranets and air-gapped machines — no external requests, with one documented exception: an anonymous, tokenless call to GitHub's public API to list a folder when the file tree is used on raw.githubusercontent.com pages
 Forked from the open-source md-reader (MIT) with new features; not affiliated with the original store listing.
@@ -31,7 +33,9 @@ MD Reader Lite 將 .md 檔轉換成簡潔易讀的網頁。開啟本機檔案或
 • GFM 標準渲染：表格、工作清單、注腳、KaTeX 數學、Mermaid 與 Graphviz 圖表
 • Obsidian 語法：![[image|300]] 嵌入、[[wikilinks|別名]]、%%備註%%、callout 標註框、front matter 屬性表
 • 資料夾目錄樹邊欄，瀏覽 HTTP 伺服器上的相鄰文件
+• 導覽搜尋歷史：輸入時顯示本機建議，可用鍵盤選取與 Tab 補完；筆數上限可調整，也可清除
 • 大綱邊欄、淺色／深色／自動佈景主題、按外掛的開關
+• CSS 客製化：新安裝預設套用 Developer 風格；可選兩個唯讀內建風格或編輯兩個本機 CSS 欄位，按「套用」後才生效
 • .txt 檔案可選擇性當 Markdown 渲染
 • 適用於內網與隔離機器——不發出外部請求，僅一項跨域例外：於 GitHub raw 頁面使用檔案樹時，匿名呼叫 GitHub 公開 API 列目錄
 源自開源 md-reader（MIT）並加入新功能；與原版上架清單無關。
