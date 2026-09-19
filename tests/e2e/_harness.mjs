@@ -31,6 +31,15 @@ Some **markdown** content for extension end-to-end tests.
 ## Section A
 - item 1
 - item 2
+
+| Feature | Starter | Pro |
+| --- | --- | --- |
+| API calls | 10,000 | 50,000 |
+| Support | Email | Priority |
+
+:::info
+This is an E2E callout fixture.
+:::
 `
 
 // Serve the fixture as text/markdown so the content script activates.

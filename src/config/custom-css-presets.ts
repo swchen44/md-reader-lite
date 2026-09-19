@@ -102,8 +102,8 @@ body.md-reader {
 
 const DEVELOPER_CSS = `/*
  * 「Developer」開發者風格範例
- * 參考網站：https://freightapis.dev/
- * （米色背景、粗黑無襯線大標題、深色終端機風程式碼區塊、赤陶橘強調色）
+ * 參考網站：https://freightapis.dev/pricing
+ * （暖白底、粗黑無襯線標題、圓潤資訊框與表格、深色終端機程式碼區塊、赤陶橘強調色）
  *
  * 字體說明：範例網站用的是 Inter（標題/內文）與 JetBrains Mono（程式碼），
  * 都需要連網下載。本擴充功能預設離線、零連線是核心賣點，這裡改用本機
@@ -123,21 +123,28 @@ body.md-reader {
 .md-reader__markdown-content h3 {
   font-family: -apple-system, 'Segoe UI', system-ui, sans-serif !important;
   font-weight: 700 !important;
-  letter-spacing: -0.02em !important;
+  letter-spacing: 0 !important;
   color: #141413 !important;
 }
 
 .md-reader__markdown-content h1 {
-  font-size: 2.6em !important;
-  line-height: 1.1 !important;
+  font-size: 2.5em !important;
+  line-height: 1.12 !important;
+  margin-bottom: 0.45em !important;
 }
 
 .md-reader__markdown-content h2 {
   font-size: 1.6em !important;
+  line-height: 1.25 !important;
+  margin-top: 2em !important;
+  padding-bottom: 0.45em !important;
+  border-bottom: 1px solid #e4ddd2 !important;
 }
 
 .md-reader__markdown-content h3 {
   font-size: 1.15em !important;
+  line-height: 1.35 !important;
+  margin-top: 1.6em !important;
 }
 
 .md-reader__markdown-content p,
@@ -157,18 +164,143 @@ body.md-reader {
 }
 
 .md-reader__markdown-content blockquote {
-  border-left: 3px solid #cc785c !important;
-  background: rgba(20, 20, 19, 0.03) !important;
+  margin: 1.2em 0 !important;
+  border: 1px solid #e4ddd2 !important;
+  border-left: 4px solid #cc785c !important;
+  border-radius: 8px !important;
+  background: #f4eee5 !important;
   color: #3d3d3a !important;
-  font-style: italic !important;
-  padding: 0.6em 1.2em !important;
+  font-style: normal !important;
+  padding: 0.8em 1em !important;
+}
+
+.md-reader__markdown-content blockquote > :first-child {
+  margin-top: 0 !important;
+}
+
+.md-reader__markdown-content blockquote > :last-child {
+  margin-bottom: 0 !important;
+}
+
+.md-reader__markdown-content blockquote.info,
+.md-reader__markdown-content blockquote.note,
+.md-reader__markdown-content blockquote.tip,
+.md-reader__markdown-content blockquote.tips,
+.md-reader__markdown-content blockquote.success,
+.md-reader__markdown-content blockquote.warning,
+.md-reader__markdown-content blockquote.danger {
+  border-radius: 8px !important;
+}
+
+.md-reader__markdown-content blockquote.info,
+.md-reader__markdown-content blockquote.note,
+.md-reader__markdown-content blockquote.tip,
+.md-reader__markdown-content blockquote.tips {
+  background: #f8f1ea !important;
+  border-left-color: #cc785c !important;
+}
+
+.md-reader__markdown-content blockquote.success {
+  background: #eef5eb !important;
+  border-left-color: #638a54 !important;
+}
+
+.md-reader__markdown-content blockquote.warning {
+  background: #fbf3df !important;
+  border-left-color: #c48a25 !important;
+}
+
+.md-reader__markdown-content blockquote.danger {
+  background: #faeae5 !important;
+  border-left-color: #bd5a49 !important;
+}
+
+.md-reader__markdown-content blockquote.info::before,
+.md-reader__markdown-content blockquote.note::before,
+.md-reader__markdown-content blockquote.tip::before,
+.md-reader__markdown-content blockquote.tips::before,
+.md-reader__markdown-content blockquote.success::before,
+.md-reader__markdown-content blockquote.warning::before,
+.md-reader__markdown-content blockquote.danger::before {
+  content: none !important;
+  display: none !important;
+}
+
+.md-reader__markdown-content details {
+  margin: 1.2em 0 !important;
+  border: 1px solid #e4ddd2 !important;
+  border-radius: 8px !important;
+  background: #fdfcf9 !important;
+  padding: 0.8em 1em !important;
+}
+
+.md-reader__markdown-content details[open] summary {
+  margin-bottom: 0.8em !important;
+  padding-bottom: 0.7em !important;
+  border-bottom: 1px solid #e4ddd2 !important;
+}
+
+.md-reader__markdown-content table {
+  display: table !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  border: 1px solid #e4ddd2 !important;
+  border-radius: 8px !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  color: #3d3d3a !important;
+  font-size: 0.94em !important;
+}
+
+@media (max-width: 700px) {
+  .md-reader__markdown-content table {
+    display: block !important;
+    overflow-x: auto !important;
+  }
+
+  .md-reader__markdown-content table > thead,
+  .md-reader__markdown-content table > tbody {
+    display: table !important;
+    min-width: 560px !important;
+    width: 100% !important;
+  }
+}
+
+.md-reader__markdown-content th,
+.md-reader__markdown-content td {
+  border: 0 !important;
+  border-bottom: 1px solid #eae3d8 !important;
+  padding: 0.75em 0.9em !important;
+  vertical-align: middle !important;
+}
+
+.md-reader__markdown-content th {
+  background: #f1eadf !important;
+  color: #6d6a64 !important;
+  font-size: 0.78em !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+}
+
+.md-reader__markdown-content th:not(:first-child),
+.md-reader__markdown-content td:not(:first-child) {
+  text-align: center !important;
+}
+
+.md-reader__markdown-content tbody tr:nth-child(even) td {
+  background: #f7f2e9 !important;
+}
+
+.md-reader__markdown-content tbody tr:last-child td {
+  border-bottom: 0 !important;
 }
 
 .md-reader__markdown-content pre.md-reader__code-block {
   position: relative !important;
   background: #181715 !important;
   border: none !important;
-  border-radius: 8px !important;
+  border-radius: 10px !important;
   padding: 2.4em 22px 21px !important;
   box-shadow: none !important;
 }
@@ -199,14 +331,14 @@ body.md-reader {
 .md-reader__markdown-content .md-reader__btn--copy {
   background: rgba(250, 249, 245, 0.12) !important;
   border: 1px solid rgba(250, 249, 245, 0.2) !important;
-  border-radius: 6px !important;
+  border-radius: 8px !important;
   color: rgba(250, 249, 245, 0.8) !important;
 }
 
 .md-reader__markdown-content code:not(pre code) {
   background: rgba(20, 20, 19, 0.06) !important;
   color: #141413 !important;
-  border-radius: 4px !important;
+  border-radius: 6px !important;
   padding: 0.1em 0.35em !important;
 }
 `

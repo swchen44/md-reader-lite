@@ -283,6 +283,12 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
       customCssUser1: '',
       customCssUser2: '',
     })
+    await page.goto(`http://localhost:${port}/x.md`, {
+      waitUntil: 'domcontentloaded',
+    })
+    await page.waitForSelector('.md-reader__markdown-content', {
+      timeout: 12000,
+    })
     await clickMenuItem(/設定|Settings|设置/)
     const frame = page.frames().find(f => /popup\.html/.test(f.url()))
     await frame.evaluate(() => {
@@ -340,10 +346,54 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
     )
     await frame.click('.btn-apply')
     await page.waitForTimeout(300)
+    const developerCss = (await getStorage('customCss')).customCss
     assert.match(
-      (await getStorage('customCss')).customCss,
+      developerCss,
       /Developer/,
       'applying a built-in preset should make it the effective CSS',
+    )
+    assert.match(
+      developerCss,
+      /\.md-reader__markdown-content table\s*\{/,
+      'Developer preset should style Markdown tables',
+    )
+    assert.match(
+      developerCss,
+      /blockquote\.info/,
+      'Developer preset should style rendered callout boxes',
+    )
+    const renderedStyles = await page.evaluate(() => {
+      const table = document.querySelector('.md-reader__markdown-content table')
+      const callout = document.querySelector(
+        '.md-reader__markdown-content blockquote.info',
+      )
+      return {
+        tableRadius: table && getComputedStyle(table).borderTopLeftRadius,
+        tableDisplay: table && getComputedStyle(table).display,
+        tableWidth: table && table.getBoundingClientRect().width,
+        tableHeaderWidth: table?.querySelector('thead')?.getBoundingClientRect()
+          .width,
+        calloutRadius: callout && getComputedStyle(callout).borderTopLeftRadius,
+        calloutFontStyle: callout && getComputedStyle(callout).fontStyle,
+        calloutIcon: callout && getComputedStyle(callout, '::before').content,
+      }
+    })
+    assert.equal(renderedStyles.tableRadius, '8px')
+    assert.equal(
+      renderedStyles.tableDisplay,
+      'table',
+      'desktop table should retain native table layout',
+    )
+    assert.ok(
+      renderedStyles.tableHeaderWidth >= renderedStyles.tableWidth - 2,
+      'table header should fill the table width',
+    )
+    assert.equal(renderedStyles.calloutRadius, '8px')
+    assert.equal(renderedStyles.calloutFontStyle, 'normal')
+    assert.equal(
+      renderedStyles.calloutIcon,
+      'none',
+      'Developer callout should use its color rail instead of the Alert icon',
     )
 
     await frame.evaluate(() => {
