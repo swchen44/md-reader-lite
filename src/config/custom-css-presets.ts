@@ -320,11 +320,36 @@ body.md-reader {
 }
 
 .md-reader__markdown-content blockquote.info,
-.md-reader__markdown-content blockquote.note,
 .md-reader__markdown-content blockquote.tip,
 .md-reader__markdown-content blockquote.tips {
   background: #f8f1ea !important;
   border-left-color: #cc785c !important;
+}
+
+.md-reader__markdown-content blockquote.note {
+  background: #f1eadf !important;
+  border-left-color: #cc785c !important;
+}
+
+.md-reader__markdown-content .markdown-alert.markdown-alert-note {
+  margin: 1.2em 0 !important;
+  border: 1px solid #e4ddd2 !important;
+  border-left: 4px solid #cc785c !important;
+  border-radius: 8px !important;
+  background: #f1eadf !important;
+  color: #3d3d3a !important;
+  padding: 0.8em 1em !important;
+}
+
+.md-reader__markdown-content .markdown-alert.markdown-alert-note
+  .markdown-alert-title {
+  color: #6d6a64 !important;
+}
+
+.md-reader__markdown-content .markdown-alert.markdown-alert-note
+  .markdown-alert-title::before {
+  content: none !important;
+  display: none !important;
 }
 
 .md-reader__markdown-content blockquote.success {

@@ -418,15 +418,27 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
       const callout = document.querySelector(
         '.md-reader__markdown-content blockquote.info',
       )
+      const note = document.querySelector(
+        '.md-reader__markdown-content .markdown-alert.markdown-alert-note',
+      )
+      const noteTitle = note?.querySelector('.markdown-alert-title')
       return {
         tableRadius: table && getComputedStyle(table).borderTopLeftRadius,
         tableDisplay: table && getComputedStyle(table).display,
         tableWidth: table && table.getBoundingClientRect().width,
         tableHeaderWidth: table?.querySelector('thead')?.getBoundingClientRect()
           .width,
+        tableHeaderBackground:
+          table && getComputedStyle(table.querySelector('th')).backgroundColor,
+        tableHeaderColor:
+          table && getComputedStyle(table.querySelector('th')).color,
         calloutRadius: callout && getComputedStyle(callout).borderTopLeftRadius,
         calloutFontStyle: callout && getComputedStyle(callout).fontStyle,
         calloutIcon: callout && getComputedStyle(callout, '::before').content,
+        noteBackground: note && getComputedStyle(note).backgroundColor,
+        noteTitleColor: noteTitle && getComputedStyle(noteTitle).color,
+        noteTitleIconDisplay:
+          noteTitle && getComputedStyle(noteTitle, '::before').display,
       }
     })
     assert.equal(renderedStyles.tableRadius, '8px')
@@ -445,6 +457,21 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
       renderedStyles.calloutIcon,
       'none',
       'Developer callout should use its color rail instead of the Alert icon',
+    )
+    assert.equal(
+      renderedStyles.noteBackground,
+      renderedStyles.tableHeaderBackground,
+      'Developer Note should use the same warm background as table headers',
+    )
+    assert.equal(
+      renderedStyles.noteTitleColor,
+      renderedStyles.tableHeaderColor,
+      'Developer Note title should use the same muted color as table headers',
+    )
+    assert.equal(
+      renderedStyles.noteTitleIconDisplay,
+      'none',
+      'Developer Note should not retain the default blue Alert icon',
     )
 
     await frame.evaluate(() => {

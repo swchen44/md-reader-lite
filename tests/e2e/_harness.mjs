@@ -40,6 +40,9 @@ Some **markdown** content for extension end-to-end tests.
 :::info
 This is an E2E callout fixture.
 :::
+
+> [!note] 來源範圍
+> 本筆記整理 E2E Note fixture。
 `
 
 // Serve the fixture as text/markdown so the content script activates.
