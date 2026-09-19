@@ -35,7 +35,11 @@ MD Reader Lite is built to record nothing and phone home to no one. Verify it yo
 
 Full policy: [PRIVACY.md](PRIVACY.md).
 
-## Install (unpacked / intranet)
+## Install
+
+[Install MD Reader Lite from the Chrome Web Store](https://chromewebstore.google.com/detail/md-reader-lite/dllkoapplbnpedjjhodcaogiegbhdkdj?authuser=0&hl=zh-TW)
+
+### Unpacked / intranet
 
 1. Build or download `dist/md-reader-lite-<version>.zip`, unzip to a fixed folder
 2. Open `chrome://extensions`, enable Developer mode, Load unpacked → select the folder
