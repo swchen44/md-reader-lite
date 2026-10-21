@@ -3,12 +3,14 @@ import assert from 'node:assert/strict'
 import http from 'node:http'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { launchExtension } from './_harness.mjs'
+import { CUSTOM_CSS_PRESETS } from '../../src/config/custom-css-presets.ts'
 
 const QA = new URL('../../dist/qa/mermaid-styles/', import.meta.url)
 const FLOW = 'graph TD\n  A[Start] --> B[Done]'
 const fence = source => '```mermaid\n' + source + '\n```'
 const SOURCES = {
   flowchart: FLOW,
+  shapes: 'graph TD\n  A([Start]) --> B[Plain]\n  B --> C(Rounded)',
   sequence:
     'sequenceDiagram\n  participant A as Reader\n  participant B as Renderer\n  A->>B: Draw\n  Note right of B: Ready\n  B-->>A: SVG',
   class:
@@ -39,6 +41,31 @@ describe('Mermaid styles (e2e)', () => {
       res.setHeader('Content-Type', 'text/markdown; charset=utf-8')
       const path = new URL(req.url, 'http://fixture').pathname
       if (path === '/diagram.mmd') return res.end(FLOW)
+      if (path === '/author-sequence.md')
+        return res.end(
+          '# Author sequence\n\n' +
+            fence(
+              "%%{initialize: {'theme': 'forest'}}%%\n" + SOURCES.sequence,
+            ) +
+            '\n\n' +
+            fence(SOURCES.sequence),
+        )
+      if (path === '/code.md')
+        return res.end(
+          '# Code document\n\n```text\n' +
+            Array.from({ length: 80 }, (_, i) => `Code line ${i}`).join('\n') +
+            '\n```\n\n' +
+            fence(FLOW) +
+            '\n\n## Later heading\n\n' +
+            'More content. '.repeat(800),
+        )
+      if (path === '/invalid.md')
+        return res.end(
+          '# Invalid diagram\n\n' +
+            fence('graph TD\n  A[broken -->') +
+            '\n\n## Still readable\n\n' +
+            fence(FLOW),
+        )
       if (path === '/long.md')
         return res.end(
           '# Long document\n\n' +
@@ -60,7 +87,7 @@ describe('Mermaid styles (e2e)', () => {
         return res.end(
           '# Matrix\n\n' +
             Object.entries(SOURCES)
-              .filter(([key]) => !['authored', 'cjk'].includes(key))
+              .filter(([key]) => !['authored', 'cjk', 'shapes'].includes(key))
               .map(([key, source]) => `## ${key}\n\n${fence(source)}`)
               .join('\n\n'),
         )
@@ -154,7 +181,9 @@ describe('Mermaid styles (e2e)', () => {
   }
 
   async function chooseStyle(frame, style) {
-    await frame.locator('.mermaid-style-select .mdc-select__anchor').click()
+    await frame
+      .locator('.mermaid-style-select .mdc-select__anchor')
+      .press('ArrowDown')
     await frame.waitForFunction(() => {
       const menu = document.querySelector(
         '.mermaid-style-select .mdc-select__menu',
@@ -249,6 +278,9 @@ describe('Mermaid styles (e2e)', () => {
             width: box.width,
             height: box.height,
             errors: svg.querySelectorAll('.error-icon').length,
+            labels: [...svg.querySelectorAll('text, foreignObject')]
+              .map(el => el.textContent)
+              .join(' '),
           }
         }),
       )
@@ -256,6 +288,22 @@ describe('Mermaid styles (e2e)', () => {
         sizes.every(s => s.width > 0 && s.height > 0 && !s.errors),
         JSON.stringify(sizes),
       )
+      for (const [index, label] of [
+        'Start',
+        'Reader',
+        'Reader',
+        'Ready',
+        'READER',
+        'Render',
+        'Markdown',
+        'feature',
+        'Open',
+      ].entries()) {
+        assert.ok(
+          sizes[index].labels.includes(label),
+          `${style}: missing ${label}`,
+        )
+      }
     }
   })
 
@@ -440,6 +488,19 @@ describe('Mermaid styles (e2e)', () => {
       )
     })
     await diagram.getByTitle('Reset', { exact: true }).click()
+    for (const style of ['original', 'anthropic-blog']) {
+      const settings = await openSettings()
+      await chooseStyle(settings, style)
+      await page.mouse.click(600, 850)
+      await diagram.scrollIntoViewIfNeeded()
+      await diagram.hover()
+      assert.equal(
+        await diagram.locator('.md-reader__diagram-controls').count(),
+        1,
+      )
+      await diagram.getByTitle('Zoom in', { exact: true }).click()
+      await diagram.getByTitle('Reset', { exact: true }).click()
+    }
   })
 
   test('auto theme follows the system for Original while Anthropic keeps its light palette', async () => {
@@ -559,6 +620,260 @@ describe('Mermaid styles (e2e)', () => {
     assert.equal(
       (await getStorage('mdPluginOptions')).mdPluginOptions.Mermaid.style,
       'original',
+    )
+  })
+
+  test('CSS presets and disabling customization retain the independent Mermaid choice', async () => {
+    for (const choice of ['developer', 'editorial', 'user1', 'user2']) {
+      const css =
+        CUSTOM_CSS_PRESETS.find(p => p.id === choice)?.css ||
+        '.md-reader__markdown-content h1 { color: #166534; }'
+      await open('light', '/flow.md', {
+        language: 'en',
+        mdPluginOptions: OPTIONS('anthropic-blog'),
+        customCssEnabled: true,
+        customCssChoice: choice,
+        customCss: css,
+      })
+      assert.equal((await readFlowchart()).paper, 'rgb(250, 249, 245)')
+      assert.equal((await readFlowchart()).fill, 'rgb(241, 234, 223)')
+      assert.equal(
+        (await getStorage('mdPluginOptions')).mdPluginOptions.Mermaid.style,
+        'anthropic-blog',
+      )
+    }
+    const frame = await openSettings()
+    await frame.locator('.tab-btn').nth(1).press('Enter')
+    const toggle = frame
+      .locator('.form-item.inline')
+      .filter({ hasText: 'Enable Custom CSS:' })
+      .locator('.mdc-switch')
+    await toggle.click()
+    await page.waitForFunction(
+      () => !document.querySelector('#md-reader-custom-css'),
+    )
+    assert.equal((await readFlowchart()).paper, 'rgb(250, 249, 245)')
+    await toggle.click()
+    assert.equal(
+      (await getStorage('mdPluginOptions')).mdPluginOptions.Mermaid.style,
+      'anthropic-blog',
+    )
+    assert.equal((await readFlowchart()).fill, 'rgb(241, 234, 223)')
+  })
+
+  test('invalid Mermaid is isolated and a later diagram and heading remain visible', async () => {
+    await open('light', '/invalid.md', {
+      mdPluginOptions: OPTIONS('anthropic-blog'),
+    })
+    assert.equal(await page.locator('pre.mermaid svg').count(), 1)
+    assert.ok(
+      await page
+        .locator('h2')
+        .filter({ hasText: 'Still readable' })
+        .isVisible(),
+    )
+    assert.equal(
+      await page
+        .locator('.md-reader__markdown-content > pre:not(.mermaid)')
+        .count(),
+      1,
+    )
+    assert.ok((await readFlowchart()).width > 0)
+  })
+
+  test('privacy-on rendering and live style selection make no extra HTTP requests', async () => {
+    const requests = []
+    const onRequest = req => {
+      if (/^https?:/.test(req.url())) requests.push(req.url())
+    }
+    page.on('request', onRequest)
+    try {
+      await open('light', '/flow.md', {
+        language: 'en',
+        mdPluginOptions: OPTIONS('original'),
+      })
+      assert.deepEqual(requests, [`http://127.0.0.1:${port}/flow.md`])
+      const frame = await openSettings()
+      await chooseStyle(frame, 'anthropic-blog')
+      await chooseStyle(frame, 'original')
+      assert.deepEqual(requests, [`http://127.0.0.1:${port}/flow.md`])
+    } finally {
+      page.off('request', onRequest)
+    }
+  })
+
+  test('all five locales display the style control with readable option labels', async () => {
+    for (const language of ['en', 'zh-TW', 'zh-CN', 'ko', 'ja']) {
+      await open('light', '/flow.md', {
+        language,
+        mdPluginOptions: OPTIONS('anthropic-blog'),
+      })
+      const frame = await openSettings()
+      const label = await frame
+        .locator('.mermaid-style-select .label-item')
+        .textContent()
+      assert.match(label, /Mermaid/)
+      assert.doesNotMatch(label, /label_|mermaid-style_/)
+      const selected = frame.locator(
+        '.mermaid-style-select .mdc-select__selected-text',
+      )
+      assert.equal(
+        (await selected.textContent()).trim(),
+        'Anthropic blog style',
+      )
+      assert.ok(
+        await selected.evaluate(el => el.scrollWidth <= el.clientWidth + 1),
+      )
+      await page.screenshot({
+        path: new URL(`settings-${language}.png`, QA).pathname,
+      })
+    }
+  })
+
+  test('desktop and narrow layouts render nonblank themed diagrams with local fonts', async () => {
+    try {
+      for (const cssChoice of ['off', 'developer', 'editorial']) {
+        for (const theme of ['light', 'dark']) {
+          for (const viewport of [
+            { width: 1200, height: 900 },
+            { width: 390, height: 844 },
+          ]) {
+            await page.setViewportSize(viewport)
+            await open(theme, '/matrix.md', {
+              language: 'en',
+              mdPluginOptions: OPTIONS('anthropic-blog'),
+              customCssEnabled: cssChoice !== 'off',
+              customCss:
+                CUSTOM_CSS_PRESETS.find(p => p.id === cssChoice)?.css || '',
+            })
+            const filename = `anthropic-blog-${theme}-${cssChoice}-${viewport.width}x${viewport.height}.png`
+            await page.screenshot({
+              path: new URL(filename, QA).pathname,
+              fullPage: true,
+              animations: 'disabled',
+            })
+            const boxes = await page
+              .locator('pre.mermaid')
+              .evaluateAll(containers =>
+                containers.map(container => {
+                  const svg = container.querySelector('svg')
+                  const bounds = svg.getBoundingClientRect()
+                  return {
+                    width: bounds.width,
+                    height: bounds.height,
+                    available: container.clientWidth - 32,
+                    viewBox: svg.getAttribute('viewBox'),
+                    style: svg.getAttribute('style'),
+                    paper: getComputedStyle(container).backgroundColor,
+                  }
+                }),
+              )
+            assert.equal(boxes.length, 9)
+            assert.ok(
+              boxes.every(
+                b =>
+                  b.width > 0 &&
+                  b.height > 0 &&
+                  b.paper === 'rgb(250, 249, 245)',
+              ),
+              filename,
+            )
+            assert.ok(
+              boxes.every(b => b.width <= b.available + 1),
+              `${filename}: ${JSON.stringify(boxes)}`,
+            )
+          }
+        }
+      }
+      await open('light', '/cjk.md', {
+        mdPluginOptions: OPTIONS('anthropic-blog'),
+      })
+      assert.match((await readFlowchart()).text, /來源文件與較長的中文標籤/)
+      await page.screenshot({
+        path: new URL('anthropic-blog-cjk-390x844.png', QA).pathname,
+        animations: 'disabled',
+      })
+    } finally {
+      await page.setViewportSize({ width: 1200, height: 900 })
+    }
+  })
+
+  test('an explicit sequence init theme fully overrides preset colors and typography', async () => {
+    const authored = []
+    for (const style of ['original', 'anthropic-blog']) {
+      await open('light', '/author-sequence.md', {
+        mdPluginOptions: OPTIONS(style),
+      })
+      authored.push(
+        await page
+          .locator('pre.mermaid')
+          .first()
+          .evaluate(el => ({
+            actor: getComputedStyle(el.querySelector('rect.actor')).fill,
+            text: getComputedStyle(el.querySelector('text.actor')).fill,
+            font: getComputedStyle(el.querySelector('text.actor')).fontFamily,
+          })),
+      )
+    }
+    assert.deepEqual(
+      authored[1],
+      authored[0],
+      'author sequence theme must win over every preset variable',
+    )
+    assert.equal(
+      await page
+        .locator('pre.mermaid')
+        .nth(1)
+        .locator('rect.actor')
+        .first()
+        .evaluate(el => getComputedStyle(el).fill),
+      'rgb(241, 234, 223)',
+    )
+  })
+
+  test('softened plain rectangles preserve stadium and explicitly rounded node shapes', async () => {
+    const shapes = []
+    for (const style of ['original', 'anthropic-blog']) {
+      await open('light', '/shapes.md', { mdPluginOptions: OPTIONS(style) })
+      shapes.push(
+        await page.locator('pre.mermaid .node rect').evaluateAll(elements =>
+          elements.map(el => ({
+            rx: getComputedStyle(el).rx,
+            ry: getComputedStyle(el).ry,
+            height: Number(el.getAttribute('height')),
+          })),
+        ),
+      )
+    }
+    assert.ok(
+      parseFloat(shapes[1][0].rx) >= shapes[1][0].height / 2,
+      'stadium must keep its semicircular ends',
+    )
+    assert.equal(shapes[1][1].rx, '8px')
+    assert.equal(
+      shapes[1][2].rx,
+      shapes[0][2].rx,
+      'explicit rounded shape must keep its radius',
+    )
+  })
+
+  test('redrawing below an entirely visible code block preserves scroll coordinates', async () => {
+    await open('light', '/code.md', {
+      language: 'en',
+      mdPluginOptions: OPTIONS('original'),
+    })
+    await page.evaluate(() => window.scrollTo(0, 400))
+    const scroll = await page.evaluate(() => window.scrollY)
+    const frame = await openSettings()
+    await chooseStyle(frame, 'anthropic-blog')
+    await page.evaluate(
+      () =>
+        new Promise(resolve =>
+          requestAnimationFrame(() => requestAnimationFrame(resolve)),
+        ),
+    )
+    assert.ok(
+      Math.abs((await page.evaluate(() => window.scrollY)) - scroll) <= 1,
     )
   })
 })

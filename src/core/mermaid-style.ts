@@ -22,6 +22,21 @@ export function resolveMermaidStyle(value: unknown): MermaidStyle {
   return value === 'anthropic-blog' ? 'anthropic-blog' : 'original'
 }
 
+export function hasMermaidThemeDirective(source: string): boolean {
+  const directives = /%%\{\s*(?:init|initialize)\s*:\s*([\s\S]*?)\}%%/g
+  const themes = ['default', 'dark', 'forest', 'neutral', 'base']
+  for (const match of source.matchAll(directives)) {
+    try {
+      // Match the installed Mermaid 9 directive parser's single-quote normalization.
+      const options = JSON.parse(match[1].replace(/'/g, '"'))
+      if (options && themes.includes(options.theme)) return true
+    } catch {
+      // Leave malformed directives to Mermaid's existing parse-error handling.
+    }
+  }
+  return false
+}
+
 export function resolveMermaidRenderOptions(
   options: unknown,
   pageTheme: 'light' | 'dark',
@@ -92,7 +107,8 @@ export function resolveMermaidRenderOptions(
   return {
     theme: 'base',
     themeVariables,
-    themeCSS: '.node rect, rect.actor { rx: 8px; ry: 8px; }',
+    themeCSS:
+      '.node rect:not([rx]):not([ry]), .node rect[rx="0"][ry="0"], rect.actor { rx: 8px; ry: 8px; }',
     fontFamily: FONT,
     darkMode: false,
   }

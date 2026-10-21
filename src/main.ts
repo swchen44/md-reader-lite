@@ -319,7 +319,10 @@ function main(data: Data) {
         mdContent.ele.querySelectorAll<HTMLElement>(HEADERS + ', p'),
       ).filter(el => !el.closest('pre, svg'))
     const before = anchors()
-    const index = before.findIndex(el => el.getBoundingClientRect().bottom > 0)
+    const index = before.findIndex(el => {
+      const rect = el.getBoundingClientRect()
+      return rect.bottom > 0 && rect.top < window.innerHeight
+    })
     const offset = before[index]?.getBoundingClientRect().top
     const { scrollX, scrollY } = window
     return () => {

@@ -22,6 +22,7 @@ import { resolveLinkify, resolveAlertDeep } from '@/core/plugin-options'
 import {
   resolveMermaidRenderOptions,
   resolveMermaidStyle,
+  hasMermaidThemeDirective,
 } from './mermaid-style'
 import successIcon from '@/images/icon_success.svg'
 import copyIcon from '@/images/icon_copy.svg'
@@ -66,6 +67,7 @@ function initRender({
   plugins = [...MD_PLUGINS],
   pluginOptions,
   plantuml,
+  theme,
 }: MdOptions) {
   const copyButton = new Ele<HTMLElement>(
     'button',
@@ -121,7 +123,21 @@ function initRender({
     const renderFence = md.renderer.rules.fence!
     const style = resolveMermaidStyle(pluginOptions?.Mermaid?.style)
     md.renderer.rules.fence = (...args) => {
-      const html = renderFence(...args)
+      const token = args[0][args[1]]
+      let html: string
+      if (token.info.trim() === 'mermaid') {
+        // Initialize per diagram so an explicit author theme cannot inherit preset variables.
+        const options = hasMermaidThemeDirective(token.content)
+          ? undefined
+          : pluginOptions?.Mermaid
+        const isolated = new MarkdownIt().use(
+          mMermaid,
+          resolveMermaidRenderOptions(options, theme),
+        )
+        html = isolated.renderer.rules.fence!(...args)
+      } else {
+        html = renderFence(...args)
+      }
       return html.startsWith('<pre class="mermaid">')
         ? html.replace(
             '<pre class="mermaid">',

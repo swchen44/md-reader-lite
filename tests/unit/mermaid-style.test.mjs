@@ -62,3 +62,29 @@ test('Renderer mutation cannot leak between style resolutions', async () => {
   assert.equal(original.themeVariables, undefined)
   assert.equal(original.themeCSS, undefined)
 })
+
+test('author theme detection uses directive JSON and accepts Mermaid 9 quoting', async () => {
+  const { hasMermaidThemeDirective } = await load()
+  assert.equal(
+    hasMermaidThemeDirective(
+      '%%{init: {"theme":"forest"}}%%\ngraph TD\n A --> B',
+    ),
+    true,
+  )
+  assert.equal(
+    hasMermaidThemeDirective(
+      "%%{initialize: {\n 'theme': 'dark'\n}}%%\nsequenceDiagram",
+    ),
+    true,
+  )
+  assert.equal(
+    hasMermaidThemeDirective('%%{init: {"flowchart":{"curve":"linear"}}}%%'),
+    false,
+  )
+  assert.equal(
+    hasMermaidThemeDirective('%%{init: {"theme":"not-a-theme"}}%%'),
+    false,
+  )
+  assert.equal(hasMermaidThemeDirective('%%{init: invalid}%%'), false)
+  assert.equal(hasMermaidThemeDirective('graph TD\n A[theme] --> B'), false)
+})
