@@ -10,6 +10,28 @@ test('getDefaultPluginOptions: expected structure and values', async () => {
   assert.equal(def.Linkify.fuzzyIP, false)
   assert.equal(def.Linkify.fuzzyEmail, true)
   assert.equal(def.Alert.deep, true)
+  assert.equal(def.Mermaid.style, 'original')
+})
+
+test('legacy plugin options acquire Original without losing existing choices', async () => {
+  const { mergePluginOptions } = await load()
+  const merged = mergePluginOptions({
+    Linkify: { fuzzyLink: false },
+    Alert: { deep: false },
+  })
+  assert.equal(merged.Mermaid.style, 'original')
+  assert.equal(merged.Linkify.fuzzyLink, false)
+  assert.equal(merged.Alert.deep, false)
+})
+
+test('saved Mermaid preset survives merging plugin options', async () => {
+  const { mergePluginOptions } = await load()
+  assert.deepEqual(
+    mergePluginOptions({ Mermaid: { style: 'anthropic-blog' } }).Mermaid,
+    {
+      style: 'anthropic-blog',
+    },
+  )
 })
 
 test('mergePluginOptions: null/non-object -> default', async () => {

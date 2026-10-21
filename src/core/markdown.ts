@@ -19,6 +19,10 @@ import mPlantuml from '@/plugins/plantuml'
 import mMultimdTable from 'markdown-it-multimd-table'
 import MD_PLUGINS from '@/config/md-plugins'
 import { resolveLinkify, resolveAlertDeep } from '@/core/plugin-options'
+import {
+  resolveMermaidRenderOptions,
+  resolveMermaidStyle,
+} from './mermaid-style'
 import successIcon from '@/images/icon_success.svg'
 import copyIcon from '@/images/icon_copy.svg'
 import className from '@/config/class-name'
@@ -33,9 +37,9 @@ const PLUGINS: Plugins = {
   Ins: [mIns],
   Abbr: [mAbbr],
   Katex: [mKatex],
-  Mermaid: ({ theme }) => [
+  Mermaid: ({ theme, pluginOptions }) => [
     mMermaid,
-    { theme: theme === 'dark' ? 'dark' : 'default', themeVariables: undefined },
+    resolveMermaidRenderOptions(pluginOptions?.Mermaid, theme),
   ],
   Mark: [mMark],
   Deflist: [mDeflist],
@@ -114,6 +118,17 @@ function initRender({
   })
 
   if (plugins.includes('Mermaid')) {
+    const renderFence = md.renderer.rules.fence!
+    const style = resolveMermaidStyle(pluginOptions?.Mermaid?.style)
+    md.renderer.rules.fence = (...args) => {
+      const html = renderFence(...args)
+      return html.startsWith('<pre class="mermaid">')
+        ? html.replace(
+            '<pre class="mermaid">',
+            `<pre class="mermaid" data-mermaid-style="${style}">`,
+          )
+        : html
+    }
     // Install after diagram plugins so Graphviz can override Mermaid fences when
     // the block content is actually DOT syntax.
     md.use(mGraphvizBlock)
