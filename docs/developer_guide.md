@@ -66,7 +66,7 @@
 
 指令：
 
-    npm test            # = test:unit，跑 tests/unit/ 全部（206 條）
+    npm test            # = test:unit，跑 tests/unit/ 全部（213 條）
     npm run test:unit   # node --test tests/unit/*.test.mjs
     npm run test:e2e    # 需先 npm run build；載入 extension/ 進真實瀏覽器
     npm run typecheck   # tsc --noEmit
@@ -93,6 +93,22 @@
 坑：headed 瀏覽器偶爾啟動卡住——**若自動化瀏覽器無故 hang，先懷疑 `extension/manifest.json` 無效**（無效的 `web_accessible_resources` match pattern 會讓擴充載入失敗、Chrome 一開就卡，表象像環境壞掉）。手動 `chrome://extensions → 載入未封裝項目` 會跳出真正的錯誤對話框（見 lesson_learn.md）。
 
 > **新增功能時**：碰網路/隱私的邏輯補 `tests/unit/`（可 CI 把關）；碰 popup／頁內 UI／點擊行為的補 `tests/e2e/`（本機驗收）。
+
+## Mermaid 風格
+
+「設定 → 插件 → 插件子選項 → Mermaid → Mermaid 風格」提供 Original 與 Anthropic blog style。儲存欄位為 `mdPluginOptions.Mermaid.style`，值為 `original` 或 `anthropic-blog`；新安裝與缺少此設定的舊版皆採 Original。Original 隨頁面 light／dark／auto 使用既有 Mermaid 主題。Anthropic blog style 是本專案的編輯風格詮釋，固定使用淺色紙面與本機 serif fallback，即使頁面為 dark 也維持淺色圖表；不載入網路字型，也不代表 Anthropic 官方整合。
+
+選取後立即儲存並重繪目前分頁，保留閱讀錨點，圖表縮放回到初始狀態。其他已開文件於下次載入採用已儲存的選擇。此設定獨立於 CSS 客製化開關與 Developer／Editorial／User slots；文件作者的 `classDef`、`style`、`linkStyle` 與 Mermaid 支援的 init 指令保留優先順序。Markdown fences 與 `.mmd` 使用同一路徑，DOT 仍分流 Graphviz，PlantUML 的隱私閘門不變。
+
+純設定解析在 `src/core/mermaid-style.ts`。每張圖表都以既有 wrapper plugin 和新的設定物件初始化，並明確清除 Original 不使用的客製化值，避免共用預設設定造成殘留。作者若以 Mermaid 9 支援的 JSON init／initialize 指定有效 theme，則從原生設定開始渲染該圖，確保時序圖等各圖種都由作者主題決定。圓角僅套用一般矩形，保留膠囊與其他既有節點形狀。popup 的新選單以不可變更新避開 `app.svelte` 的物件身分去重；SMUI plugin chips 則在使用者選取綁定完成後複製陣列再儲存。請勿以原地修改巢狀設定或陣列的方式觸發這兩個儲存流程。
+
+永久情境與截圖規格見 [Mermaid Style Test Plan](superpowers/plans/2026-10-22-mermaid-styles.md#permanent-test-plan)。執行：
+
+    node --test tests/unit/mermaid-style.test.mjs tests/unit/plugin-options.test.mjs
+    npm run build
+    node --test tests/e2e/mermaid-styles.e2e.mjs
+
+截圖保存在忽略追蹤的 `dist/qa/mermaid-styles/`。瀏覽器不可用或測試被 skip 時，不能將 UI／視覺驗收記為通過。
 
 ## CSS 客製化與搜尋歷史
 

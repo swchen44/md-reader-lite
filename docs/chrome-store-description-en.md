@@ -17,6 +17,7 @@ Key features:
 - 🔍 Full-text search: instant filename search in the file tree, search results persist across file switches
 - 🕘 Navigation search history: local suggestions while typing, keyboard selection and Tab completion; configurable limit and clear control
 - 🎨 Multiple themes and adjustable font size
+- Mermaid styles: keep the Original appearance or select Anthropic blog style with local serif fonts and a light editorial palette
 - 🧩 CSS customization: Developer style is active by default on new installs; select two built-in read-only presets or edit either of two local CSS slots, then Apply
 - ⌨️ Keyboard shortcuts for faster navigation
 - 🖱️ Floating menu, resizable sidebar

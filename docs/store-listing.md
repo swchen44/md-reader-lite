@@ -24,6 +24,7 @@ MD Reader Lite turns .md files into clean, readable pages. Open a local file or 
 • Folder tree side panel to browse sibling documents on http servers
 • Navigation search history with local suggestions, keyboard selection, Tab completion, configurable limit, and clear control
 • Outline panel, light/dark/auto themes, per-plugin toggles
+• Mermaid styles: Original or Anthropic blog style, with local serif fonts and a light editorial palette
 • CSS customization: Developer styling is active by default on new installs; select two read-only presets or edit either of two local CSS slots, then Apply
 • Optional: render .txt files as Markdown
 • Works on intranets and air-gapped machines — no external requests, with one documented exception: an anonymous, tokenless call to GitHub's public API to list a folder when the file tree is used on raw.githubusercontent.com pages
@@ -35,6 +36,7 @@ MD Reader Lite 將 .md 檔轉換成簡潔易讀的網頁。開啟本機檔案或
 • 資料夾目錄樹邊欄，瀏覽 HTTP 伺服器上的相鄰文件
 • 導覽搜尋歷史：輸入時顯示本機建議，可用鍵盤選取與 Tab 補完；筆數上限可調整，也可清除
 • 大綱邊欄、淺色／深色／自動佈景主題、按外掛的開關
+• Mermaid 風格可選原始風格或 Anthropic blog style，採用本機襯線字型與淺色紙面
 • CSS 客製化：新安裝預設套用 Developer 風格；可選兩個唯讀內建風格或編輯兩個本機 CSS 欄位，按「套用」後才生效
 • .txt 檔案可選擇性當 Markdown 渲染
 • 適用於內網與隔離機器——不發出外部請求，僅一項跨域例外：於 GitHub raw 頁面使用檔案樹時，匿名呼叫 GitHub 公開 API 列目錄

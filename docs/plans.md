@@ -16,6 +16,6 @@
 | 2026-09-02 | .mdc/.puml/.plantuml + 關閉顯示原碼 + 伺服器教學 + language 修正 + 全按鈕測試 | [superpowers/plans/2026-09-02-plantuml-files-and-fixes.md](superpowers/plans/2026-09-02-plantuml-files-and-fixes.md) | 完成（v1.5.0） |
 | 2026-09-06 | CSS 客製化四選一（新安裝預設 Developer、兩個 readonly preset + User 1/User 2）＋側欄搜尋歷史與 Tab 補完 | [superpowers/plans/2026-09-06-css-slots-search-history.md](superpowers/plans/2026-09-06-css-slots-search-history.md) | 完成（已併入 main） |
 
-| 2026-10-22 | Mermaid 風格選單（Original / Anthropic blog style）、離線內建配色與永久 Test Plan | [superpowers/plans/2026-10-22-mermaid-styles.md](superpowers/plans/2026-10-22-mermaid-styles.md) | 規劃完成，待實作 |
+| 2026-10-22 | Mermaid 風格選單（Original / Anthropic blog style）、離線內建配色與永久 Test Plan | [superpowers/plans/2026-10-22-mermaid-styles.md](superpowers/plans/2026-10-22-mermaid-styles.md) | 完成（main；213 unit / 54 e2e） |
 
 新計畫請放 docs/superpowers/plans/ 並在此登錄。

@@ -10,7 +10,7 @@
 
 **Spec:** Bounded in-chat design, Q1-Q8 accepted by the user on 2026-10-22. The complete agreed behavior is recorded below. This plan is the requested planning deliverable, including a permanent Test Plan.
 
-**Status:** Planning complete; implementation has not started. Checkboxes describe future work, not completed verification.
+**Status:** Completed on 2026-10-22 on `main`. Implementation commits: `5b2c9e9`, `fe380da`, `b24f88c`. Shipped documentation is finalized in the accompanying documentation commit.
 
 ## Agreed Design
 
@@ -126,6 +126,7 @@ export type ResolvedMermaidStyleOptions = {
   darkMode: boolean
 }
 export function resolveMermaidStyle(value: unknown): MermaidStyle
+export function hasMermaidThemeDirective(source: string): boolean
 export function resolveMermaidRenderOptions(
   options: unknown,
   pageTheme: 'light' | 'dark',
@@ -134,7 +135,7 @@ export function resolveMermaidRenderOptions(
 
 `options` is the stored `mdPluginOptions.Mermaid` subobject, not its parent. Each call returns a fresh object with a fresh nested theme-variable object when present. Original returns the native theme and explicitly clears custom `themeVariables`, `themeCSS`, and `fontFamily`; native page-dark colors come from the `dark` theme. Use top-level `darkMode: false`, matching the installed Mermaid default; the native `dark` theme still supplies its own dark theme variables.
 
-- [ ] **Step 1: Establish Original browser baseline before changing rendering.**
+- [x] **Step 1: Establish Original browser baseline before changing rendering.**
 
 Create the dedicated e2e suite using `launchExtension` from `_harness.mjs` and a suite-local HTTP server. Close both in `after`. Serve documents as `text/markdown; charset=utf-8`, including `.mmd` fixture routes. For fresh storage, capture node fill/stroke, text color/font, edge stroke, viewBox, and visible labels in light and dark. Use a plain flowchart with one `Start` rectangle and one `Done` rectangle. Store baseline values in memory for same-test before/after comparison, and save visual evidence under ignored `dist/qa/mermaid-styles/` during verification.
 
@@ -168,7 +169,7 @@ async function readFlowchart(page) {
 
 Check nonzero width/height and both expected labels. Do not compare complete SVG strings or randomized internal element IDs.
 
-- [ ] **Step 2: Add failing unit tests for the option contract.**
+- [x] **Step 2: Add failing unit tests for the option contract.**
 
 ```js
 import test from 'node:test'
@@ -207,7 +208,7 @@ Extend `plugin-options.test.mjs` to assert default Mermaid style is `original`, 
 
 Run `node --test tests/unit/mermaid-style.test.mjs tests/unit/plugin-options.test.mjs`; expect failures for the missing module/default before production edits.
 
-- [ ] **Step 3: Implement the resolver, register defaults, and integrate the renderer.**
+- [x] **Step 3: Implement the resolver, register defaults, and integrate the renderer.**
 
 Use these concrete configuration values in the new pure module, together with the exported types above:
 
@@ -300,7 +301,8 @@ export function resolveMermaidRenderOptions(
   return {
     theme: 'base',
     themeVariables,
-    themeCSS: '.node rect, rect.actor { rx: 8px; ry: 8px; }',
+    themeCSS:
+      '.node rect:not([rx]):not([ry]), .node rect[rx="0"][ry="0"], rect.actor { rx: 8px; ry: 8px; }',
     fontFamily: FONT,
     darkMode: false,
   }
@@ -338,13 +340,13 @@ pre.mermaid[data-mermaid-style='anthropic-blog'] {
 
 Keep diagram scaling and overflow compatible with the existing Panzoom wrapper. Use scoped specificity only if the bundled theme otherwise overrides this surface. Do not apply this rule to `pre.md-reader__code-block` or Graphviz.
 
-- [ ] **Step 4: Exercise actual SVGs in the dedicated e2e suite.**
+- [x] **Step 4: Exercise actual SVGs in the dedicated e2e suite.**
 
 Until the menu exists, set `mdPluginOptions` using the existing harness storage helper and reload the fixture. Compare original baseline -> Anthropic -> restored Original, for both page themes. Anthropic must produce the specified paper, fill, readable labels and edges; restored Original must match baseline color/font measurements. Check all fixture diagram kinds in the permanent matrix below. Verify authored styles and directives are respected and do not leak into a later plain diagram. Check DOT-in-Mermaid remains Graphviz.
 
 Run focused unit tests, `npm run typecheck`, `npm run build`, and `node --test tests/e2e/mermaid-styles.e2e.mjs`. Browser unavailability or skipped tests must be reported as unverified, never as a pass.
 
-- [ ] **Step 5: Commit the independently tested rendering change.**
+- [x] **Step 5: Commit the independently tested rendering change.**
 
 Subject: `feat: add isolated Mermaid visual presets`
 
@@ -358,7 +360,7 @@ Body: Why: diagrams need an editorial option alongside the native appearance. Wh
 
 **Produces:** Immutable `mdPluginOptions` updates through existing `updateConfig`; live application via the current `applySetting` route.
 
-- [ ] **Step 1: Add failing user-driven e2e scenarios.**
+- [x] **Step 1: Add failing user-driven e2e scenarios.**
 
 Open the in-page settings overlay using the float menu and select the Plugins tab. Assert there is a Mermaid style Select with exactly the two agreed options. Click its SMUI anchor, choose Anthropic, and wait for both stored value and the actual diagram appearance to change. Do not satisfy the test by setting storage or invoking an internal handler directly.
 
@@ -375,7 +377,7 @@ assert.equal(stored.Alert.deep, false)
 
 Set the unrelated overrides before opening settings. Switch back and then to Anthropic again in the same overlay to catch the object-identity persistence failure.
 
-- [ ] **Step 2: Add the Select with immutable updates.**
+- [x] **Step 2: Add the Select with immutable updates.**
 
 Import SMUI `Select, { Option }` and the style type/resolver into `tab-plugins.svelte`. Bind a normalized local string to the Select, reactively derived from `data.mdPluginOptions.Mermaid`. Place the control under a Mermaid subheading in Plugin Options. Disable it when the extension or Mermaid plugin is disabled; keep the stored choice.
 
@@ -397,13 +399,13 @@ Do not change unrelated Linkify/Alert handlers in this task. No reactive block m
 
 Add `label_mermaid-style`, `mermaid-style_original`, and `mermaid-style_anthropic-blog` to `en`, `zh-CN`, `zh-TW`, `ko`, and `ja`. Keep `Anthropic blog style` as the shared preset name. Use `Mermaid 風格` and `原始風格` for the Traditional Chinese label and Original option. Verify all locales display actual strings without a raw translation key or cropped option text.
 
-- [ ] **Step 3: Preserve the reading position around the style redraw.**
+- [x] **Step 3: Preserve the reading position around the style redraw.**
 
 In `main.ts`, detect a changed normalized Mermaid style when handling `mdPluginOptions`. Capture the first visible stable heading/paragraph anchor and its viewport offset before `actions.updateMdPlugins()`. Capture window coordinates as fallback. After redraw and the next animation frame, restore the matching anchor's viewport offset; clamp to the available scroll range. Use a content-relative index/tag for a plain paragraph if it has no ID. Do not rely on regenerated Mermaid SVG IDs. Limit the change to this style-setting update.
 
 Keep settings overlay DOM mounted. Let the existing `contentRendered` hook attach new Panzoom instances to replacement SVGs. Do not preserve old diagram transforms. Keep the inactive Files tab lazy: changing Mermaid style must not fetch a listing, call GitHub, or trigger a document reload.
 
-- [ ] **Step 4: Validate persistence, controls, CSS independence, and theme behavior.**
+- [x] **Step 4: Validate persistence, controls, CSS independence, and theme behavior.**
 
 Reopen settings, reload the document, open a standalone `.mmd`, and confirm Anthropic persists. Change Developer/Editorial and turn CSS customization off/on; assert Mermaid style does not change and Anthropic paper/labels stay readable. Disable/re-enable Mermaid and confirm the selected style returns. Use Reset to Defaults and confirm Original is restored.
 
@@ -413,7 +415,7 @@ Use light, dark, and emulated auto color schemes. Original follows the page; Ant
 
 Run the dedicated suite plus existing `extension.e2e.mjs`, then typecheck. Save desktop and narrow-screen evidence for the fixed light diagram on both light/dark pages.
 
-- [ ] **Step 5: Commit the independently tested menu and live application.**
+- [x] **Step 5: Commit the independently tested menu and live application.**
 
 Subject: `feat: expose Mermaid style selection in plugin settings`
 
@@ -423,7 +425,7 @@ Body: Why: readers need to select diagram appearance during reading. What: local
 
 **Deliverable:** Repeatable permanent tests and documentation describe the behavior users actually receive.
 
-- [ ] **Step 1: Complete the matrix below in the dedicated suite.**
+- [x] **Step 1: Complete the matrix below in the dedicated suite.**
 
 Serve the listed minimal sources in Markdown fences and also serve the flowchart as `/diagram.mmd`. Use separate routes for invalid syntax and the long scrolled document. Suite-local HTTP server code must choose fixture content by parsed URL pathname rather than returning one unrelated page for every request.
 
@@ -450,15 +452,15 @@ const diagramSources = {
 
 Verify each source works with the installed library before treating its output as a visual assertion. A fixture typo must fail that test; it must not be hidden by accepting an error image. Include a document with `%%{init: {"theme": "forest"}}%%` before a flowchart and then a plain flowchart to validate directive precedence and diagram isolation. Keep source comments untouched.
 
-- [ ] **Step 2: Verify failure isolation and zero requests.**
+- [x] **Step 2: Verify failure isolation and zero requests.**
 
 Use one invalid Mermaid fence followed by a valid fence and a heading; the error must stay local and the later content must render. This change retains the existing plugin error presentation. On a fixture without external resources, register a network listener before navigation, ignore extension-local asset URLs, record the initial Markdown GET separately, and assert no additional HTTP(S) request during rendering or style switching. Keep Files closed. Do not use this test to claim arbitrary author CSS never requests resources.
 
-- [ ] **Step 3: Update user/developer docs to match the implemented result.**
+- [x] **Step 3: Update user/developer docs to match the implemented result.**
 
 Add a concise feature bullet to README and the store copy, documenting the two styles without implying an official Anthropic integration. Add the exact setting location, default, author-style precedence, CSS independence, fixed light Anthropic surface, active-tab live behavior, and test command to `developer_guide.md`. Link this permanent Test Plan. Update `docs/plans.md` status only after the required checks pass. Record real test counts and actual evidence rather than planned counts.
 
-- [ ] **Step 4: Run final regression checks and inspect screenshots.**
+- [x] **Step 4: Run final regression checks and inspect screenshots.**
 
 Run each command separately:
 
@@ -474,11 +476,22 @@ The current `npm run lint` script needs explicit filenames to format/check files
 
 All required e2e suites must report executed passes with zero skips. Record existing build warnings separately from failures. Inspect screenshots at 1200x900 and 390x844, with CSS customization disabled, Developer, and Editorial in representative combinations. Diagrams must be visible, edges/labels legible, the diagram paper must not overlap nearby text, and a wide chart must remain inspectable through the existing viewer.
 
-- [ ] **Step 5: Commit regression coverage and documentation.**
+- [x] **Step 5: Commit regression coverage and documentation.**
 
 Subject: `test: document permanent Mermaid style regression coverage`
 
 Body: Why: style changes must remain verifiable across diagram types and renderer updates. What: finalize fixture matrix, behavioral/visual checks and shipped documentation. How: record actual unit/headed e2e outcomes and screenshot evidence. Boundary: validation/documentation for the two approved presets, without changing release version or workflow.
+
+## Implementation Notes
+
+- The planned in-chat design is implemented. Each Mermaid fence additionally initializes the existing plugin with fresh configuration so author themes fully override the preset in sequence diagrams as well as flowcharts. `hasMermaidThemeDirective(source)` parses supported init/initialize JSON using the installed Mermaid 9 single-quote normalization. An explicit valid author theme starts with native options; source is unchanged and subsequent plain diagrams return to the selected preset.
+- Radius selectors target rectangles without explicit radii or with zero radii. Stadium semicircular ends and deliberately rounded shapes retain their geometry. The visual-spec code above reflects this narrowed selector.
+- Reading restoration uses only headings/paragraphs intersecting the viewport. When a code block fills the viewport, it preserves window coordinates instead of anchoring to a later, offscreen paragraph.
+- Anthropic SVGs use `display: block; max-width: 100%; height: auto`, fixing the observed mobile gitGraph clipping and avoiding excessive SVG whitespace. The native Original surface is untouched.
+- Existing SMUI plugin chips mutated the stored selection array in place. Their user click/key handlers now wait for binding and persist a copy; programmatic synchronization does not trigger these handlers.
+- The browser suite opens Select via ArrowDown and clicks real options after the opening animation finishes; it activates pre-existing settings tabs/reset buttons using Enter. Both are ordinary user input and avoid timing sleeps or calling production handlers directly.
+- Malformed-diagram coverage preserves the installed wrapper's fallback presentation, which may contain `undefined` because this dependency does not always provide an error message. It verifies that the fallback is isolated and a later valid diagram and heading remain usable. Changing the dependency's error wording is outside this feature.
+- A fresh reviewer identified the sequence-theme, stadium, and offscreen-anchor issues; all three were reproduced RED, fixed, and verified GREEN. Follow-up review confirmed those findings resolved with no specific new issue.
 
 ## Permanent Test Plan
 
@@ -523,4 +536,16 @@ Run the full regression commands in Task 3 before completion. Keep screenshots i
 
 ### Completion Evidence
 
-Implementation has not started. No new unit/e2e result or screenshot is claimed by this planning commit. The implementer must append actual command results, executed/skipped counts, screenshot paths, and implementation commit IDs here before marking the feature complete.
+Verified on 2026-10-22 against the production build:
+
+- `npm run test:unit`: 213 passed, zero failed/skipped.
+- `npm run typecheck`: passed.
+- `npm run build`: passed and produced `dist/md-reader-lite-1.8.2.zip`. The version remains 1.8.2. Only existing webpack bundle-size recommendations were emitted.
+- `npm run test:e2e`: 54 passed in four headed Chromium suites, zero failed/skipped. This includes the existing 34 tests and 20 Mermaid tests.
+- Final `node --test tests/e2e/mermaid-styles.e2e.mjs`: 20 passed, zero failed/skipped, after strengthening repeated redraw/zoom reattachment.
+- Explicit-filename Prettier checks with `--ignore-unknown` passed. Svelte has no installed Prettier parser and is covered by production compilation; it is not claimed as formatted by that check.
+- `git diff --check`: passed.
+- Twelve full-page screenshot combinations cover CSS off/Developer/Editorial, light/dark pages, and 1200x900/390x844. Each also asserts nine nonzero SVGs within its available surface width. Evidence: `dist/qa/mermaid-styles/anthropic-blog-<light|dark>-<off|developer|editorial>-<1200x900|390x844>.png`.
+- Additional evidence: `settings-en.png`, `settings-zh-TW.png`, `settings-zh-CN.png`, `settings-ko.png`, `settings-ja.png`, `anthropic-blog-cjk-390x844.png`, and Original light/dark baseline PNG/JSON files in the same ignored QA directory. Desktop, fixed-light-on-dark mobile, CJK and Traditional Chinese settings images were visually inspected.
+- Implementation: `5b2c9e9` rendering/defaults; `fe380da` localized selection/live redraw; `b24f88c` complete regression coverage and review corrections.
+- No push, release tag, dependency upgrade, manifest permission change or network feature was performed.

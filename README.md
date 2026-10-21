@@ -12,6 +12,7 @@ A lightweight, **privacy-first** Chrome extension that renders local and online 
 - Folder tree side panel for browsing sibling markdown files — **on by default** (http/https autoindex, `file://` via folder picker, GitHub raw pages); the listing itself is still lazy-loaded, only fetched when you open the Files tab
 - CSS customization: Developer styling is applied by default on new installs; choose the read-only Developer or Editorial presets, or edit either of two local user slots, then explicitly Apply
 - Persistent navigation-search history stored locally: configurable limit (default 10), suggestions while typing, keyboard selection, Tab completion, and a clear control
+- Mermaid styles: choose Original or Anthropic blog style in Settings > Plugins. Original is the default; the editorial preset uses local serif fonts and a light paper surface, independently of custom page CSS
 - PlantUML diagrams via a configurable server — **opt-in, off by default, and disabled whenever offline mode is on** (self-hostable; `.puml`/`.plantuml` files render whole as one diagram — [self-host guide](docs/plantuml-server-setup.md))
 - Recognizes `.md` / `.markdown` / `.mkd` / `.mdx` / `.mdc` / `.txt` (opt-in) / `.puml` / `.plantuml` / `.mmd`
 - Works on `file://`, intranet servers, and raw URLs
