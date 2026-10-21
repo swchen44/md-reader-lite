@@ -1,20 +1,43 @@
 <script lang="ts">
+  import { tick } from 'svelte'
   import Chip, { Set, Text } from '@smui/chips'
   import FormField from '@smui/form-field'
   import Switch from '@smui/switch'
+  import Select, { Option } from '@smui/select'
   import MD_PLUGINS from '@/config/md-plugins'
   import type { Data } from '@/core/data'
   import { normalizePlantumlServer } from '@/core/plantuml'
+  import { resolveMermaidStyle, type MermaidStyle } from '@/core/mermaid-style'
 
   export let data: Data
   export let localize: (field: string) => string
   export let updateConfig: (key: string, value: any) => void
 
   $: allSelected = data.mdPlugins.length === MD_PLUGINS.length
+  $: mermaidStyle = resolveMermaidStyle(data.mdPluginOptions.Mermaid?.style)
+  const MERMAID_STYLES: MermaidStyle[] = ['original', 'anthropic-blog']
+
+  function onMermaidStyleChange(e: CustomEvent<{ value: string }>) {
+    const style = resolveMermaidStyle(e.detail.value)
+    if (style === resolveMermaidStyle(data.mdPluginOptions.Mermaid?.style)) return
+    data.mdPluginOptions = {
+      ...data.mdPluginOptions,
+      Mermaid: { ...data.mdPluginOptions.Mermaid, style },
+    }
+    updateConfig('mdPluginOptions', data.mdPluginOptions)
+  }
 
   function toggleAll(e: Event) {
     const checked = (e.target as HTMLInputElement).checked
     data.mdPlugins = checked ? [...MD_PLUGINS] : []
+    updateConfig('mdPlugins', data.mdPlugins)
+  }
+
+  async function onPluginSelection() {
+    if (!data.enable) return
+    // SMUI mutates the bound array; wait for binding, then avoid identity deduplication.
+    await tick()
+    data.mdPlugins = [...data.mdPlugins]
     updateConfig('mdPlugins', data.mdPlugins)
   }
 
@@ -54,8 +77,10 @@
     <Chip
       {chip}
       title={chip}
-      on:click={() =>
-        data.enable && updateConfig('mdPlugins', data.mdPlugins)}
+      on:click={onPluginSelection}
+      on:keydown={e => {
+        if (e.key === 'Enter' || e.key === ' ') onPluginSelection()
+      }}
       ><Text>{localize(chip)}</Text></Chip
     >
   </Set>
@@ -63,6 +88,20 @@
 
 <div class="form-item">
   <div class="label-item">{localize('label_plugin-options')}:</div>
+
+  <div class="sub-label">Mermaid</div>
+  <div class="form-item mermaid-style-select">
+    <div class="label-item">{localize('label_mermaid-style')}:</div>
+    <Select
+      bind:value={mermaidStyle}
+      disabled={!data.enable || !data.mdPlugins.includes('Mermaid')}
+      on:MDCSelect:change={onMermaidStyleChange}
+    >
+      {#each MERMAID_STYLES as style}
+        <Option value={style}>{localize(`mermaid-style_${style}`)}</Option>
+      {/each}
+    </Select>
+  </div>
 
   <div class="sub-label">{localize('label_linkify')}</div>
   <div class="form-item inline">

@@ -31,6 +31,7 @@ import {
   resolveCodeTheme,
 } from '@/core/settings'
 import { mdRender, type MdOptions } from '@/core/markdown'
+import { resolveMermaidStyle } from '@/core/mermaid-style'
 import { fetchDirListing } from '@/core/dir-fetch'
 import { parseDirListing, type DirEntry } from '@/core/dir-listing'
 import {
@@ -54,6 +55,7 @@ import {
   setTheme,
   setCodeTheme,
   CONTENT_TYPES,
+  HEADERS,
   darkMediaQuery,
   getMediaQueryTheme,
   toTheme,
@@ -131,7 +133,15 @@ function main(data: Data) {
           // required before an old draft can affect the page again.
           if (!value) applyCustomCss()
           break
-        case 'mdPluginOptions':
+        case 'mdPluginOptions': {
+          const styleChanged =
+            resolveMermaidStyle(value?.Mermaid?.style) !==
+            resolveMermaidStyle(_oldValue?.Mermaid?.style)
+          const restore = styleChanged ? captureReadingPosition() : null
+          actions.updateMdPlugins()
+          if (restore) requestAnimationFrame(restore)
+          break
+        }
         case 'plantumlEnabled':
         case 'plantumlServer':
           actions.updateMdPlugins()
@@ -302,6 +312,26 @@ function main(data: Data) {
     }
   const contentRender = mdRenderer(mdContent)
   contentRender(mdRaw)
+
+  function captureReadingPosition(): () => void {
+    const anchors = () =>
+      Array.from(
+        mdContent.ele.querySelectorAll<HTMLElement>(HEADERS + ', p'),
+      ).filter(el => !el.closest('pre, svg'))
+    const before = anchors()
+    const index = before.findIndex(el => el.getBoundingClientRect().bottom > 0)
+    const offset = before[index]?.getBoundingClientRect().top
+    const { scrollX, scrollY } = window
+    return () => {
+      const anchor = anchors()[index]
+      window.scrollTo(
+        scrollX,
+        anchor && offset !== undefined
+          ? window.scrollY + anchor.getBoundingClientRect().top - offset
+          : scrollY,
+      )
+    }
+  }
 
   mdContent.on(
     'click',

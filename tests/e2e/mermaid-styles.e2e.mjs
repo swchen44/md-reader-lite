@@ -39,6 +39,23 @@ describe('Mermaid styles (e2e)', () => {
       res.setHeader('Content-Type', 'text/markdown; charset=utf-8')
       const path = new URL(req.url, 'http://fixture').pathname
       if (path === '/diagram.mmd') return res.end(FLOW)
+      if (path === '/long.md')
+        return res.end(
+          '# Long document\n\n' +
+            fence(FLOW) +
+            '\n\n' +
+            Array.from(
+              { length: 22 },
+              (_, i) => `## Part ${i}\n\n${'Reading paragraph. '.repeat(20)}`,
+            ).join('\n\n') +
+            '\n\n## Reading anchor\n\n' +
+            'Visible paragraph. '.repeat(30) +
+            '\n\n' +
+            fence(SOURCES.cjk) +
+            '\n\n' +
+            '## More reading\n\n' +
+            'Remaining paragraph. '.repeat(500),
+        )
       if (path === '/matrix.md')
         return res.end(
           '# Matrix\n\n' +
@@ -110,6 +127,62 @@ describe('Mermaid styles (e2e)', () => {
             .join(' '),
         }
       })
+  }
+
+  async function openSettings() {
+    await page.bringToFront()
+    await page.locator('.md-reader__float-menu-btn').click()
+    await page
+      .locator('.md-reader__float-menu-item')
+      .filter({ hasText: /^(Settings|設定|设置|설정)$/ })
+      .click()
+    await page
+      .frameLocator('.md-reader__settings-overlay iframe')
+      .locator('.tab-btn')
+      .first()
+      .waitFor()
+    const frame = page.frames().find(f => /popup\.html/.test(f.url()))
+    assert.ok(frame)
+    await frame.locator('.tab-btn').nth(2).press('Enter')
+    await frame.locator('.mermaid-style-select').waitFor({ timeout: 3000 })
+    assert.equal(
+      await frame.locator('.mermaid-style-select').count(),
+      1,
+      'Mermaid style menu should exist',
+    )
+    return frame
+  }
+
+  async function chooseStyle(frame, style) {
+    await frame.locator('.mermaid-style-select .mdc-select__anchor').click()
+    await frame.waitForFunction(() => {
+      const menu = document.querySelector(
+        '.mermaid-style-select .mdc-select__menu',
+      )
+      return (
+        menu.classList.contains('mdc-menu-surface--open') &&
+        !menu.classList.contains('mdc-menu-surface--animating-open')
+      )
+    })
+    await frame
+      .getByRole('option', {
+        name: style === 'original' ? 'Original' : 'Anthropic blog style',
+        exact: true,
+      })
+      .click()
+    await frame
+      .locator('.mermaid-style-select .mdc-select__menu')
+      .waitFor({ state: 'hidden', timeout: 3000 })
+    await page.waitForFunction(
+      selected =>
+        document.querySelector('pre.mermaid')?.dataset.mermaidStyle ===
+        selected,
+      style,
+    )
+    assert.equal(
+      (await getStorage('mdPluginOptions')).mdPluginOptions.Mermaid.style,
+      style,
+    )
   }
 
   test('Original renders nonblank SVGs in light and dark', async () => {
@@ -272,5 +345,220 @@ describe('Mermaid styles (e2e)', () => {
       if (graphviz) assert.equal(fill, graphviz)
       graphviz = fill
     }
+  })
+
+  test('menu saves repeated choices and redraws without navigation or losing other settings', async () => {
+    await open('light', '/flow.md', {
+      language: 'en',
+      mdPluginOptions: OPTIONS('original'),
+    })
+    const frame = await openSettings()
+    let navigations = 0
+    const onNavigate = f => {
+      if (f === page.mainFrame()) navigations++
+    }
+    page.on('framenavigated', onNavigate)
+    try {
+      for (const style of ['anthropic-blog', 'original', 'anthropic-blog']) {
+        await chooseStyle(frame, style)
+        assert.equal(
+          (await getStorage('mdPluginOptions')).mdPluginOptions.Linkify
+            .fuzzyLink,
+          false,
+        )
+        assert.equal(
+          (await getStorage('mdPluginOptions')).mdPluginOptions.Alert.deep,
+          false,
+        )
+        assert.ok(
+          await page.locator('.md-reader__settings-overlay').isVisible(),
+        )
+        assert.equal(
+          (await readFlowchart()).fill,
+          style === 'original' ? 'rgb(236, 236, 255)' : 'rgb(241, 234, 223)',
+        )
+      }
+      assert.equal(navigations, 0)
+    } finally {
+      page.off('framenavigated', onNavigate)
+    }
+    await open('light')
+    assert.equal(
+      await page.locator('pre.mermaid').getAttribute('data-mermaid-style'),
+      'anthropic-blog',
+    )
+    const reopened = await openSettings()
+    assert.match(
+      await reopened
+        .locator('.mermaid-style-select .mdc-select__selected-text')
+        .textContent(),
+      /Anthropic/,
+    )
+  })
+
+  test('live style redraw preserves a scrolled reading anchor and attaches fresh zoom controls', async () => {
+    await open('light', '/long.md', {
+      language: 'en',
+      mdPluginOptions: OPTIONS('original'),
+    })
+    const anchor = page
+      .locator('.md-reader__markdown-content h2')
+      .filter({ hasText: 'Reading anchor' })
+    await anchor.evaluate(el =>
+      window.scrollTo(0, window.scrollY + el.getBoundingClientRect().top - 100),
+    )
+    const top = await anchor.evaluate(el => el.getBoundingClientRect().top)
+    const frame = await openSettings()
+    await chooseStyle(frame, 'anthropic-blog')
+    await page.waitForFunction(
+      expected => {
+        const el = [
+          ...document.querySelectorAll('.md-reader__markdown-content h2'),
+        ].find(el => el.textContent.includes('Reading anchor'))
+        return Math.abs(el.getBoundingClientRect().top - expected) <= 8
+      },
+      top,
+      { timeout: 3000 },
+    )
+    await page.mouse.click(800, 600)
+    const diagram = page.locator('pre.mermaid').last()
+    await diagram.scrollIntoViewIfNeeded()
+    await diagram.hover()
+    assert.equal(
+      await diagram.locator('.md-reader__diagram-controls').count(),
+      1,
+    )
+    await diagram.getByTitle('Zoom in', { exact: true }).click()
+    await page.waitForFunction(() => {
+      const diagrams = document.querySelectorAll('pre.mermaid svg')
+      return (
+        parseFloat(
+          getComputedStyle(diagrams[diagrams.length - 1]).transform.split(
+            '(',
+          )[1],
+        ) > 1
+      )
+    })
+    await diagram.getByTitle('Reset', { exact: true }).click()
+  })
+
+  test('auto theme follows the system for Original while Anthropic keeps its light palette', async () => {
+    await page.emulateMedia({ colorScheme: 'light' })
+    await open('auto', '/flow.md', {
+      language: 'en',
+      mdPluginOptions: OPTIONS('original'),
+    })
+    const light = await readFlowchart()
+    await page.emulateMedia({ colorScheme: 'dark' })
+    await page.waitForFunction(
+      fill =>
+        getComputedStyle(document.querySelector('pre.mermaid .node rect'))
+          .fill !== fill,
+      light.fill,
+    )
+    const frame = await openSettings()
+    await chooseStyle(frame, 'anthropic-blog')
+    const darkAnthropic = await readFlowchart()
+    await page.emulateMedia({ colorScheme: 'light' })
+    await page.evaluate(
+      () =>
+        new Promise(resolve =>
+          requestAnimationFrame(() => requestAnimationFrame(resolve)),
+        ),
+    )
+    const lightAnthropic = await readFlowchart()
+    for (const key of ['fill', 'font', 'color', 'edge', 'paper'])
+      assert.equal(lightAnthropic[key], darkAnthropic[key])
+    await chooseStyle(frame, 'original')
+    assert.equal((await readFlowchart()).fill, light.fill)
+  })
+
+  test('Mermaid can be disabled and re-enabled without erasing its selected style', async () => {
+    await open('light', '/flow.md', {
+      language: 'en',
+      mdPluginOptions: OPTIONS('anthropic-blog'),
+    })
+    const frame = await openSettings()
+    const chip = frame.locator('[title="Mermaid"]')
+    await chip.click()
+    await page.waitForFunction(
+      () => !document.querySelector('pre.mermaid'),
+      null,
+      { timeout: 3000 },
+    )
+    assert.equal(
+      await frame
+        .locator('.mermaid-style-select .mdc-select__anchor')
+        .getAttribute('aria-disabled'),
+      'true',
+    )
+    assert.equal(
+      (await getStorage('mdPluginOptions')).mdPluginOptions.Mermaid.style,
+      'anthropic-blog',
+    )
+    await chip.click()
+    await page.waitForSelector(
+      'pre.mermaid[data-mermaid-style="anthropic-blog"] svg',
+    )
+    assert.equal(
+      await frame
+        .locator('.mermaid-style-select .mdc-select__anchor')
+        .getAttribute('aria-disabled'),
+      'false',
+    )
+  })
+
+  test('opening saved settings does not redraw content and another tab adopts the choice on its next load', async () => {
+    await open('light', '/flow.md', {
+      language: 'en',
+      mdPluginOptions: OPTIONS('original'),
+    })
+    const other = await ctx.newPage()
+    try {
+      await other.goto(`http://127.0.0.1:${port}/flow.md`)
+      await other.waitForSelector('pre.mermaid svg')
+      await page.evaluate(() => {
+        window.__originalSvg = document.querySelector('pre.mermaid svg')
+      })
+      const before = await getStorage('mdPluginOptions')
+      const frame = await openSettings()
+      assert.equal(
+        await page.evaluate(
+          () =>
+            window.__originalSvg === document.querySelector('pre.mermaid svg'),
+        ),
+        true,
+      )
+      assert.deepEqual(await getStorage('mdPluginOptions'), before)
+      await chooseStyle(frame, 'anthropic-blog')
+      assert.equal(
+        await other.locator('pre.mermaid').getAttribute('data-mermaid-style'),
+        'original',
+      )
+      await other.reload()
+      await other.waitForSelector(
+        'pre.mermaid[data-mermaid-style="anthropic-blog"] svg',
+      )
+    } finally {
+      await other.close()
+    }
+  })
+
+  test('Reset to Defaults restores Original', async () => {
+    await open('light', '/flow.md', {
+      language: 'en',
+      mdPluginOptions: OPTIONS('anthropic-blog'),
+    })
+    const frame = await openSettings()
+    await frame.locator('.tab-btn').nth(0).press('Enter')
+    await frame
+      .getByRole('button', { name: 'Reset to Defaults', exact: true })
+      .press('Enter')
+    await frame.locator('.btn-reset.danger').press('Enter')
+    await page.waitForSelector('pre.mermaid[data-mermaid-style="original"] svg')
+    assert.equal(
+      (await getStorage('mdPluginOptions')).mdPluginOptions.Mermaid.style,
+      'original',
+    )
   })
 })
