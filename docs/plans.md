@@ -18,4 +18,6 @@
 
 | 2026-10-22 | Mermaid 風格選單（Original / Anthropic blog style）、離線內建配色與永久 Test Plan | [superpowers/plans/2026-10-22-mermaid-styles.md](superpowers/plans/2026-10-22-mermaid-styles.md) | 完成（main；213 unit / 54 e2e） |
 
+| 2026-10-23 | Mermaid 12 升級、31 圖種、MV3 PoC 與重開機續接 checklist | [superpowers/plans/2026-10-23-mermaid-modernization.md](superpowers/plans/2026-10-23-mermaid-modernization.md) | 執行中：A 可行性 PoC |
+
 新計畫請放 docs/superpowers/plans/ 並在此登錄。

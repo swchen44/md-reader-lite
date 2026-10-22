@@ -16,6 +16,6 @@
 
 | 2026-09-02 | .mdc/.puml/.plantuml 副檔名（.puml/.plantuml 整檔即一張圖，wrap-as-fence 復用離線管制）＋ PlantUML 關閉顯示小提示+原碼 ＋ 伺服器內網自架教學連結 ＋ language 即時生效修正（actionMap reload）＋ 全按鈕驗收 | [superpowers/specs/2026-09-02-plantuml-files-and-fixes-design.md](superpowers/specs/2026-09-02-plantuml-files-and-fixes-design.md) | 已實作 |
 
-| 2026-10-22 | Mermaid 12.2.0 升級、非同步 adapter、31 圖種支援與永久 Test Plan | [superpowers/specs/2026-10-22-mermaid-modernization-design.md](superpowers/specs/2026-10-22-mermaid-modernization-design.md) | 提案，待確認 |
+| 2026-10-22 | Mermaid 12.2.0 升級、非同步 adapter、31 圖種支援與永久 Test Plan | [superpowers/specs/2026-10-22-mermaid-modernization-design.md](superpowers/specs/2026-10-22-mermaid-modernization-design.md) | 已授權；A PoC 執行中 |
 
 新設計請放 docs/superpowers/specs/ 並在此登錄。

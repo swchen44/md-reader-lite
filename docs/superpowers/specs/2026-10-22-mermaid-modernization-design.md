@@ -1,6 +1,6 @@
 # Mermaid 12 升級與 31 圖種支援提案
 
-狀態：**提案，待使用者確認；尚未安裝新依賴、製作 PoC 或修改產品程式。** 本文件先定義升級路線與試驗關卡；通過設計確認後，再拆成逐項可執行的實作計畫。
+狀態：**2026-10-23 使用者授權開始分階段執行。** 四項 review 修正已納入；依賴與 runtime 的實際進度以 [實作計畫與續接 checklist](../plans/2026-10-23-mermaid-modernization.md) 為準。先通過 PoC 關卡，再替換產品 renderer。
 
 ## 目標
 
@@ -68,7 +68,7 @@
 
 1. **Markdown 階段維持同步。** `src/core/markdown.ts` 只替 Mermaid fence 產生可讀原碼 placeholder 與唯一識別；DOT 仍先分流 Graphviz。避免把整個 Markdown／搜尋／大綱流程一起改成 async。
 2. **獨立非同步圖表階段。** 新增 `src/core/mermaid-renderer.ts` 與 `src/plugins/mermaid-renderer.ts`。前者封裝載入、外掛註冊、設定隔離及逐圖佇列；後者連接現有 plugin lifecycle，管理容器與 generation。
-3. **明確完成通知。** 保留 `contentRendered` 的既有語意，再提供有 generation 的圖表工作完成通知／promise，供閱讀位置及布局處理使用。成功、錯誤與過期工作都必須完成收尾；不能整份文件永久 loading。
+3. **明確完成通知。** 保留 `contentRendered` 的既有語意，再提供有 generation 的圖表工作完成通知／promise，供閱讀位置、布局及搜尋索引處理使用。有效工作完成後重建搜尋索引與 highlight，避免 placeholder 被換掉後殘留搜尋結果；過期工作不可影響新文件。成功、錯誤與過期工作都必須完成收尾；不能整份文件永久 loading。
 4. **狀態與復原。** 每張圖有 pending/rendering/ready/error；渲染失敗保留原碼與安全錯誤訊息，其後圖表照常處理。局部錯誤不應攔住搜尋、原碼切換或大綱。
 5. **檢視器與閱讀位置。** 以既有 MutationObserver 方案接非同步 SVG，補上錯誤／失效容器的 observer 清理。恢復錨點須等本次有效圖表工作完成；若使用者已自行捲動，不再強制拉回。
 6. **風格與作者設定。** 繼續使用 `mdPluginOptions.Mermaid.style`，不改儲存 schema。更新 v12 的 theme／look 與設定解析，納入合法 directive 及圖內 YAML frontmatter；使用 Mermaid 公開能力或結構化 parser，不用簡單 regex 假裝解析完整 YAML。C4／ZenUML 的可渲染與風格完成分開記錄。
@@ -81,11 +81,12 @@
 
 ### A. 可行性 PoC
 
-- 在忽略追蹤的 `dist/probes/mermaid12/` 使用獨立套件環境與最小 MV3 候選，不更動主專案 lockfile。
+- 在版本控制內的 `tests/probes/mermaid12/` 保存 probe 原始碼、manifest、建置／執行指令與獨立 lockfile，不更動主專案 lockfile。只有依賴安裝目錄、bundle、截圖與執行紀錄存入忽略追蹤的目錄。
 - 固定 Mermaid 12.2.0；先驗證完整核心 30 圖，再加入 ZenUML 1.0.1 驗證第 31 圖。
-- 用與本專案相同的 webpack 工具及 Chrome for Testing，檢查 ESM、本機 lazy/eager、ELK、CSP、網路與完整頁第一次載入。
+- 用與本專案相同的 webpack 工具及 Chrome for Testing，以 manifest content script 的 isolated world 注入 HTTP 與 `file://` 文件，檢查 ESM、本機 lazy/eager、ELK、嚴格頁面 CSP、網路與完整頁第一次載入。extension popup／普通 HTTP script 成功不能代替此關卡。
 - 記錄有無新增 worker／font／image／chunk 請求；不在標準圖中使用遠端資源。
-- **通過條件：** 30 核心有非空圖、無執行錯誤或對外請求；ZenUML 有獨立 pass/fail receipt；所有 blocker 均具體分類。這只證明候選架構可行，不等於正式整合通過。
+- A 階段同時加入遠端 image／HTML label／CSS 與惡意設定負例，觀察從開始渲染到插入完成的請求；測試攔截到的外送嘗試也算失敗，不能以最終 DOM 已清除資源當成通過。
+- **通過條件：** 30 核心有非空圖、無執行錯誤或對外請求；ZenUML 有獨立 pass/fail receipt；正常與安全負例、HTTP／file 與 CSP 結果均明列。這只證明候選架構可行，不等於正式整合通過。
 - **失敗策略：** 保留現行版本與報告，說明是語法、套件、工具鏈或 MV3 問題。不能把一般 HTTP demo 成功當成擴充功能成功。
 
 ### B. 替換同步 wrapper
@@ -93,7 +94,8 @@
 - 範圍：`package.json`、`pnpm-lock.yaml`、`src/core/markdown.ts`、新 renderer modules、`src/plugins/index.ts`，必要的 `build/webpack.common.js`／`src/manifest.json` 調整。
 - 加入固定版本 `mermaid`，移除舊 wrapper，避免留下兩套核心。Node engine 與文件需求同步核對；不順便更新其他無關依賴。
 - 先寫佇列、錯誤復原、generation 與 placeholder 的失敗測試，再接 adapter。
-- 修正 loading／done 時機、圖表檢視器與 remote-guard 連接；主文件文字不等待圖表才能顯示。
+- 同步更新相容性測試的依賴解析、版本 guard 與核心 30 圖預期，保留 9.1.6 歷史報告。B 的 commit 必須可獨立通過；ZenUML 在 C 加入正向驗證。
+- 修正 loading／done 時機、圖表檢視器、remote-guard 與搜尋索引連接；主文件文字不等待圖表才能顯示。測試搜尋中圖表完成、失敗保留原碼與快速切文件。
 - **通過條件：** 舊 11 圖無倒退、30 核心能在正式建置的擴充功能渲染；快速切換與非同步錯誤不破壞正文。
 - **建議 commit：** `refactor: migrate Mermaid to a local async renderer`。
 
@@ -115,7 +117,7 @@
 
 ### E. 永久測試、文件與候選驗收
 
-- 更新 `tests/e2e/mermaid-compatibility.e2e.mjs`：移除只認 9.1.6 的版本 guard 與已解決的負向 baseline，改為逐圖正向驗證；仍保留真正未知／損壞語法的負向測試。
+- 擴充 B／C 已同步遷移的 `tests/e2e/mermaid-compatibility.e2e.mjs` 為完整矩陣與候選驗收；仍保留真正未知／損壞語法的負向測試。不得把測試遷移延到此階段而留下必然失敗的中間 commit。
 - 只有 GitGraph 問題確實修好且重現測試通過，才移除原 TODO；不把新失敗改成 TODO 作為完成方式。
 - 更新 `example/mermaid-compatibility.md`、相容性報告、`docs/developer_guide.md`、`docs/ARCHITECTURE.md`、相關設計／計畫索引及版本對應的 changelog。README／PRIVACY 若提及同步流程、圖種或依賴行為，須一併核對。
 - **通過條件：** 下列 Test Plan、Regression Plan 與隱私關卡全部有 receipt；真實 runtime 未過的圖種不得標支援。
@@ -166,11 +168,11 @@ git status --short
 
 ## 停止與回退
 
-- A 階段未過：刪除或保留忽略追蹤的候選作為證據，不改主專案依賴。
+- A 階段未過：保留版本控制內的 probe 與報告，記下失敗命令及 blocker；忽略追蹤的 artifact 僅作補充，不改主專案依賴。
 - B–E 階段未過：不推送或發佈，保留明確 checkpoint。不要引入自動切回 9.x 的第二套正式 renderer。
 - 需要撤回已提交改動時，用該階段的 `git revert`；保留使用者其他修改，禁止 `reset --hard`。尚未提交的變更只針對本任務處理並記錄。
 - 若核心 30 種通過而 ZenUML 無法在安全限制內運作，交付 30/31 的真實結果與 blocker，由使用者決定是否接受部分支援；不得宣稱 31/31 或改用遠端渲染。
 
 ## 本輪驗證邊界
 
-本輪完成版本／官方原始碼查核、既有程式介面盤點與提案文件。**Mermaid 12.2.0、ZenUML 1.0.1 的本專案 runtime：not-performed。** 沒有重跑產品測試或變更依賴；之前 9.1.6 的測試結果只作 baseline，不能當成新版已通過。
+提案建立時，Mermaid 12.2.0、ZenUML 1.0.1 的本專案 runtime 為 **not-performed**。2026-10-23 的執行、測試及續接位置記錄在實作計畫，9.1.6 結果僅作 baseline，不能當成新版已通過。
