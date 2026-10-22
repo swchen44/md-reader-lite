@@ -28,6 +28,11 @@ async function run({ cases, zen = false, config = {} }) {
     source.textContent = item.source
     section.append(heading, source)
     main.append(section)
+    const scratch = document.createElement('div')
+    scratch.dataset.probeScratch = '1'
+    document.body.append(scratch)
+    const id = `probe-${i}`
+    let restoreFault = () => {}
     const start = performance.now()
     try {
       mermaid.initialize({
@@ -46,7 +51,10 @@ async function run({ cases, zen = false, config = {} }) {
         ],
         ...config,
       })
-      const result = await mermaid.render(`probe-${i}`, item.source)
+      await mermaid.parse(item.source)
+      section.dataset.syntax = 'valid'
+      restoreFault = injectFault(item.failAt, id)
+      const result = await mermaid.render(id, item.source, scratch)
       const diagram = document.createElement('div')
       diagram.className = 'probe-output'
       diagram.innerHTML = result.svg
@@ -57,10 +65,42 @@ async function run({ cases, zen = false, config = {} }) {
       section.dataset.error =
         error instanceof Error ? error.message : String(error)
     } finally {
+      restoreFault()
+      scratch.remove()
       section.dataset.duration = String(performance.now() - start)
       section.dataset.securityLevel =
         mermaid.mermaidAPI.getConfig().securityLevel
     }
   }
   document.documentElement.dataset.probeDone = '1'
+}
+
+function injectFault(stage, id) {
+  if (stage === 'stylesheet') {
+    const original = CSSStyleSheet.prototype.insertRule
+    CSSStyleSheet.prototype.insertRule = () => {
+      throw new Error('probe: injected stylesheet failure')
+    }
+    return () => {
+      CSSStyleSheet.prototype.insertRule = original
+    }
+  }
+  if (stage === 'serialization') {
+    const original = Object.getOwnPropertyDescriptor(
+      Element.prototype,
+      'innerHTML',
+    )
+    Object.defineProperty(Element.prototype, 'innerHTML', {
+      ...original,
+      get() {
+        if (this.id === `d${id}`)
+          throw new Error('probe: injected serialization failure')
+        return original.get.call(this)
+      },
+    })
+    return () => {
+      Object.defineProperty(Element.prototype, 'innerHTML', original)
+    }
+  }
+  return () => {}
 }

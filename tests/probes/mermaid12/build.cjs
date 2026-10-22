@@ -1,6 +1,7 @@
 const { resolve } = require('node:path')
 const { mkdir, copyFile, stat, writeFile } = require('node:fs/promises')
 const webpack = require('webpack')
+const { fingerprint } = require('./evidence.cjs')
 
 const output = resolve(__dirname, '../../../dist/probes/mermaid12/extension')
 
@@ -32,7 +33,9 @@ async function build() {
     JSON.stringify(
       {
         bytes,
+        node: process.version,
         webpack: webpack.version,
+        ...(await fingerprint(output)),
         warnings: stats.toJson({ all: false, warnings: true }).warnings,
       },
       null,

@@ -9,6 +9,7 @@ import { createHash } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import { chromium } from 'playwright'
 import MarkdownIt from 'markdown-it'
+import evidence from './evidence.cjs'
 
 const root = new URL('../../../', import.meta.url)
 const artifacts = new URL('dist/probes/mermaid12/', root)
@@ -41,6 +42,10 @@ const report = {
     encoding: 'utf8',
   }).trim(),
   fixtureSha256: createHash('sha256').update(markdown).digest('hex'),
+  testSha256: createHash('sha256')
+    .update(await readFile(new URL(import.meta.url)))
+    .digest('hex'),
+  gates: [],
   runs: [],
 }
 const payloads = new Map()
@@ -54,7 +59,7 @@ function html(payload) {
   )
 }
 
-before(async () => {
+async function setup() {
   assert.equal(core.length, 30)
   assert.equal(fixtures.length, 31)
   for (const [name, version] of [
@@ -70,6 +75,13 @@ before(async () => {
     assert.equal(metadata.version, version)
   }
   await mkdir(artifacts, { recursive: true })
+  report.build = JSON.parse(
+    await readFile(new URL('build.json', artifacts), 'utf8'),
+  )
+  evidence.verifyFingerprint(
+    report.build,
+    await evidence.fingerprint(extension),
+  )
   server = http.createServer((request, response) => {
     response.setHeader('Content-Type', 'text/html; charset=utf-8')
     if (request.url.startsWith('/strict'))
@@ -98,17 +110,42 @@ before(async () => {
     context.serviceWorkers()[0] ||
     (await context.waitForEvent('serviceworker', { timeout: 15000 }))
   extensionId = new URL(worker.url()).hostname
+}
+
+before(async () => {
+  try {
+    await setup()
+    report.setupStatus = 'pass'
+  } catch (error) {
+    report.setupStatus = 'fail'
+    report.setupError = error.message
+    throw error
+  }
 })
 
 after(async () => {
-  await context?.close()
-  if (server) await new Promise(resolve => server.close(resolve))
-  if (profile) await rm(profile, { recursive: true, force: true })
-  await writeFile(
-    new URL('results.json', artifacts),
-    JSON.stringify(report, null, 2),
+  await evidence.finishReport(
+    report,
+    [
+      () => context?.close(),
+      () => server && new Promise(resolve => server.close(resolve)),
+      () => profile && rm(profile, { recursive: true, force: true }),
+    ],
+    async result => {
+      await mkdir(artifacts, { recursive: true })
+      await writeFile(
+        new URL('results.json', artifacts),
+        JSON.stringify(result, null, 2),
+      )
+    },
   )
+  assert.deepEqual(report.cleanupErrors, [])
 })
+
+function gate(name, task) {
+  report.gates.push({ name, status: 'pending' })
+  test(name, () => evidence.runGate(report, name, task))
+}
 
 async function probe(
   label,
@@ -165,10 +202,20 @@ async function probe(
             errorDiagram: !!svg?.querySelector('.error-icon, .error-text'),
             source: element.querySelector('pre')?.textContent,
             securityLevel: element.dataset.securityLevel,
+            syntax: element.dataset.syntax,
           }
         }),
       )
-    const result = { label, fatal, diagrams, requests, allRequests, errors }
+    const residuals = await page.locator('body > :not(#probe-results)').count()
+    const result = {
+      label,
+      fatal,
+      diagrams,
+      requests,
+      allRequests,
+      errors,
+      residuals,
+    }
     report.runs.push(result)
     await page.screenshot({
       path: fileURLToPath(new URL(`${label}.png`, artifacts)),
@@ -176,6 +223,11 @@ async function probe(
     })
     assert.equal(fatal, null)
     assert.deepEqual(errors, [])
+    assert.equal(
+      residuals,
+      0,
+      'Rendering left temporary DOM outside its result container',
+    )
     return result
   } catch (error) {
     report.runs.push({
@@ -205,22 +257,25 @@ function assertRenders(result, expected) {
   assert.deepEqual(result.requests, [], 'Unexpected outbound attempts')
 }
 
-test('all 30 core types render in an isolated-world MV3 content script', async () => {
-  assertRenders(await probe('core-30', core), 30)
-})
+gate(
+  'all 30 core types render in an isolated-world MV3 content script',
+  async () => {
+    assertRenders(await probe('core-30', core), 30)
+  },
+)
 
-test('ZenUML renders in the unfiltered 31-type gallery', async () => {
+gate('ZenUML renders in the unfiltered 31-type gallery', async () => {
   assertRenders(await probe('zen-gallery-31', fixtures, { zen: true }), 31)
 })
 
-test('all 31 types render under strict host-page CSP', async () => {
+gate('all 31 types render under strict host-page CSP', async () => {
   assertRenders(
     await probe('strict-csp-31', fixtures, { zen: true, strict: true }),
     31,
   )
 })
 
-test('local file injection renders all 31 types', async () => {
+gate('local file injection renders all 31 types', async () => {
   const settings = await context.newPage()
   try {
     await settings.goto(`chrome://extensions/?id=${extensionId}`)
@@ -240,17 +295,42 @@ test('local file injection renders all 31 types', async () => {
   )
 })
 
-test('malformed input preserves source and later diagrams recover', async () => {
-  const result = await probe('recovery', [
-    { name: 'Broken', source: 'flowchart TD\n A[unterminated' },
-    { name: 'Unknown', source: 'unknownDiagram\n text' },
-    sentinel,
-  ])
-  assert.equal(result.diagrams[0].status, 'error')
-  assert.match(result.diagrams[0].source, /unterminated/)
-  assert.equal(result.diagrams[1].status, 'error')
-  assertRenders({ ...result, diagrams: result.diagrams.slice(2) }, 1)
-})
+gate(
+  'malformed input preserves source and later diagrams recover',
+  async () => {
+    const result = await probe('recovery', [
+      { name: 'Broken', source: 'flowchart TD\n A[unterminated' },
+      { name: 'Unknown', source: 'unknownDiagram\n text' },
+      sentinel,
+    ])
+    assert.equal(result.diagrams[0].status, 'error')
+    assert.match(result.diagrams[0].source, /unterminated/)
+    assert.equal(result.diagrams[1].status, 'error')
+    assertRenders({ ...result, diagrams: result.diagrams.slice(2) }, 1)
+  },
+)
+
+for (const stage of ['stylesheet', 'serialization']) {
+  gate(`cleanup and recovery after ${stage} failure`, async () => {
+    const result = await probe(`failure-${stage}`, [
+      {
+        name: 'Injected failure',
+        source:
+          'flowchart LR\n A --> B\n classDef colored fill:red\n class A colored',
+        failAt: stage,
+      },
+      sentinel,
+    ])
+    assert.equal(result.diagrams[0].syntax, 'valid')
+    assert.equal(result.diagrams[0].status, 'error')
+    assert.match(
+      result.diagrams[0].error,
+      new RegExp(`injected ${stage} failure`),
+    )
+    assert.match(result.diagrams[0].source, /flowchart/)
+    assertRenders({ ...result, diagrams: result.diagrams.slice(1) }, 1)
+  })
+}
 
 const negatives = [
   {
@@ -275,10 +355,15 @@ const negatives = [
   },
 ]
 for (const item of negatives) {
-  test(`strict rendering makes no remote attempt: ${item.name}`, async () => {
+  gate(`strict rendering makes no remote attempt: ${item.name}`, async () => {
     const result = await probe(`privacy-${item.name}`, [item, sentinel])
     assert.ok(
       result.diagrams.every(diagram => diagram.securityLevel === 'strict'),
+    )
+    assert.equal(
+      result.diagrams[0].syntax,
+      'valid',
+      'A syntax error cannot satisfy a resource-blocking gate',
     )
     assert.deepEqual(
       result.requests,
@@ -286,6 +371,11 @@ for (const item of negatives) {
       `Remote attempt before/after SVG insertion: ${JSON.stringify(
         result.requests,
       )}`,
+    )
+    assert.equal(
+      result.diagrams[0].status,
+      'ready',
+      'An unrelated rendering error cannot satisfy a resource-blocking gate',
     )
     assertRenders({ ...result, diagrams: result.diagrams.slice(1) }, 1)
   })
