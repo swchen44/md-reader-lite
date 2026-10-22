@@ -45,7 +45,7 @@
 - [x] Verify the existing baseline before push: 213 unit pass; typecheck/build pass; 87 focused e2e pass, 0 fail, 1 existing TODO, 0 skip.
 - [x] Push the existing eight commits to `origin/main` at `5df0a82`.
 - [x] Incorporate all four review findings into the design and this implementation plan.
-- [ ] A1: Commit versioned probe sources, manifest, independent lockfile and commands.
+- [x] A1: Commit versioned probe sources, manifest, independent lockfile and commands.
 - [ ] A2: Run 30 core types and ZenUML in a real content script; save individual and full-gallery receipts.
 - [ ] A3: Run HTTP, file, strict-CSP and malicious-resource checks; classify every failure and decide whether B is allowed.
 - [ ] B: Migrate product rendering, security, completion/search lifecycle and corresponding permanent tests.
@@ -153,3 +153,12 @@ Format only changed files with the installed Prettier. Each receipt states the c
 - Ruling: Keep the probe source and independent lockfile in Git while retaining large artifacts under ignored `dist/`; this implements the review and reboot-recovery requirement.
 
 Append each task's actual outcome here before stopping or handing off. Update Current Checkpoint and Durable Checklist together so a reboot does not require reconstructing chat history.
+
+### 2026-10-23: A1 Probe Harness
+
+- Independent npm install completed with Mermaid 12.2.0 / ZenUML 1.0.1; root dependencies and pnpm lockfile remain unchanged.
+- `npm audit --json --prefix tests/probes/mermaid12`: zero reported vulnerabilities at this checkpoint.
+- Eager webpack probe build succeeds: 14,125,240 bytes, unminified. This cannot be compared directly with the minified product bundle.
+- Initial runtime: core 30/30, mixed 31/31 and strict-page-CSP 31/31 pass. Recovery after invalid input passes. Four remote image/CSS fixtures each trigger intercepted outbound attempts under strict mode; privacy gate fails.
+- Initial file-access test used a wrong Chrome settings selector; corrected against the actual Chrome for Testing UI. Re-run before recording file acceptance.
+- Next: execute the committed harness again, save final results and classify A's privacy blocker before considering any product migration.

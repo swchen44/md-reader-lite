@@ -1,0 +1,12 @@
+{
+  "name": "md-reader-mermaid12-probe",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "mermaid": "12.2.0",
+    "@mermaid-js/mermaid-zenuml": "1.0.1"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

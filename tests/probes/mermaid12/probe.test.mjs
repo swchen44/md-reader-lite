@@ -1,0 +1,292 @@
+import { before, after, test } from 'node:test'
+import assert from 'node:assert/strict'
+import { readFile, writeFile, mkdir, mkdtemp, rm } from 'node:fs/promises'
+import http from 'node:http'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { createHash } from 'node:crypto'
+import { execFileSync } from 'node:child_process'
+import { chromium } from 'playwright'
+import MarkdownIt from 'markdown-it'
+
+const root = new URL('../../../', import.meta.url)
+const artifacts = new URL('dist/probes/mermaid12/', root)
+const extension = fileURLToPath(new URL('extension/', artifacts))
+const fixtures = []
+const markdown = await readFile(
+  new URL('example/mermaid-compatibility.md', root),
+  'utf8',
+)
+const tokens = new MarkdownIt().parse(markdown, {})
+let name
+for (let i = 0; i < tokens.length; i++) {
+  if (tokens[i].type === 'heading_open' && tokens[i].tag === 'h2')
+    name = tokens[i + 1].content.replace(/^\d+\. /, '')
+  if (tokens[i].type === 'fence' && tokens[i].info.trim() === 'mermaid')
+    fixtures.push({ name, source: tokens[i].content })
+}
+const core = fixtures.filter(item => item.name !== 'ZenUML')
+const sentinel = {
+  name: 'Recovery sentinel',
+  source: 'flowchart LR\n A[Still readable] --> B[Recovered]',
+}
+const report = {
+  started: new Date().toISOString(),
+  node: process.version,
+  mermaid: '12.2.0',
+  zenuml: '1.0.1',
+  sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], {
+    cwd: fileURLToPath(root),
+    encoding: 'utf8',
+  }).trim(),
+  fixtureSha256: createHash('sha256').update(markdown).digest('hex'),
+  runs: [],
+}
+const payloads = new Map()
+let server, context, profile, base, extensionId
+
+function html(payload) {
+  return (
+    '<!doctype html><meta charset="utf-8"><script type="application/json" id="md-reader-probe-input">' +
+    JSON.stringify(payload).replace(/</g, '\\u003c') +
+    '</script>'
+  )
+}
+
+before(async () => {
+  assert.equal(core.length, 30)
+  assert.equal(fixtures.length, 31)
+  for (const [name, version] of [
+    ['mermaid', report.mermaid],
+    ['@mermaid-js/mermaid-zenuml', report.zenuml],
+  ]) {
+    const metadata = JSON.parse(
+      await readFile(
+        new URL(`node_modules/${name}/package.json`, import.meta.url),
+        'utf8',
+      ),
+    )
+    assert.equal(metadata.version, version)
+  }
+  await mkdir(artifacts, { recursive: true })
+  server = http.createServer((request, response) => {
+    response.setHeader('Content-Type', 'text/html; charset=utf-8')
+    if (request.url.startsWith('/strict'))
+      response.setHeader(
+        'Content-Security-Policy',
+        "default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src 'none'; connect-src 'none'",
+      )
+    const key = new URL(request.url, 'http://fixture').searchParams.get('case')
+    const payload = payloads.get(key)
+    response.end(payload ? html(payload) : 'Probe fixture not found')
+  })
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
+  base = `http://127.0.0.1:${server.address().port}`
+  profile = await mkdtemp(join(tmpdir(), 'md-reader-mermaid12-'))
+  context = await chromium.launchPersistentContext(profile, {
+    headless: false,
+    viewport: { width: 1200, height: 900 },
+    args: [
+      `--disable-extensions-except=${extension}`,
+      `--load-extension=${extension}`,
+      '--no-first-run',
+    ],
+  })
+  report.browser = context.browser().version()
+  const worker =
+    context.serviceWorkers()[0] ||
+    (await context.waitForEvent('serviceworker', { timeout: 15000 }))
+  extensionId = new URL(worker.url()).hostname
+})
+
+after(async () => {
+  await context?.close()
+  if (server) await new Promise(resolve => server.close(resolve))
+  if (profile) await rm(profile, { recursive: true, force: true })
+  await writeFile(
+    new URL('results.json', artifacts),
+    JSON.stringify(report, null, 2),
+  )
+})
+
+async function probe(
+  label,
+  cases,
+  { zen = false, strict = false, file = false, config = {} } = {},
+) {
+  const page = await context.newPage()
+  const requests = []
+  const allRequests = []
+  const errors = []
+  page.on('pageerror', error => errors.push(error.message))
+  page.on('request', request => {
+    const url = new URL(request.url())
+    allRequests.push({ url: request.url(), type: request.resourceType() })
+    if (
+      ['http:', 'https:'].includes(url.protocol) &&
+      !(request.isNavigationRequest() && url.origin === base)
+    )
+      requests.push(request.url())
+  })
+  await page.route(/^https?:\/\/(?!127\.0\.0\.1(?::|\/))/, route =>
+    route.abort(),
+  )
+  const payload = { cases, zen, config }
+  try {
+    if (file) {
+      const fixture = new URL('local.md', artifacts)
+      await writeFile(fixture, JSON.stringify(payload))
+      await page.goto(pathToFileURL(fileURLToPath(fixture)).href)
+    } else {
+      payloads.set(label, payload)
+      await page.goto(
+        `${base}/${strict ? 'strict' : 'probe'}.md?case=${encodeURIComponent(
+          label,
+        )}`,
+      )
+    }
+    await page.waitForSelector('html[data-probe-done="1"]', { timeout: 90000 })
+    const fatal = await page.getAttribute('html', 'data-probe-fatal')
+    const diagrams = await page
+      .locator('.probe-diagram')
+      .evaluateAll(elements =>
+        elements.map(element => {
+          const svg = element.querySelector('.probe-output svg')
+          const box = svg?.getBoundingClientRect()
+          return {
+            name: element.dataset.name,
+            status: element.dataset.status,
+            error: element.dataset.error,
+            duration: Number(element.dataset.duration),
+            width: box?.width || 0,
+            height: box?.height || 0,
+            labels: svg?.querySelectorAll('text, foreignObject').length || 0,
+            errorDiagram: !!svg?.querySelector('.error-icon, .error-text'),
+            source: element.querySelector('pre')?.textContent,
+            securityLevel: element.dataset.securityLevel,
+          }
+        }),
+      )
+    const result = { label, fatal, diagrams, requests, allRequests, errors }
+    report.runs.push(result)
+    await page.screenshot({
+      path: fileURLToPath(new URL(`${label}.png`, artifacts)),
+      fullPage: false,
+    })
+    assert.equal(fatal, null)
+    assert.deepEqual(errors, [])
+    return result
+  } catch (error) {
+    report.runs.push({
+      label,
+      error: error.message,
+      requests,
+      allRequests,
+      errors,
+    })
+    throw error
+  } finally {
+    await page.close()
+  }
+}
+
+function assertRenders(result, expected) {
+  assert.equal(result.diagrams.length, expected)
+  const failures = result.diagrams.filter(
+    item =>
+      item.status !== 'ready' ||
+      item.width <= 0 ||
+      item.height <= 0 ||
+      item.errorDiagram ||
+      !item.labels,
+  )
+  assert.deepEqual(failures, [], JSON.stringify(failures))
+  assert.deepEqual(result.requests, [], 'Unexpected outbound attempts')
+}
+
+test('all 30 core types render in an isolated-world MV3 content script', async () => {
+  assertRenders(await probe('core-30', core), 30)
+})
+
+test('ZenUML renders in the unfiltered 31-type gallery', async () => {
+  assertRenders(await probe('zen-gallery-31', fixtures, { zen: true }), 31)
+})
+
+test('all 31 types render under strict host-page CSP', async () => {
+  assertRenders(
+    await probe('strict-csp-31', fixtures, { zen: true, strict: true }),
+    31,
+  )
+})
+
+test('local file injection renders all 31 types', async () => {
+  const settings = await context.newPage()
+  try {
+    await settings.goto(`chrome://extensions/?id=${extensionId}`)
+    const toggle = settings.locator('#allow-on-file-urls cr-toggle')
+    await toggle.waitFor()
+    if ((await toggle.getAttribute('aria-pressed')) !== 'true')
+      await toggle.click()
+    await settings
+      .locator('#allow-on-file-urls cr-toggle[aria-pressed="true"]')
+      .waitFor()
+  } finally {
+    await settings.close()
+  }
+  assertRenders(
+    await probe('local-file-31', fixtures, { zen: true, file: true }),
+    31,
+  )
+})
+
+test('malformed input preserves source and later diagrams recover', async () => {
+  const result = await probe('recovery', [
+    { name: 'Broken', source: 'flowchart TD\n A[unterminated' },
+    { name: 'Unknown', source: 'unknownDiagram\n text' },
+    sentinel,
+  ])
+  assert.equal(result.diagrams[0].status, 'error')
+  assert.match(result.diagrams[0].source, /unterminated/)
+  assert.equal(result.diagrams[1].status, 'error')
+  assertRenders({ ...result, diagrams: result.diagrams.slice(2) }, 1)
+})
+
+const negatives = [
+  {
+    name: 'html-image',
+    source:
+      'flowchart LR\n A["<img src=\'https://mermaid-probe.invalid/html.png\' />"] --> B[Safe]',
+  },
+  {
+    name: 'image-node',
+    source:
+      'flowchart LR\n A@{ img: "https://mermaid-probe.invalid/node.png", label: "Remote image", h: 60 } --> B[Safe]',
+  },
+  {
+    name: 'theme-css',
+    source:
+      '%%{init: {"themeCSS":"@import url(https://mermaid-probe.invalid/import.css); .node { fill: url(https://mermaid-probe.invalid/fill.svg); }"}}%%\nflowchart LR\n A --> B',
+  },
+  {
+    name: 'security-directive',
+    source:
+      '%%{init: {"securityLevel":"loose","secure":[],"themeCSS":"@import url(https://mermaid-probe.invalid/directive.css);"}}%%\nflowchart LR\n A["<img src=\'https://mermaid-probe.invalid/directive.png\' />"] --> B[Safe]',
+  },
+]
+for (const item of negatives) {
+  test(`strict rendering makes no remote attempt: ${item.name}`, async () => {
+    const result = await probe(`privacy-${item.name}`, [item, sentinel])
+    assert.ok(
+      result.diagrams.every(diagram => diagram.securityLevel === 'strict'),
+    )
+    assert.deepEqual(
+      result.requests,
+      [],
+      `Remote attempt before/after SVG insertion: ${JSON.stringify(
+        result.requests,
+      )}`,
+    )
+    assertRenders({ ...result, diagrams: result.diagrams.slice(1) }, 1)
+  })
+}

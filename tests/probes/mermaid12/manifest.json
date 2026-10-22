@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "md-reader Mermaid 12 feasibility probe",
+  "version": "0.0.1",
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": ["http://127.0.0.1/*", "file:///*"],
+      "js": ["js/content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
