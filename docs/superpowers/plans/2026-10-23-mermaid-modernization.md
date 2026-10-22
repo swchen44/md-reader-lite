@@ -15,9 +15,9 @@
 - Updated: 2026-10-23, Asia/Taipei.
 - Product baseline: `5df0a82`, version 1.8.2, wrapper 0.5.1 / Mermaid 9.1.6.
 - GitHub: baseline push to `origin/main` completed; verify remote SHA before subsequent push.
-- Current checkpoint: A1–A3 executed; normal diagrams pass, privacy gate fails. See [probe report](../../research/mermaid12-probe.md).
-- Product migration: not started. Four strict-mode fixtures still attempt remote resource loads; A4 must resolve this before B changes the root lockfile.
-- Next task after resume: A4 resource-policy prototype below. Begin with `git status --short --branch`, read this file/spec/report and verify build fingerprints before rerunning. The raw candidate currently exits 1 on four privacy assertions.
+- Current checkpoint: A4 in progress. A local renderer frame connects under strict host CSP and renders 31/31; the original four resource cases now reject before requests in confined mode. Expanded encoded/YAML/relative-input gates and security review are running. See [probe report](../../research/mermaid12-probe.md).
+- Product migration: next. A4 confined candidate passes 25/25 browser gates and 15/15 helper tests. The raw comparison still exposes the four strict-mode resource failures.
+- Next task after resume: B async product renderer below, then C and D including Anthropic styling for all newly supported types. Begin with `git status --short --branch`, read this file/spec/report and verify build fingerprints before rerunning. Product dependencies have not changed at the A4 checkpoint.
 
 ## Global Constraints
 
@@ -48,7 +48,7 @@
 - [x] A1: Commit versioned probe sources, manifest, independent lockfile and commands.
 - [x] A2: Run 30 core types and ZenUML in a real content script; save individual measurements and full-gallery receipts.
 - [x] A3: Run HTTP, file, strict-CSP and malicious-resource checks; B is not allowed yet because four privacy gates fail.
-- [ ] A4: Prove a resource policy that acts before Mermaid can initiate requests, then repeat A's environment and safety gates.
+- [x] A4: Prove a resource policy that acts before Mermaid can initiate requests, then repeat A's environment and safety gates.
 - [ ] B: Migrate product rendering, security, completion/search lifecycle and corresponding permanent tests.
 - [ ] C: Integrate ZenUML and validate all 31 types in the product.
 - [ ] D: Preserve styling, viewer controls, localization and reading position.
@@ -79,14 +79,14 @@
 
 **Files:** Extend `tests/probes/mermaid12/` only until a safe candidate passes. Keep raw strict-mode failures as comparison evidence; put candidate policy in a separate module and identify the policy in the receipt. Update the spec if an isolated renderer becomes necessary.
 
-- [ ] Inspect the pinned public parse/config interfaces and the image/HTML/CSS paths in the report. Determine which operations can occur before a returned SVG exists.
-- [ ] Prototype a conservative policy that accepts ordinary fixtures and explicitly rejects unsupported resource-bearing input before rendering. Use structured configuration, HTML and CSS parsing; URL substring matching is insufficient for entities, CSS escapes or relative URLs.
-- [ ] If public APIs cannot establish the boundary, prototype a locally confined renderer. Verify host CSP, WAR, execution world, message sender identity and returned SVG before changing product architecture. Do not alter whole-page policy or browser-wide globals as an incidental fix.
-- [ ] Add HTML entity URLs, CSS-escaped URLs, YAML resource configuration, relative images, SVG use/image resources and resource-loading style declarations. Keep the four valid raw negative fixtures; add explicit policy-rejection assertions with preserved source and later-diagram recovery.
-- [ ] Run evidence helpers, build fingerprint verification and the same 30/31, HTTP/file/strict-CSP, recovery and no-request gates for the candidate. Test interception never counts as an implemented product policy.
-- [ ] Record tradeoffs and outcomes. Permit B only after a safe candidate passes; otherwise preserve root dependencies with a concrete reproducible blocker.
+- [x] Inspect the pinned public parse/config interfaces and the image/HTML/CSS paths in the report. Determine which operations can occur before a returned SVG exists.
+- [x] Prototype a conservative policy that accepts ordinary fixtures and explicitly rejects unsupported resource-bearing input before rendering. Use structured configuration, HTML and CSS parsing; URL substring matching is insufficient for entities, CSS escapes or relative URLs.
+- [x] If public APIs cannot establish the boundary, prototype a locally confined renderer. Verify host CSP, WAR, execution world, message sender identity and returned SVG before changing product architecture. Do not alter whole-page policy or browser-wide globals as an incidental fix.
+- [x] Add HTML entity URLs, CSS-escaped URLs, YAML resource configuration, relative images, SVG use/image resources and resource-loading style declarations. Keep the four valid raw negative fixtures; add explicit policy-rejection assertions with preserved source and later-diagram recovery.
+- [x] Run evidence helpers, build fingerprint verification and the same 30/31, HTTP/file/strict-CSP, recovery and no-request gates for the candidate. Test interception never counts as an implemented product policy.
+- [x] Record tradeoffs and outcomes. Permit B only after a safe candidate passes; otherwise preserve root dependencies with a concrete reproducible blocker.
 
-**Next action:** Read `docs/research/mermaid12-probe.md`, then implement and test the candidate resource policy inside the probe. B–E remain pending, not accepted.
+**Next action:** Implement B with the proven local frame/policy; B–E remain pending, not accepted.
 
 ## Task B: Async Product Renderer and Lifecycle
 
@@ -122,6 +122,7 @@
 
 - [ ] Keep the stored style schema. Resolve directive/frontmatter author configuration through public Mermaid parsing or a structured parser; protected security values remain authoritative.
 - [ ] For old diagram types choose explicit compatible theme/look/layout settings; retain required native layout for new types such as Swimlanes. Test authored colors, fonts, shapes and absence of theme leakage.
+- [ ] Extend Anthropic blog style to every newly supported diagram type, not just the previous 11. Verify each type in both styles for palette, local typography, borders, titles and light/dark behavior; preserve meaningful native shapes and document any renderer-specific limitation.
 - [ ] Fit Original GitGraph within 320/390 px frames; preserve meaningful shapes and C4 styling without broad shape overrides.
 - [ ] Ensure viewer observers settle on ready/error/stale and do not attach duplicate controls. Restore reading anchors after current work completes only when the user has not scrolled meanwhile.
 - [ ] Localize new pending/error messages in all five existing languages. Test CSS off / Developer / Editorial / User1 / User2 without altering Mermaid settings.
@@ -186,3 +187,20 @@ Append each task's actual outcome here before stopping or handing off. Update Cu
 - Final bundle: 14,126,428 bytes, unminified. Source/output fingerprints verified; cleanupErrors is empty. Complete hashes, environment and limitations are in the probe report.
 - Ruling: Stop before B because the approved privacy gate failed. Preserve root Mermaid 9.1.6 and perform A4 before product migration; cost is postponing the upgrade until its resource boundary is proven.
 - A4 has not been implemented. Original/Anthropic migration, the 372-output matrix, whole-product final regression and release remain pending.
+
+### A4 Working Checkpoint
+
+- Added an extension-local renderer frame with restrictive CSP, a private MessagePort transport, pure HTML/CSS/flowchart-metadata preflight, and sanitized inline SVG output.
+- Strict-host-CSP full gallery: 31/31 rendered. Original four privacy fixtures: 4/4 reject with no requests and no CSP violations; raw comparison still demonstrates the old intercepted attempts.
+- CSS/parser/evidence helper tests: 12 pass. Added source-entity regression RED→GREEN. Invalid native CSS is discarded, missing local filter references become `none`, and CSS variables resolve without host inheritance.
+- Two independent eager webpack compilations prevent shared chunks across execution worlds. Root dependencies remain unchanged.
+- Next: run the full confined suite, resolve the independent security review, and commit/update the A4 gate before B. This checkpoint is not final product acceptance.
+
+### A4 Accepted Probe Boundary
+
+- `node --test` over evidence/CSS/preflight/transport helper suites: 15 pass, zero fail/skip/TODO. Independent review regressions were observed RED, then GREEN: exponential CSS expansion, selector escape and render-after-dispose.
+- `MERMAID_PROBE_POLICY=confined node --test tests/probes/mermaid12/probe.test.mjs`: 25 pass, zero fail/unavailable/skip/TODO, exit 0; Chrome for Testing 147.0.7727.15. Cleanup errors empty; fingerprints verified before launch.
+- All 31 normal fixtures work under strict host CSP and file injection. Four raw negative counterexamples still reproduce requests; guarded versions and 11 encoded/structured cases reject before requests or CSP violations. Safe class colors and host selector isolation pass.
+- Ruling: The attempted classDef URL fixture is invalid in the pinned flowchart grammar, including quoted/escaped-parenthesis variants. Replace that false negative with a positive authored-class browser test; keep parsed-class resource policy tests and valid themeCSS escape/URL negatives. Do not count parser rejection as a security pass.
+- Ruling: Permit B using the confined architecture. Reject image nodes, external resource markup/CSS, unsupported CSS functions/at-rules and conflicting scoped variables rather than silently enabling resource loading. Root dependencies remain unchanged in this commit.
+- User clarification: after upgrading, extend Anthropic blog style to all newly supported diagrams; D and the permanent 372-output matrix include this requirement.

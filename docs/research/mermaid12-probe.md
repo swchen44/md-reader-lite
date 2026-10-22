@@ -2,6 +2,8 @@
 
 日期：2026-10-23。此報告記錄獨立 probe，產品仍使用 Mermaid 9.1.6。
 
+最新 A4 結果：**confined 候選 25/25 browser gates、15/15 helper tests 通過，可進入產品整合。** 下方原始 strict 失敗證據保留；它不會因新增隔離政策而變成通過。產品與 Anthropic 風格遷移尚未驗收。
+
 ## 關卡結果
 
 **正常範例已能渲染 31/31；直接以 strict 模式替換產品 renderer 的安全關卡未通過。** HTML 圖片、image node 與 CSS URL 仍會產生遠端載入嘗試。Playwright 已攔截請求，沒有把負例資料送往該遠端站點。這是候選架構的失敗證據，不能把它記成升級完成。
@@ -77,3 +79,17 @@ Artifacts 保存於忽略追蹤的 `dist/probes/mermaid12/`：`extension/`、`bu
 候選方案必須同時驗證設定／HTML／CSS 與 image node，納入編碼 URL 與相對 URL；若需隔離 renderer，另驗證嚴格 host CSP、WAR、傳訊來源與回傳 SVG 的資源處理。不得用覆寫全域 `fetch`／`Image`、放寬 CSP、遠端服務或只在測試中攔截網路來宣稱產品已安全。
 
 **產品 B–E 尚未開始。** 這份 probe 證明新版的圖種可行性，也具體指出目前安全架構的阻塞；資源政策通過前保留現行產品依賴。
+
+## A4 本機隔離政策驗證
+
+`MERMAID_PROBE_POLICY=confined node --test tests/probes/mermaid12/probe.test.mjs`：**25 pass、0 fail／unavailable／skip／TODO，exit 0**。環境仍為 Node 26.0.0、CfT 147.0.7727.15。來源為 `6c92d3f` 上的本次 A4 修改，receipt 含完整 build/test 指紋；cleanupErrors 為空。
+
+- Mermaid 在本機 extension iframe 執行。兩個 eager bundle 分開編譯，無共用跨執行世界 chunk；不放寬 host CSP、不新增權限。
+- renderer-only CSP 阻止外部資源，渲染前用 htmlparser2／entities／css-tree 解析設定、HTML、CSS 與固定版本 flowchart metadata。輸出以 DOMPurify 及結構化 CSS/SVG 政策清理後才插入 host。
+- 原始四個有效負例仍先以 raw 模式重現請求；confined 模式拒絕並保留原碼，**零 request events、零 CSP violations**，後續正常圖可繼續。
+- 額外 11 個有效負例涵蓋 HTML／Mermaid entities、相對圖片、SVG image/use、inline CSS、CSS escape、image-set、CSS variables、YAML CSS／字型。全部在 renderer CSP 介入前拒絕。
+- 31 圖總覽、嚴格 host CSP、本機檔、故障復原、作者 class 色彩與 host selector 隔離皆通過。15 個 helper tests 包含 review 找出的展開總量、selector 與 dispose 回歸。
+- 原生 renderer 的無效 CSS 被捨棄；不存在的本機 filter 轉為 `none`。圖片節點、資源 CSS、未支援函式／at-rule、相互衝突的 scoped variables 採拒絕政策，可能比 Mermaid 原生功能保守。
+- 嘗試的 classDef URL fixture 不符合固定版語法，未算作安全通過，改驗證合法 class 顏色；policy 的 metadata 測試與有效 themeCSS 資源案例仍保留。
+
+本輪 `results.json` SHA-256：`30b6d56ee0bbab04353f8efdec027c6bcbca42d82cabfcc8bb8a10faa9fe6741`；frame bundle SHA-256：`51829adb7437e03580ee2b6fa74eee749bb021830587f598ccefc0a1e0ab1394`。重現指令以 probe README 為準。此關卡允許進入 B，不等於正式產品、所有語法、安全全面性或 31 圖視覺驗收已完成。

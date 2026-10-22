@@ -1,23 +1,32 @@
 const { resolve } = require('node:path')
-const { mkdir, copyFile, stat, writeFile } = require('node:fs/promises')
+const {
+  mkdir,
+  copyFile,
+  stat,
+  writeFile,
+  rm,
+  readdir,
+} = require('node:fs/promises')
+const assert = require('node:assert/strict')
 const webpack = require('webpack')
 const { fingerprint } = require('./evidence.cjs')
 
 const output = resolve(__dirname, '../../../dist/probes/mermaid12/extension')
 
 async function build() {
+  await rm(output, { recursive: true, force: true })
   await mkdir(output, { recursive: true })
   const stats = await new Promise((accept, reject) => {
     webpack(
-      {
+      ['content', 'frame'].map(name => ({
         mode: 'production',
-        entry: resolve(__dirname, 'content.js'),
-        output: { path: output, filename: 'js/content.js', publicPath: './' },
+        entry: resolve(__dirname, `${name}.js`),
+        output: { path: output, filename: `js/${name}.js`, publicPath: './' },
         optimization: { minimize: false },
         plugins: [new webpack.optimize.LimitChunkCountPlugin({ maxChunks: 1 })],
         performance: false,
         stats: 'errors-warnings',
-      },
+      })),
       (error, result) => {
         if (error) reject(error)
         else if (result.hasErrors()) reject(new Error(result.toString()))
@@ -25,7 +34,11 @@ async function build() {
       },
     )
   })
-  for (const file of ['manifest.json', 'background.js'])
+  assert.deepEqual((await readdir(resolve(output, 'js'))).sort(), [
+    'content.js',
+    'frame.js',
+  ])
+  for (const file of ['manifest.json', 'background.js', 'frame.html'])
     await copyFile(resolve(__dirname, file), resolve(output, file))
   const bytes = (await stat(resolve(output, 'js/content.js'))).size
   await writeFile(
@@ -36,7 +49,9 @@ async function build() {
         node: process.version,
         webpack: webpack.version,
         ...(await fingerprint(output)),
-        warnings: stats.toJson({ all: false, warnings: true }).warnings,
+        warnings: stats
+          .toJson({ all: false, warnings: true })
+          .children.flatMap(child => child.warnings),
       },
       null,
       2,

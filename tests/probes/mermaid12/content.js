@@ -1,5 +1,7 @@
 import mermaid from 'mermaid'
 import zenuml from '@mermaid-js/mermaid-zenuml'
+import { connectFrame } from './frame-transport'
+import { injectFault } from './fault-injection'
 
 const payload = document.getElementById('md-reader-probe-input')
 const input =
@@ -12,12 +14,27 @@ if (input) {
   })
 }
 
-async function run({ cases, zen = false, config = {} }) {
+async function run({
+  cases,
+  zen = false,
+  config = {},
+  transport = false,
+  policy = 'raw',
+}) {
+  if (transport) {
+    document.body.replaceChildren()
+    const connection = await connectFrame()
+    connection.dispose()
+    document.documentElement.dataset.probeTransport = 'ready'
+    document.documentElement.dataset.probeDone = '1'
+    return
+  }
   if (zen) await mermaid.registerExternalDiagrams([zenuml])
   document.body.replaceChildren()
   const main = document.createElement('main')
   main.id = 'probe-results'
   document.body.append(main)
+  const confined = policy === 'confined' ? await connectFrame() : null
   for (const [i, item] of cases.entries()) {
     const section = document.createElement('section')
     section.className = 'probe-diagram'
@@ -35,6 +52,28 @@ async function run({ cases, zen = false, config = {} }) {
     let restoreFault = () => {}
     const start = performance.now()
     try {
+      if (confined) {
+        const result = await confined.render({
+          source: item.source,
+          config,
+          zen,
+          failAt: item.failAt,
+        })
+        section.dataset.status = result.status
+        if (result.syntax) section.dataset.syntax = result.syntax
+        section.dataset.violations = JSON.stringify(result.violations || [])
+        section.dataset.frameResiduals = String(result.residuals || 0)
+        section.dataset.securityLevel = result.securityLevel
+        if (result.status !== 'ready') {
+          section.dataset.error = result.error
+          continue
+        }
+        const diagram = document.createElement('div')
+        diagram.className = 'probe-output'
+        diagram.innerHTML = result.svg
+        source.replaceWith(diagram)
+        continue
+      }
       mermaid.initialize({
         startOnLoad: false,
         securityLevel: 'strict',
@@ -68,39 +107,11 @@ async function run({ cases, zen = false, config = {} }) {
       restoreFault()
       scratch.remove()
       section.dataset.duration = String(performance.now() - start)
-      section.dataset.securityLevel =
-        mermaid.mermaidAPI.getConfig().securityLevel
+      if (!confined)
+        section.dataset.securityLevel =
+          mermaid.mermaidAPI.getConfig().securityLevel
     }
   }
+  confined?.dispose()
   document.documentElement.dataset.probeDone = '1'
-}
-
-function injectFault(stage, id) {
-  if (stage === 'stylesheet') {
-    const original = CSSStyleSheet.prototype.insertRule
-    CSSStyleSheet.prototype.insertRule = () => {
-      throw new Error('probe: injected stylesheet failure')
-    }
-    return () => {
-      CSSStyleSheet.prototype.insertRule = original
-    }
-  }
-  if (stage === 'serialization') {
-    const original = Object.getOwnPropertyDescriptor(
-      Element.prototype,
-      'innerHTML',
-    )
-    Object.defineProperty(Element.prototype, 'innerHTML', {
-      ...original,
-      get() {
-        if (this.id === `d${id}`)
-          throw new Error('probe: injected serialization failure')
-        return original.get.call(this)
-      },
-    })
-    return () => {
-      Object.defineProperty(Element.prototype, 'innerHTML', original)
-    }
-  }
-  return () => {}
 }

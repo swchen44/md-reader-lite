@@ -37,6 +37,7 @@ const report = {
   node: process.version,
   mermaid: '12.2.0',
   zenuml: '1.0.1',
+  policy: process.env.MERMAID_PROBE_POLICY || 'raw',
   sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], {
     cwd: fileURLToPath(root),
     encoding: 'utf8',
@@ -150,7 +151,14 @@ function gate(name, task) {
 async function probe(
   label,
   cases,
-  { zen = false, strict = false, file = false, config = {} } = {},
+  {
+    zen = false,
+    strict = false,
+    file = false,
+    config = {},
+    transport = false,
+    policy = report.policy,
+  } = {},
 ) {
   const page = await context.newPage()
   const requests = []
@@ -169,7 +177,7 @@ async function probe(
   await page.route(/^https?:\/\/(?!127\.0\.0\.1(?::|\/))/, route =>
     route.abort(),
   )
-  const payload = { cases, zen, config }
+  const payload = { cases, zen, config, transport, policy }
   try {
     if (file) {
       const fixture = new URL('local.md', artifacts)
@@ -203,6 +211,13 @@ async function probe(
             source: element.querySelector('pre')?.textContent,
             securityLevel: element.dataset.securityLevel,
             syntax: element.dataset.syntax,
+            violations: JSON.parse(element.dataset.violations || '[]'),
+            frameResiduals: Number(element.dataset.frameResiduals || 0),
+            nodeFills: svg
+              ? [...svg.querySelectorAll('.node rect')].map(
+                  node => getComputedStyle(node).fill,
+                )
+              : [],
           }
         }),
       )
@@ -215,6 +230,10 @@ async function probe(
       allRequests,
       errors,
       residuals,
+      transport: await page.getAttribute('html', 'data-probe-transport'),
+      bodyColor: await page.evaluate(
+        () => getComputedStyle(document.body).color,
+      ),
     }
     report.runs.push(result)
     await page.screenshot({
@@ -251,7 +270,8 @@ function assertRenders(result, expected) {
       item.width <= 0 ||
       item.height <= 0 ||
       item.errorDiagram ||
-      !item.labels,
+      !item.labels ||
+      item.frameResiduals,
   )
   assert.deepEqual(failures, [], JSON.stringify(failures))
   assert.deepEqual(result.requests, [], 'Unexpected outbound attempts')
@@ -263,6 +283,15 @@ gate(
     assertRenders(await probe('core-30', core), 30)
   },
 )
+
+gate('local renderer frame can connect under strict host CSP', async () => {
+  const result = await probe('frame-transport-csp', [], {
+    strict: true,
+    transport: true,
+  })
+  assert.equal(result.transport, 'ready')
+  assert.deepEqual(result.requests, [])
+})
 
 gate('ZenUML renders in the unfiltered 31-type gallery', async () => {
   assertRenders(await probe('zen-gallery-31', fixtures, { zen: true }), 31)
@@ -356,14 +385,20 @@ const negatives = [
 ]
 for (const item of negatives) {
   gate(`strict rendering makes no remote attempt: ${item.name}`, async () => {
+    if (report.policy === 'confined') {
+      const raw = await probe(`counterexample-${item.name}`, [item, sentinel], {
+        policy: 'raw',
+      })
+      assert.equal(raw.diagrams[0].syntax, 'valid')
+      assert.ok(
+        raw.requests.length > 0,
+        'Raw counterexample must still expose the resource attempt',
+      )
+      assert.equal(raw.diagrams[1].status, 'ready')
+    }
     const result = await probe(`privacy-${item.name}`, [item, sentinel])
     assert.ok(
       result.diagrams.every(diagram => diagram.securityLevel === 'strict'),
-    )
-    assert.equal(
-      result.diagrams[0].syntax,
-      'valid',
-      'A syntax error cannot satisfy a resource-blocking gate',
     )
     assert.deepEqual(
       result.requests,
@@ -372,11 +407,135 @@ for (const item of negatives) {
         result.requests,
       )}`,
     )
-    assert.equal(
-      result.diagrams[0].status,
-      'ready',
-      'An unrelated rendering error cannot satisfy a resource-blocking gate',
-    )
+    if (report.policy === 'confined') {
+      assert.equal(result.diagrams[0].status, 'blocked')
+      assert.match(result.diagrams[0].error, /^Blocked resource policy:/)
+      assert.equal(result.diagrams[0].source, item.source)
+      assert.deepEqual(
+        result.diagrams[0].violations,
+        [],
+        'Known resource input must be rejected before CSP is needed',
+      )
+    } else {
+      assert.equal(result.diagrams[0].syntax, 'valid')
+      assert.equal(result.diagrams[0].status, 'ready')
+    }
     assertRenders({ ...result, diagrams: result.diagrams.slice(1) }, 1)
   })
+}
+
+if (report.policy === 'confined') {
+  const graph = 'flowchart LR\n A --> B'
+  const themed = css =>
+    '%%{init: ' + JSON.stringify({ themeCSS: css }) + '}%%\n' + graph
+  gate('returned SVG styles cannot select the host body', async () => {
+    const result = await probe('host-style-isolation', [
+      {
+        name: 'Scoped selectors',
+        source: themed('body:has(&){color:rgb(251,1,2)!important}'),
+      },
+      sentinel,
+    ])
+    assertRenders(result, 2)
+    assert.notEqual(result.bodyColor, 'rgb(251, 1, 2)')
+    assert.deepEqual(result.requests, [])
+  })
+  gate('safe authored class styles survive the resource policy', async () => {
+    const result = await probe('authored-class-style', [
+      {
+        name: 'Authored class',
+        source:
+          graph +
+          '\n classDef authored fill:#123456,stroke:#654321\n class A authored',
+      },
+      sentinel,
+    ])
+    assertRenders(result, 2)
+    assert.ok(result.diagrams[0].nodeFills.includes('rgb(18, 52, 86)'))
+    assert.deepEqual(result.requests, [])
+  })
+  const attacks = [
+    {
+      name: 'entity-image',
+      source:
+        'flowchart LR\n A["&lt;img src=\'https://mermaid-probe.invalid/entity.png\'&gt;"] --> B',
+    },
+    {
+      name: 'mermaid-entity-image',
+      source:
+        'flowchart LR\n A["#60;img src=#quot;https://mermaid-probe.invalid/entity.png#quot;#62;"] --> B',
+    },
+    {
+      name: 'relative-image',
+      source:
+        'flowchart LR\n A@{img: "private.png",label: "Private",h:60} --> B',
+    },
+    {
+      name: 'svg-image',
+      source:
+        'flowchart LR\n A["<svg><image href=\'https://mermaid-probe.invalid/nested.svg\'/></svg>"] --> B',
+    },
+    {
+      name: 'svg-use',
+      source:
+        'flowchart LR\n A["<svg><use href=\'https://mermaid-probe.invalid/nested.svg#x\'/></svg>"] --> B',
+    },
+    {
+      name: 'inline-css',
+      source:
+        'flowchart LR\n A["<span style=\'background-image:url(https://mermaid-probe.invalid/inline.png)\'>Private</span>"] --> B',
+    },
+    {
+      name: 'escaped-css',
+      source: themed(
+        '.node{fill:u\\72l(https://mermaid-probe.invalid/escaped.svg)}',
+      ),
+    },
+    {
+      name: 'image-set',
+      source: themed(
+        '.node{background:image-set("https://mermaid-probe.invalid/set.png" 1x)}',
+      ),
+    },
+    {
+      name: 'variable-url',
+      source: themed(
+        '.node{--remote:url(https://mermaid-probe.invalid/variable.svg);fill:var(--remote)}',
+      ),
+    },
+    {
+      name: 'yaml-relative-css',
+      source:
+        '---\nconfig:\n  themeCSS: |\n    .node {fill:url(../private.svg)}\n---\n' +
+        graph,
+    },
+    {
+      name: 'yaml-font',
+      source:
+        '---\nconfig:\n  themeCSS: |\n    @font-face{font-family:remote;src:url(https://mermaid-probe.invalid/font.woff2)}\n---\n' +
+        graph,
+    },
+  ]
+  for (const attack of attacks) {
+    gate(
+      `preflight blocks encoded or structured resources: ${attack.name}`,
+      async () => {
+        const raw = await probe(`syntax-${attack.name}`, [attack, sentinel], {
+          policy: 'raw',
+        })
+        assert.equal(
+          raw.diagrams[0].syntax,
+          'valid',
+          'Fixture must be valid Mermaid before policy rejection',
+        )
+        const result = await probe(`guarded-${attack.name}`, [attack, sentinel])
+        assert.deepEqual(result.requests, [])
+        assert.equal(result.diagrams[0].status, 'blocked')
+        assert.match(result.diagrams[0].error, /^Blocked resource policy:/)
+        assert.equal(result.diagrams[0].source, attack.source)
+        assert.deepEqual(result.diagrams[0].violations, [])
+        assertRenders({ ...result, diagrams: result.diagrams.slice(1) }, 1)
+      },
+    )
+  }
 }

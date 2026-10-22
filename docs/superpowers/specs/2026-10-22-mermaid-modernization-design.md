@@ -70,10 +70,12 @@
 
 1. **Markdown 階段維持同步。** `src/core/markdown.ts` 只替 Mermaid fence 產生可讀原碼 placeholder 與唯一識別；DOT 仍先分流 Graphviz。避免把整個 Markdown／搜尋／大綱流程一起改成 async。
 2. **獨立非同步圖表階段。** 新增 `src/core/mermaid-renderer.ts` 與 `src/plugins/mermaid-renderer.ts`。前者封裝載入、外掛註冊、設定隔離及逐圖佇列；後者連接現有 plugin lifecycle，管理容器與 generation。
+   A4 採用本機 extension frame 執行 Mermaid，獨立編譯成單一 eager bundle。renderer 專用 CSP 禁止外部圖片、字型、連線及巢狀 frame；不改 host CSP。先檢查結構化設定、HTML、CSS 與固定版本 flowchart metadata，再渲染並清理 SVG。回傳 SVG 的 selector 限制在圖內、動畫名稱獨立、CSS 變數有展開總量限制。private MessagePort 只從實際 parent 接受首次握手，不透過 host window 廣播 SVG。
 3. **明確完成通知。** 保留 `contentRendered` 的既有語意，再提供有 generation 的圖表工作完成通知／promise，供閱讀位置、布局及搜尋索引處理使用。有效工作完成後重建搜尋索引與 highlight，避免 placeholder 被換掉後殘留搜尋結果；過期工作不可影響新文件。成功、錯誤與過期工作都必須完成收尾；不能整份文件永久 loading。
 4. **狀態與復原。** 每張圖有 pending/rendering/ready/error；渲染失敗保留原碼與安全錯誤訊息，其後圖表照常處理。局部錯誤不應攔住搜尋、原碼切換或大綱。
 5. **檢視器與閱讀位置。** 以既有 MutationObserver 方案接非同步 SVG，補上錯誤／失效容器的 observer 清理。恢復錨點須等本次有效圖表工作完成；若使用者已自行捲動，不再強制拉回。
 6. **風格與作者設定。** 繼續使用 `mdPluginOptions.Mermaid.style`，不改儲存 schema。更新 v12 的 theme／look 與設定解析，納入合法 directive 及圖內 YAML frontmatter；使用 Mermaid 公開能力或結構化 parser，不用簡單 regex 假裝解析完整 YAML。C4／ZenUML 的可渲染與風格完成分開記錄。
+   使用者已確認新增圖種也須能切換 Anthropic blog style；驗收涵蓋所有 31 種的配色、字型、框線與標題，保留有語意的原生圖形。
 
 單純 Promise timeout 不會終止正在主執行緒計算的布局，故不把它宣稱為 CPU 中止機制。先以受保護的來源大小／edge 限制及丟棄過期工作控制負載；若實測仍卡住，再評估獨立 worker 或渲染隔離，不能假稱已可取消任意任務。
 

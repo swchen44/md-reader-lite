@@ -20,6 +20,13 @@ async function fingerprint(output) {
   return {
     inputs: await hashFiles(__dirname, [
       'content.js',
+      'frame.js',
+      'frame.html',
+      'frame-transport.js',
+      'css-policy.mjs',
+      'svg-policy.js',
+      'resource-preflight.mjs',
+      'fault-injection.js',
       'background.js',
       'manifest.json',
       'package.json',
@@ -30,6 +37,8 @@ async function fingerprint(output) {
     ]),
     outputs: await hashFiles(output, [
       'js/content.js',
+      'js/frame.js',
+      'frame.html',
       'background.js',
       'manifest.json',
     ]),
