@@ -2,6 +2,8 @@
 
 狀態：**2026-10-23 使用者授權開始分階段執行。** 四項 review 修正已納入；依賴與 runtime 的實際進度以 [實作計畫與續接 checklist](../plans/2026-10-23-mermaid-modernization.md) 為準。先通過 PoC 關卡，再替換產品 renderer。
 
+2026-10-23 checkpoint：[獨立 MV3 probe](../../research/mermaid12-probe.md) 已確認正常 31/31 範例、HTTP／file／嚴格頁面 CSP 可渲染，但 strict 模式仍有四個遠端資源負例失敗。產品遷移關卡未過；下一步為計畫 A4 的渲染前資源政策。
+
 ## 目標
 
 使用最新正式版 Mermaid，盡量支援使用者指定的全部 31 種圖。優先確保既有文件可讀、離線本機渲染、設定相容及 Original／Anthropic blog style 切換，不以「核心有註冊圖種」取代擴充功能內的實際驗證。

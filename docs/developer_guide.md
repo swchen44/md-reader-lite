@@ -119,6 +119,8 @@
 
 此測試包含不支援圖種的負向案例，通過不表示該圖種已受支援。Original 窄螢幕 GitGraph 的已知超寬問題保留為會執行的 TODO；C4 目前可渲染但風格整合未完整驗收。升級 Mermaid 必須重新稽核 baseline 與同步 wrapper 相容性，不得只修改預期結果。
 
+Mermaid 12 的獨立候選與重開機續接位置見 [migration plan/checklist](superpowers/plans/2026-10-23-mermaid-modernization.md)；[MV3 probe report](research/mermaid12-probe.md) 記錄實際結果。Probe 使用獨立 lockfile，未升級產品。正常 31 圖可渲染，但四個 strict 模式遠端資源負例仍失敗；資源政策通過前不可把候選標為已支援版本。永久重測指令位於 probe README；這些候選 gates 不混入目前產品的 test glob。
+
 ## CSS 客製化與搜尋歷史
 
 CSS 客製化與導覽搜尋歷史皆只存於 `chrome.storage.local`，不會增加網路請求。CSS 有兩個唯讀 preset（`editorial`、`developer`）與兩個可編輯欄位（`user1`、`user2`）。`customCssEnabled` 是實際注入 CSS 的開關；切換 preset 或編輯草稿本身不改變頁面，使用者按「套用」後才寫入 `customCss` 並生效。

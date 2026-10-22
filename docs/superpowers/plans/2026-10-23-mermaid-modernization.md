@@ -15,9 +15,9 @@
 - Updated: 2026-10-23, Asia/Taipei.
 - Product baseline: `5df0a82`, version 1.8.2, wrapper 0.5.1 / Mermaid 9.1.6.
 - GitHub: baseline push to `origin/main` completed; verify remote SHA before subsequent push.
-- Current task: A, reproducible isolated-world MV3 feasibility probe.
-- Product migration: not started. A must pass before B changes the root lockfile.
-- Next command after resume: `git status --short --branch`, then read this file and the spec; inspect existing probe results before rerunning.
+- Current checkpoint: A1–A3 executed; normal diagrams pass, privacy gate fails. See [probe report](../../research/mermaid12-probe.md).
+- Product migration: not started. Four strict-mode fixtures still attempt remote resource loads; A4 must resolve this before B changes the root lockfile.
+- Next task after resume: A4 resource-policy prototype below. Begin with `git status --short --branch`, read this file/spec/report and verify build fingerprints before rerunning. The raw candidate currently exits 1 on four privacy assertions.
 
 ## Global Constraints
 
@@ -46,8 +46,9 @@
 - [x] Push the existing eight commits to `origin/main` at `5df0a82`.
 - [x] Incorporate all four review findings into the design and this implementation plan.
 - [x] A1: Commit versioned probe sources, manifest, independent lockfile and commands.
-- [ ] A2: Run 30 core types and ZenUML in a real content script; save individual and full-gallery receipts.
-- [ ] A3: Run HTTP, file, strict-CSP and malicious-resource checks; classify every failure and decide whether B is allowed.
+- [x] A2: Run 30 core types and ZenUML in a real content script; save individual measurements and full-gallery receipts.
+- [x] A3: Run HTTP, file, strict-CSP and malicious-resource checks; B is not allowed yet because four privacy gates fail.
+- [ ] A4: Prove a resource policy that acts before Mermaid can initiate requests, then repeat A's environment and safety gates.
 - [ ] B: Migrate product rendering, security, completion/search lifecycle and corresponding permanent tests.
 - [ ] C: Integrate ZenUML and validate all 31 types in the product.
 - [ ] D: Preserve styling, viewer controls, localization and reading position.
@@ -62,17 +63,30 @@
 
 **Produces:** A repeatable `npm ci --ignore-scripts --prefix tests/probes/mermaid12` install; `node tests/probes/mermaid12/build.cjs` build; `node --test tests/probes/mermaid12/probe.test.mjs` runtime command; JSON evidence with package/browser versions, per-diagram dimensions/errors, requests and gate results.
 
-- [ ] Save the probe package with exact versions and generate its independent lockfile. Keep `node_modules` ignored.
-- [ ] Use webpack with `LimitChunkCountPlugin({ maxChunks: 1 })` to test eager bundling first. Copy a versioned MV3 manifest and service worker; inject `js/content.js` in the default isolated world on matching HTTP/file documents.
-- [ ] Parse the shared Markdown fixture using MarkdownIt. The content script reads a JSON payload from a DOM node, clears the fixture page and renders each diagram serially with protected settings; result nodes expose status, source, SVG and errors for browser assertions.
-- [ ] Test without ZenUML registration first, then with locally bundled registration; verify each core type and a separate full mixed gallery. Reject error SVGs and zero-size output.
-- [ ] Run an HTTP document with strict CSP and a local file document with Chrome's extension file access enabled. Record any permission setup explicitly; do not weaken page CSP to pass.
-- [ ] Include remote HTML image labels, SVG image nodes, CSS URL imports and directives attempting to lower security. Observe requests from before navigation until completion, including aborted attempts. A normal fixture alone is insufficient.
-- [ ] Add broken/unknown input followed by a known flowchart; source must remain readable and later work must finish.
-- [ ] Store machine-readable evidence and screenshots in ignored artifacts; commit a readable report with exact failures. Do not call A passed when any required environment or safety check is unavailable or fails.
-- [ ] Commit `test: add reproducible Mermaid 12 MV3 feasibility probe` with Why / What / How / Boundary and update the checklist.
+- [x] Save the probe package with exact versions and generate its independent lockfile. Keep `node_modules` ignored.
+- [x] Use webpack with `LimitChunkCountPlugin({ maxChunks: 1 })` to test eager bundling first. Copy a versioned MV3 manifest and service worker; inject `js/content.js` in the default isolated world on matching HTTP/file documents.
+- [x] Parse the shared Markdown fixture using MarkdownIt. The content script reads a JSON payload from a DOM node, clears the fixture page and renders each diagram serially with protected settings; result nodes expose status, source, SVG and errors for browser assertions.
+- [x] Test without ZenUML registration first, then with locally bundled registration; verify each core type and a separate full mixed gallery. Reject error SVGs and zero-size output.
+- [x] Run an HTTP document with strict CSP and a local file document with Chrome's extension file access enabled. Record any permission setup explicitly; do not weaken page CSP to pass.
+- [x] Include remote HTML image labels, SVG image nodes, CSS URL imports and directives attempting to lower security. Observe requests from before navigation until completion, including aborted attempts. A normal fixture alone is insufficient.
+- [x] Add broken/unknown input followed by a known flowchart; source must remain readable and later work must finish.
+- [x] Store machine-readable evidence and screenshots in ignored artifacts; commit a readable report with exact failures. Do not call A passed when any required environment or safety check is unavailable or fails.
+- [x] Commit `test: add reproducible Mermaid 12 MV3 feasibility probe` with Why / What / How / Boundary and update the checklist.
 
 **Gate:** All 30 core fixtures render, HTTP/file/CSP checks pass and protected rendering emits no unexpected remote requests. ZenUML gets an independent result. A failed resource boundary requires a concrete rendering-policy fix and another A run before product migration. If no safe local candidate works, keep the product baseline and document the blocker.
+
+## Task A4: Close the Pre-render Resource Boundary
+
+**Files:** Extend `tests/probes/mermaid12/` only until a safe candidate passes. Keep raw strict-mode failures as comparison evidence; put candidate policy in a separate module and identify the policy in the receipt. Update the spec if an isolated renderer becomes necessary.
+
+- [ ] Inspect the pinned public parse/config interfaces and the image/HTML/CSS paths in the report. Determine which operations can occur before a returned SVG exists.
+- [ ] Prototype a conservative policy that accepts ordinary fixtures and explicitly rejects unsupported resource-bearing input before rendering. Use structured configuration, HTML and CSS parsing; URL substring matching is insufficient for entities, CSS escapes or relative URLs.
+- [ ] If public APIs cannot establish the boundary, prototype a locally confined renderer. Verify host CSP, WAR, execution world, message sender identity and returned SVG before changing product architecture. Do not alter whole-page policy or browser-wide globals as an incidental fix.
+- [ ] Add HTML entity URLs, CSS-escaped URLs, YAML resource configuration, relative images, SVG use/image resources and resource-loading style declarations. Keep the four valid raw negative fixtures; add explicit policy-rejection assertions with preserved source and later-diagram recovery.
+- [ ] Run evidence helpers, build fingerprint verification and the same 30/31, HTTP/file/strict-CSP, recovery and no-request gates for the candidate. Test interception never counts as an implemented product policy.
+- [ ] Record tradeoffs and outcomes. Permit B only after a safe candidate passes; otherwise preserve root dependencies with a concrete reproducible blocker.
+
+**Next action:** Read `docs/research/mermaid12-probe.md`, then implement and test the candidate resource policy inside the probe. B–E remain pending, not accepted.
 
 ## Task B: Async Product Renderer and Lifecycle
 
@@ -162,3 +176,13 @@ Append each task's actual outcome here before stopping or handing off. Update Cu
 - Initial runtime: core 30/30, mixed 31/31 and strict-page-CSP 31/31 pass. Recovery after invalid input passes. Four remote image/CSS fixtures each trigger intercepted outbound attempts under strict mode; privacy gate fails.
 - Initial file-access test used a wrong Chrome settings selector; corrected against the actual Chrome for Testing UI. Re-run before recording file acceptance.
 - Next: execute the committed harness again, save final results and classify A's privacy blocker before considering any product migration.
+
+### 2026-10-23: A2–A3 Results and Independent Review
+
+- Probe sources committed as `5b71970`; five independent review findings fixed as `405cb02`.
+- Evidence helper tests: observed RED before implementation, then 3/3 PASS. Tests pin failed gate receipts, stale source/bundle rejection and cleanup-failure persistence.
+- Final runtime at `405cb02`: 11 gates, 7 pass, 4 fail, zero skip/TODO/unavailable, exit 1. Normal core/ZenUML galleries, strict host CSP, file injection and three kinds of error recovery pass.
+- Four privacy cases remain failures: HTML image, image node, CSS URL and directive containing a remote image. Settings remain strict; six HTTP(S) attempts were intercepted. No negative-fixture request was allowed to complete.
+- Final bundle: 14,126,428 bytes, unminified. Source/output fingerprints verified; cleanupErrors is empty. Complete hashes, environment and limitations are in the probe report.
+- Ruling: Stop before B because the approved privacy gate failed. Preserve root Mermaid 9.1.6 and perform A4 before product migration; cost is postponing the upgrade until its resource boundary is proven.
+- A4 has not been implemented. Original/Anthropic migration, the 372-output matrix, whole-product final regression and release remain pending.
