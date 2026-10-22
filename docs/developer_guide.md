@@ -110,6 +110,15 @@
 
 截圖保存在忽略追蹤的 `dist/qa/mermaid-styles/`。瀏覽器不可用或測試被 skip 時，不能將 UI／視覺驗收記為通過。
 
+### 圖種相容性
+
+目前 wrapper 為 `@md-reader/markdown-it-mermaid@0.5.1`，實際 Mermaid 為 **9.1.6**，不等於官方網站的最新版。31 種圖的逐項實測、已知限制與永久 Test Plan 見 [Mermaid 圖種相容性測試](research/mermaid-diagram-compatibility.md)；檢查頁為 `example/mermaid-compatibility.md`。
+
+    npm run build
+    node --test tests/e2e/mermaid-compatibility.e2e.mjs
+
+此測試包含不支援圖種的負向案例，通過不表示該圖種已受支援。Original 窄螢幕 GitGraph 的已知超寬問題保留為會執行的 TODO；C4 目前可渲染但風格整合未完整驗收。升級 Mermaid 必須重新稽核 baseline 與同步 wrapper 相容性，不得只修改預期結果。
+
 ## CSS 客製化與搜尋歷史
 
 CSS 客製化與導覽搜尋歷史皆只存於 `chrome.storage.local`，不會增加網路請求。CSS 有兩個唯讀 preset（`editorial`、`developer`）與兩個可編輯欄位（`user1`、`user2`）。`customCssEnabled` 是實際注入 CSS 的開關；切換 preset 或編輯草稿本身不改變頁面，使用者按「套用」後才寫入 `customCss` 並生效。
