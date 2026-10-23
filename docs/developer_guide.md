@@ -35,7 +35,7 @@
 
 ## 環境需求
 
-- Node ≥ 22（本 repo 以 Node 26 驗證；測試直接 import .ts，依賴 type stripping）
+- Node ≥ 22.12.0（本 repo 以 Node 26 驗證；測試直接 import .ts，依賴 type stripping）
 - pnpm：不需全域安裝，用 `corepack pnpm <cmd>`
 - macOS 註：本 repo 的圖示轉檔流程用 Chrome for Testing + sips
 
@@ -66,7 +66,7 @@
 
 指令：
 
-    npm test            # = test:unit，跑 tests/unit/ 全部（213 條）
+    npm test            # = test:unit，跑 tests/unit/ 全部
     npm run test:unit   # node --test tests/unit/*.test.mjs
     npm run test:e2e    # 需先 npm run build；載入 extension/ 進真實瀏覽器
     npm run typecheck   # tsc --noEmit
@@ -100,7 +100,9 @@
 
 選取後立即儲存並重繪目前分頁，保留閱讀錨點，圖表縮放回到初始狀態。其他已開文件於下次載入採用已儲存的選擇。此設定獨立於 CSS 客製化開關與 Developer／Editorial／User slots；文件作者的 `classDef`、`style`、`linkStyle` 與 Mermaid 支援的 init 指令保留優先順序。Markdown fences 與 `.mmd` 使用同一路徑，DOT 仍分流 Graphviz，PlantUML 的隱私閘門不變。
 
-純設定解析在 `src/core/mermaid-style.ts`。每張圖表都以既有 wrapper plugin 和新的設定物件初始化，並明確清除 Original 不使用的客製化值，避免共用預設設定造成殘留。作者若以 Mermaid 9 支援的 JSON init／initialize 指定有效 theme，則從原生設定開始渲染該圖，確保時序圖等各圖種都由作者主題決定。圓角僅套用一般矩形，保留膠囊與其他既有節點形狀。popup 的新選單以不可變更新避開 `app.svelte` 的物件身分去重；SMUI plugin chips 則在使用者選取綁定完成後複製陣列再儲存。請勿以原地修改巢狀設定或陣列的方式觸發這兩個儲存流程。
+純設定解析在 `src/core/mermaid-style.ts`。`src/plugins/mermaid-block.ts` 同步產生安全跳脫的原碼 placeholder；`src/plugins/mermaid-renderer.ts` 逐圖非同步渲染，在 active generation 完成後發出 `diagramsRendered` 並重建搜尋。過期工作在佇列開始與回傳時檢查，錯誤保留原碼，不阻塞後圖。每張圖重新初始化設定；圓角只套用一般矩形，保留膠囊與明確圓角形狀。popup 的新選單以不可變更新避開 `app.svelte` 的物件身分去重；SMUI plugin chips 則在使用者選取綁定完成後複製陣列再儲存。請勿以原地修改巢狀設定或陣列的方式觸發這兩個儲存流程。
+
+Mermaid 本體只載入本機 `mermaid-frame.html`。它和主程式使用獨立 webpack compilation，避免跨執行世界共用 chunk；production 與 dev 都要建置兩者。renderer-only CSP、結構化 HTML/CSS/config/flowchart metadata preflight、DOMPurify 與 SVG/CSS 清理共同限制資源。外部圖片、image nodes、資源 CSS 或不支援的 CSS 會拒絕並保留原碼；不新增權限、不下載字型、不降低 strict。這個政策適用 Mermaid，不代表文件中任意 raw HTML/CSS 的既有隱私缺口已消失。
 
 永久情境與截圖規格見 [Mermaid Style Test Plan](superpowers/plans/2026-10-22-mermaid-styles.md#permanent-test-plan)。執行：
 
@@ -112,14 +114,14 @@
 
 ### 圖種相容性
 
-目前 wrapper 為 `@md-reader/markdown-it-mermaid@0.5.1`，實際 Mermaid 為 **9.1.6**，不等於官方網站的最新版。31 種圖的逐項實測、已知限制與永久 Test Plan 見 [Mermaid 圖種相容性測試](research/mermaid-diagram-compatibility.md)；檢查頁為 `example/mermaid-compatibility.md`。
+產品已移除舊 wrapper，固定 **Mermaid 12.2.0**。B 階段已驗證 30 種核心；ZenUML 與全新圖種的 Anthropic 視覺驗收依 [migration plan/checklist](superpowers/plans/2026-10-23-mermaid-modernization.md) 接續。歷史 9.1.6 的 11/31 實測保留於 [Mermaid 圖種相容性測試](research/mermaid-diagram-compatibility.md)，不可當作目前版本的支援清單。檢查頁為 `example/mermaid-compatibility.md`。
 
     npm run build
     node --test tests/e2e/mermaid-compatibility.e2e.mjs
 
-此測試包含不支援圖種的負向案例，通過不表示該圖種已受支援。Original 窄螢幕 GitGraph 的已知超寬問題保留為會執行的 TODO；C4 目前可渲染但風格整合未完整驗收。升級 Mermaid 必須重新稽核 baseline 與同步 wrapper 相容性，不得只修改預期結果。
+相容性測試直接核對已安裝版本與各圖支援清單，並等待 active generation 完成，不能只等待第一張 SVG。錯誤保留原碼；C4／ZenUML 的可渲染與完整風格驗收分開記錄。升級 Mermaid 必須同步 parser、資源政策、lifecycle 與期待結果。
 
-Mermaid 12 的獨立候選與重開機續接位置見 [migration plan/checklist](superpowers/plans/2026-10-23-mermaid-modernization.md)；[MV3 probe report](research/mermaid12-probe.md) 記錄實際結果。Probe 使用獨立 lockfile，未升級產品。正常 31 圖可渲染，但四個 strict 模式遠端資源負例仍失敗；資源政策通過前不可把候選標為已支援版本。永久重測指令位於 probe README；這些候選 gates 不混入目前產品的 test glob。
+[MV3 probe report](research/mermaid12-probe.md) 保留 raw strict 四個失敗及 A4 confined 25/25 通過證據。Probe 與產品共用 `src/core/mermaid/` 政策，仍保有獨立 lockfile 與 raw 對照。永久重測指令位於 probe README。TypeScript 固定 5.0.4 以解析新增 d3 const type parameters；`ignoreDeprecations: '5.0'` 僅相容既有 Svelte 3 base config，不代表已遷移整個工具鏈。
 
 ## CSS 客製化與搜尋歷史
 

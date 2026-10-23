@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { createCSSPolicy } from './css-policy.mjs'
+import { createCSSPolicy } from '../../src/core/mermaid/css-policy.mjs'
 
 test('safe author colors, geometry and local marker references survive', () => {
   const policy = createCSSPolicy(

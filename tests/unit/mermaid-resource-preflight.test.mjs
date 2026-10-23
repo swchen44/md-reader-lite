@@ -5,7 +5,7 @@ import {
   checkConfig,
   checkVertices,
   checkDiagram,
-} from './resource-preflight.mjs'
+} from '../../src/core/mermaid/resource-preflight.mjs'
 
 test('plain URLs and safe formatting remain readable without treating them as resources', () => {
   assert.doesNotThrow(() =>

@@ -22,13 +22,16 @@ export function usePlugin(plugin: Plugin | Array<Plugin>) {
 export function initPlugins({
   event,
   offlineMode,
+  language,
 }: {
   event: Event
   offlineMode?: boolean
+  language?: string
 }) {
   const ctx: Ctx = {
     event,
     offlineMode,
+    language,
   }
   plugins.forEach(p => p(ctx))
 }

@@ -15,7 +15,14 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["css/*", "fonts/*", "images/*", "popup.html"],
+      "resources": [
+        "css/*",
+        "fonts/*",
+        "images/*",
+        "popup.html",
+        "mermaid-frame.html",
+        "js/mermaid-frame.js"
+      ],
       "matches": ["<all_urls>"]
     }
   ],

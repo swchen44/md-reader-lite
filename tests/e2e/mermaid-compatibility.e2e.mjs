@@ -7,10 +7,7 @@ import MarkdownIt from 'markdown-it'
 import { launchExtension } from './_harness.mjs'
 
 const require = createRequire(import.meta.url)
-const nestedRequire = createRequire(
-  require.resolve('@md-reader/markdown-it-mermaid'),
-)
-const version = nestedRequire('mermaid/package.json').version
+const version = require('mermaid/package.json').version
 const QA = new URL('../../dist/qa/mermaid-compatibility/', import.meta.url)
 const gallery = await readFile(
   new URL('../../example/mermaid-compatibility.md', import.meta.url),
@@ -49,19 +46,7 @@ const expectedNames = [
   'Cynefin',
   'TreeView',
 ]
-const supported = new Set([
-  'Flowchart',
-  'Sequence Diagram',
-  'Class Diagram',
-  'State Diagram',
-  'Entity Relationship Diagram',
-  'User Journey',
-  'Gantt',
-  'Pie Chart',
-  'Requirement Diagram',
-  'GitGraph (Git) Diagram',
-  'C4 Diagram',
-])
+const supported = new Set(expectedNames.filter(name => name !== 'ZenUML'))
 const cases = []
 let heading
 const tokens = new MarkdownIt().parse(gallery, {})
@@ -80,13 +65,17 @@ const options = style => ({
   Mermaid: { style },
 })
 
-test('compatibility inventory covers all 31 requested types on Mermaid 9.1.6', () => {
-  assert.equal(version, '9.1.6', 'Re-audit the baseline when upgrading Mermaid')
+test('compatibility inventory covers all 31 requested types on Mermaid 12.2.0', () => {
+  assert.equal(
+    version,
+    '12.2.0',
+    'Re-audit the baseline when upgrading Mermaid',
+  )
   assert.deepEqual(
     cases.map(item => item.name),
     expectedNames,
   )
-  assert.equal(supported.size, 11)
+  assert.equal(supported.size, 30)
   assert.ok(cases.every(item => item.source.trim()))
 })
 
@@ -159,6 +148,17 @@ describe('Mermaid diagram compatibility (e2e)', () => {
     })
     await page.goto(`http://127.0.0.1:${port}${path}`)
     await page.waitForSelector('pre.mermaid svg', { timeout: 15000 })
+    await page.waitForFunction(
+      () => {
+        const article = document.querySelector('.md-reader__markdown-content')
+        return (
+          !!article?.dataset.mermaidComplete &&
+          article.dataset.mermaidComplete === article.dataset.mermaidGeneration
+        )
+      },
+      undefined,
+      { timeout: 30000 },
+    )
   }
 
   function inspect(container) {
@@ -232,14 +232,12 @@ describe('Mermaid diagram compatibility (e2e)', () => {
               viewport: width,
               fits,
             })
-            // The separate TODO below executes and exposes this known layout gap.
-            if (!(style === 'original' && width === 390 && index === 12))
-              assert.ok(
-                fits,
-                `${item.name} exceeds its initial viewport: ${JSON.stringify(
-                  result,
-                )}`,
-              )
+            assert.ok(
+              fits,
+              `${item.name} exceeds its initial viewport: ${JSON.stringify(
+                result,
+              )}`,
+            )
           } else assert.equal(result.rendered, false, item.name)
         }
         assert.deepEqual(
@@ -255,23 +253,14 @@ describe('Mermaid diagram compatibility (e2e)', () => {
     }
   }
 
-  test(
-    'Original GitGraph initially fits a 390px viewport',
-    {
-      todo: 'Known Mermaid 9 Original overflow; no product changes in this audit',
-    },
-    async () => {
-      await open('/probe.md?case=12', 'original', 390)
-      const block = page.locator('.md-reader__markdown-content > pre').first()
-      const result = await block.evaluate(inspect)
-      await block.screenshot({
-        path: new URL('original-gitgraph-390.png', QA).pathname,
-      })
-      assertRendered(result, 'original')
-      assert.ok(
-        result.width <= result.containerWidth + 2,
-        JSON.stringify(result),
-      )
-    },
-  )
+  test('Original GitGraph initially fits a 390px viewport', async () => {
+    await open('/probe.md?case=12', 'original', 390)
+    const block = page.locator('.md-reader__markdown-content > pre').first()
+    const result = await block.evaluate(inspect)
+    await block.screenshot({
+      path: new URL('original-gitgraph-390.png', QA).pathname,
+    })
+    assertRendered(result, 'original')
+    assert.ok(result.width <= result.containerWidth + 2, JSON.stringify(result))
+  })
 })

@@ -11,19 +11,14 @@ import mFootnote from 'markdown-it-footnote'
 import mTaskLists from 'markdown-it-task-lists'
 import mToc from 'markdown-it-table-of-contents'
 import mKatex from '@traptitech/markdown-it-katex'
-import mMermaid from '@md-reader/markdown-it-mermaid'
 import mAlert from '@/plugins/alert'
 import mObsidian from '@/plugins/obsidian'
 import mGraphvizBlock from '@/plugins/graphviz-block'
+import mMermaidBlock from '@/plugins/mermaid-block'
 import mPlantuml from '@/plugins/plantuml'
 import mMultimdTable from 'markdown-it-multimd-table'
 import MD_PLUGINS from '@/config/md-plugins'
 import { resolveLinkify, resolveAlertDeep } from '@/core/plugin-options'
-import {
-  resolveMermaidRenderOptions,
-  resolveMermaidStyle,
-  hasMermaidThemeDirective,
-} from './mermaid-style'
 import successIcon from '@/images/icon_success.svg'
 import copyIcon from '@/images/icon_copy.svg'
 import className from '@/config/class-name'
@@ -38,10 +33,6 @@ const PLUGINS: Plugins = {
   Ins: [mIns],
   Abbr: [mAbbr],
   Katex: [mKatex],
-  Mermaid: ({ theme, pluginOptions }) => [
-    mMermaid,
-    resolveMermaidRenderOptions(pluginOptions?.Mermaid, theme),
-  ],
   Mark: [mMark],
   Deflist: [mDeflist],
   Footnote: [mFootnote],
@@ -120,31 +111,7 @@ function initRender({
   })
 
   if (plugins.includes('Mermaid')) {
-    const renderFence = md.renderer.rules.fence!
-    const style = resolveMermaidStyle(pluginOptions?.Mermaid?.style)
-    md.renderer.rules.fence = (...args) => {
-      const token = args[0][args[1]]
-      let html: string
-      if (token.info.trim() === 'mermaid') {
-        // Initialize per diagram so an explicit author theme cannot inherit preset variables.
-        const options = hasMermaidThemeDirective(token.content)
-          ? undefined
-          : pluginOptions?.Mermaid
-        const isolated = new MarkdownIt().use(
-          mMermaid,
-          resolveMermaidRenderOptions(options, theme),
-        )
-        html = isolated.renderer.rules.fence!(...args)
-      } else {
-        html = renderFence(...args)
-      }
-      return html.startsWith('<pre class="mermaid">')
-        ? html.replace(
-            '<pre class="mermaid">',
-            `<pre class="mermaid" data-mermaid-style="${style}">`,
-          )
-        : html
-    }
+    md.use(mMermaidBlock, { style: pluginOptions?.Mermaid?.style, theme })
     // Install after diagram plugins so Graphviz can override Mermaid fences when
     // the block content is actually DOT syntax.
     md.use(mGraphvizBlock)

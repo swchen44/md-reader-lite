@@ -2,7 +2,7 @@ const { merge } = require('webpack-merge')
 const commentConfig = require('./webpack.common.js')
 const { ESBuildMinifyPlugin } = require('esbuild-loader')
 
-module.exports = merge(commentConfig, {
+const production = {
   mode: 'production',
   optimization: {
     minimize: true,
@@ -13,4 +13,8 @@ module.exports = merge(commentConfig, {
       }),
     ],
   },
-})
+}
+module.exports = [
+  merge(commentConfig, production),
+  merge(require('./webpack.mermaid')('production'), production),
+]

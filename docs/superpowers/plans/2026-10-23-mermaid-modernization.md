@@ -16,8 +16,8 @@
 - Product baseline: `5df0a82`, version 1.8.2, wrapper 0.5.1 / Mermaid 9.1.6.
 - GitHub: baseline push to `origin/main` completed; verify remote SHA before subsequent push.
 - Current checkpoint: A4 in progress. A local renderer frame connects under strict host CSP and renders 31/31; the original four resource cases now reject before requests in confined mode. Expanded encoded/YAML/relative-input gates and security review are running. See [probe report](../../research/mermaid12-probe.md).
-- Product migration: next. A4 confined candidate passes 25/25 browser gates and 15/15 helper tests. The raw comparison still exposes the four strict-mode resource failures.
-- Next task after resume: B async product renderer below, then C and D including Anthropic styling for all newly supported types. Begin with `git status --short --branch`, read this file/spec/report and verify build fingerprints before rerunning. Product dependencies have not changed at the A4 checkpoint.
+- Product migration: B complete. Root Mermaid is 12.2.0, TypeScript 5.0.4; 228 unit tests, 68 compatibility cases, 20 style cases and 4 lifecycle cases pass without skip/TODO. Shared-policy probe rerun: 25/25 pass.
+- Next task after resume: C local ZenUML, then D including Anthropic styling for all newly supported types. Begin with `git status --short --branch`, read this file/spec/report and verify build fingerprints before rerunning. A4 is committed/pushed as `3b785a2`; B's commit follows the ledger below.
 
 ## Global Constraints
 
@@ -49,7 +49,7 @@
 - [x] A2: Run 30 core types and ZenUML in a real content script; save individual measurements and full-gallery receipts.
 - [x] A3: Run HTTP, file, strict-CSP and malicious-resource checks; B is not allowed yet because four privacy gates fail.
 - [x] A4: Prove a resource policy that acts before Mermaid can initiate requests, then repeat A's environment and safety gates.
-- [ ] B: Migrate product rendering, security, completion/search lifecycle and corresponding permanent tests.
+- [x] B: Migrate product rendering, security, completion/search lifecycle and corresponding permanent tests.
 - [ ] C: Integrate ZenUML and validate all 31 types in the product.
 - [ ] D: Preserve styling, viewer controls, localization and reading position.
 - [ ] E: Run full matrix/regression, update documentation and record final review.
@@ -94,14 +94,14 @@
 
 **Interfaces:** The core exposes a factory `createMermaidQueue(render: (job: MermaidJob) => Promise<string>)` with `run(job: MermaidJob): Promise<MermaidResult>`; jobs contain `id`, `source`, `style`, `theme` and `isCurrent(): boolean`. Results distinguish ready/error/stale. The plugin emits `diagramsRendered` with `{ container, generation }` only after the active generation settles. Keep the existing `contentRendered(container)` event synchronous.
 
-- [ ] Write unit tests with an injected deferred renderer: settings/render work must be serialized; a rejection must not poison the queue; outdated jobs must not start or write back; later valid jobs still succeed. Run the new file and observe failure before implementation.
-- [ ] Add escaped `<pre class="mermaid"><code>…</code></pre>` placeholders with source and style metadata; preserve the DOT override and disabled-plugin plain-code path.
-- [ ] Implement the queue and the resource policy proven by A. Only then pin root `mermaid`, remove the wrapper and update the Node engine requirement to `>=22.12.0`.
-- [ ] Connect the plugin before the first document render. Track generation on every content render and skip disconnected elements; use unique IDs per render, not source text as an ID. Clean up temporary/error DOM in `finally`.
-- [ ] Keep body text usable during rendering. Completion events invalidate search entries and refresh active-query highlights only for the current container. Successful Mermaid source placeholders are excluded from code-search results after replacement; failed source remains searchable.
-- [ ] Update dependency/version assertions and the 30 core expectations immediately. Keep the historical 9.1.6 report unchanged as a dated baseline; ZenUML remains explicitly unintegrated until C.
-- [ ] Test pending-search → completed SVG, failed-source search, rapid style/file changes, obsolete work, disable/enable, invalid → valid, source view and page reload.
-- [ ] Verify unit/typecheck/build, core compatibility, lifecycle and existing style e2e. Commit `refactor: migrate Mermaid to a local async renderer` and record actual counts.
+- [x] Write unit tests with an injected deferred renderer: settings/render work must be serialized; a rejection must not poison the queue; outdated jobs must not start or write back; later valid jobs still succeed. Run the new file and observe failure before implementation.
+- [x] Add escaped `<pre class="mermaid"><code>…</code></pre>` placeholders with source and style metadata; preserve the DOT override and disabled-plugin plain-code path.
+- [x] Implement the queue and the resource policy proven by A. Only then pin root `mermaid`, remove the wrapper and update the Node engine requirement to `>=22.12.0`.
+- [x] Connect the plugin before the first document render. Track generation on every content render and skip disconnected elements; use unique IDs per render, not source text as an ID. Clean up temporary/error DOM in `finally`.
+- [x] Keep body text usable during rendering. Completion events invalidate search entries and refresh active-query highlights only for the current container. Successful Mermaid source placeholders are excluded from code-search results after replacement; failed source remains searchable.
+- [x] Update dependency/version assertions and the 30 core expectations immediately. Keep the historical 9.1.6 report unchanged as a dated baseline; ZenUML remains explicitly unintegrated until C.
+- [x] Test pending-search → completed SVG, failed-source search, rapid style/file changes, obsolete work, disable/enable, invalid → valid, source view and page reload.
+- [x] Verify unit/typecheck/build, core compatibility, lifecycle and existing style e2e. Commit `refactor: migrate Mermaid to a local async renderer` and record actual counts.
 
 **Gate:** Core 30/30 in the built product, privacy policy from A preserved, tests aligned with the new dependency, no stale results or stuck queue. Resolve changed v12 typings within the existing toolchain or record a narrowly scoped compiler prerequisite before upgrading it.
 
@@ -204,3 +204,20 @@ Append each task's actual outcome here before stopping or handing off. Update Cu
 - Ruling: The attempted classDef URL fixture is invalid in the pinned flowchart grammar, including quoted/escaped-parenthesis variants. Replace that false negative with a positive authored-class browser test; keep parsed-class resource policy tests and valid themeCSS escape/URL negatives. Do not count parser rejection as a security pass.
 - Ruling: Permit B using the confined architecture. Reject image nodes, external resource markup/CSS, unsupported CSS functions/at-rules and conflicting scoped variables rather than silently enabling resource loading. Root dependencies remain unchanged in this commit.
 - User clarification: after upgrading, extend Anthropic blog style to all newly supported diagrams; D and the permanent 372-output matrix include this requirement.
+
+### B Working Checkpoint
+
+- Replaced the synchronous wrapper with safe source placeholders, serial queue and a local eager renderer frame. Shared policy modules moved to `src/core/mermaid/`; the probe imports these exact sources. Policy tests moved into the permanent unit glob.
+- Queue/placeholder regressions observed RED→GREEN. Product lifecycle browser regression observed RED on the old build, then 3/3 GREEN: failed source, active search + rapid styles, strict-CSP privacy/recovery. Existing 20 style cases pass after adapting assertions to v12's label rectangles, curved stadium path, asynchronous theme redraw and explicit error container.
+- `npm run test:unit`: 228 pass, zero fail/skip/TODO. `npm run typecheck` and production build exit 0. Compatibility previously rendered all 30 core types in both styles; ZenUML deliberately remains unsupported until C.
+- Ruling: d3-dispatch const type parameters cannot parse in TypeScript 4.8. Pin the minimal compiler prerequisite 5.0.4, retain Svelte 3 and other build versions, and suppress only its inherited 5.0 deprecation options. Source: TypeScript 5.0 release notes; runtime/compiler failure was observed before the change.
+- Content bundle 3,253,981 B; separate Mermaid frame 5,744,120 B; zip 3,028,163 B at this checkpoint. Review aggregate size/performance during E, not only the smaller content bundle.
+- Next: fresh B compatibility/transport probe reruns, commit verified B, then C ZenUML and D new-diagram Anthropic style. No release/version/tag change.
+
+### B Accepted Product Boundary
+
+- Fresh compatibility run: 68/68 pass, no fail/skip/TODO. All 30 core fixtures render individually and in complete mixed pages in both styles, with no external requests. Original GitGraph narrow fit now passes its real assertion; removed the old TODO and fit exception.
+- Style suite: 20/20 pass. Expanded lifecycle suite: 4/4 pass, including observed pending-source search hits disappearing after completion, failed-source search retained, rapid styles, raw view during rendering, reload and strict-host-CSP privacy/recovery.
+- Shared-module probe rerun: 25/25 pass, zero fail/unavailable/skip/TODO, cleanup errors empty. Product unit suite remains 228/228; typecheck/build exit 0.
+- Ruling: Adopt v12's native curved stadium SVG path instead of assuming it remains a rect. Tests still require a native curved shape and preserve an explicitly rounded rect's radius; the softening selector targets primary unrounded rectangles only, never invisible label rectangles.
+- Remaining boundary: ZenUML is intentionally still a negative product case. Per-type new-diagram palette/typography, structured author frontmatter isolation, delayed reading restoration and the full E matrix remain C/D/E work.

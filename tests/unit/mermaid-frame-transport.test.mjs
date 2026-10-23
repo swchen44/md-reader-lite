@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { connectFrame } from './frame-transport.js'
+import { connectFrame } from '../../src/core/mermaid/frame-transport.js'
 
 test('disposed renderers reject immediately without posting another job', async () => {
   const originalDocument = globalThis.document

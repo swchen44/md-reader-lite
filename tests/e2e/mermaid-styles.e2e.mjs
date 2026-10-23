@@ -127,11 +127,20 @@ describe('Mermaid styles (e2e)', () => {
     await setStorage({ pageTheme: theme, offlineMode: true, ...extra })
     await page.goto(`http://127.0.0.1:${port}${path}`)
     await page.waitForSelector('pre.mermaid svg', { timeout: 15000 })
+    await page.waitForFunction(
+      () =>
+        !document.querySelector(
+          'pre.mermaid[data-mermaid-status="pending"],pre.mermaid[data-mermaid-status="rendering"]',
+        ),
+      undefined,
+      { timeout: 30000 },
+    )
   }
 
   async function readFlowchart() {
+    await page.waitForSelector('pre.mermaid[data-mermaid-status="ready"] svg')
     return page
-      .locator('pre.mermaid')
+      .locator('pre.mermaid[data-mermaid-status="ready"]')
       .first()
       .evaluate(container => {
         const svg = container.querySelector('svg')
@@ -211,6 +220,14 @@ describe('Mermaid styles (e2e)', () => {
     assert.equal(
       (await getStorage('mdPluginOptions')).mdPluginOptions.Mermaid.style,
       style,
+    )
+    await page.waitForFunction(
+      () =>
+        !document.querySelector(
+          'pre.mermaid[data-mermaid-status="pending"],pre.mermaid[data-mermaid-status="rendering"]',
+        ),
+      undefined,
+      { timeout: 30000 },
     )
   }
 
@@ -314,9 +331,9 @@ describe('Mermaid styles (e2e)', () => {
         .locator('pre.mermaid')
         .first()
         .evaluate(container => ({
-          nodes: [...container.querySelectorAll('.node rect')].map(
-            el => getComputedStyle(el).fill,
-          ),
+          nodes: [
+            ...container.querySelectorAll('.node > rect.label-container'),
+          ].map(el => getComputedStyle(el).fill),
           edge: getComputedStyle(
             container.querySelector('.flowchart-link, .edgePath .path'),
           ).stroke,
@@ -511,12 +528,10 @@ describe('Mermaid styles (e2e)', () => {
     })
     const light = await readFlowchart()
     await page.emulateMedia({ colorScheme: 'dark' })
-    await page.waitForFunction(
-      fill =>
-        getComputedStyle(document.querySelector('pre.mermaid .node rect'))
-          .fill !== fill,
-      light.fill,
-    )
+    await page.waitForFunction(fill => {
+      const rect = document.querySelector('pre.mermaid .node rect')
+      return !!rect && getComputedStyle(rect).fill !== fill
+    }, light.fill)
     const frame = await openSettings()
     await chooseStyle(frame, 'anthropic-blog')
     const darkAnthropic = await readFlowchart()
@@ -674,7 +689,7 @@ describe('Mermaid styles (e2e)', () => {
     )
     assert.equal(
       await page
-        .locator('.md-reader__markdown-content > pre:not(.mermaid)')
+        .locator('pre.mermaid[data-mermaid-status="error"] code')
         .count(),
       1,
     )
@@ -836,18 +851,20 @@ describe('Mermaid styles (e2e)', () => {
     for (const style of ['original', 'anthropic-blog']) {
       await open('light', '/shapes.md', { mdPluginOptions: OPTIONS(style) })
       shapes.push(
-        await page.locator('pre.mermaid .node rect').evaluateAll(elements =>
-          elements.map(el => ({
-            rx: getComputedStyle(el).rx,
-            ry: getComputedStyle(el).ry,
-            height: Number(el.getAttribute('height')),
-          })),
+        await page.locator('pre.mermaid .node').evaluateAll(elements =>
+          elements.map(el => {
+            const rect = el.querySelector(':scope > rect.label-container')
+            return {
+              rx: rect && getComputedStyle(rect).rx,
+              stadium: !!el.querySelector(':scope > g.outer-path > path'),
+            }
+          }),
         ),
       )
     }
     assert.ok(
-      parseFloat(shapes[1][0].rx) >= shapes[1][0].height / 2,
-      'stadium must keep its semicircular ends',
+      shapes[0][0].stadium && shapes[1][0].stadium,
+      'Mermaid 12 stadium must preserve its native curved path',
     )
     assert.equal(shapes[1][1].rx, '8px')
     assert.equal(

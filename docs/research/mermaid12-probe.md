@@ -1,6 +1,6 @@
 # Mermaid 12 MV3 可行性實測
 
-日期：2026-10-23。此報告記錄獨立 probe，產品仍使用 Mermaid 9.1.6。
+日期：2026-10-23。此報告記錄 A 階段的獨立 probe，當時產品使用 Mermaid 9.1.6。後續 B 的 12.2.0 產品整合與目前狀態見 [migration checklist](../superpowers/plans/2026-10-23-mermaid-modernization.md)。
 
 最新 A4 結果：**confined 候選 25/25 browser gates、15/15 helper tests 通過，可進入產品整合。** 下方原始 strict 失敗證據保留；它不會因新增隔離政策而變成通過。產品與 Anthropic 風格遷移尚未驗收。
 

@@ -1,7 +1,10 @@
 import mermaid from 'mermaid'
 import zenuml from '@mermaid-js/mermaid-zenuml'
-import { connectFrame } from './frame-transport'
+import { connectFrame as connectLocalFrame } from '../../../src/core/mermaid/frame-transport'
 import { injectFault } from './fault-injection'
+
+const connectFrame = () =>
+  connectLocalFrame(chrome.runtime.getURL('frame.html'))
 
 const payload = document.getElementById('md-reader-probe-input')
 const input =

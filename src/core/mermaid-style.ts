@@ -46,7 +46,7 @@ export function resolveMermaidRenderOptions(
       ? (options as Record<string, unknown>).style
       : undefined
   if (resolveMermaidStyle(value) === 'original') {
-    // The wrapper plugin retains options between calls; clear custom values explicitly.
+    // Explicitly clear custom values when switching the shared renderer to Original.
     return {
       theme: pageTheme === 'dark' ? 'dark' : 'default',
       themeVariables: undefined,
@@ -108,7 +108,7 @@ export function resolveMermaidRenderOptions(
     theme: 'base',
     themeVariables,
     themeCSS:
-      '.node rect:not([rx]):not([ry]), .node rect[rx="0"][ry="0"], rect.actor { rx: 8px; ry: 8px; }',
+      '.node > rect.label-container:not([rx]):not([ry]), .node > rect.label-container[rx="0"][ry="0"], rect.actor { rx: 8px; ry: 8px; }',
     fontFamily: FONT,
     darkMode: false,
   }

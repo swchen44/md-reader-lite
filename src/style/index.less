@@ -627,6 +627,19 @@ body.md-reader {
             white-space: pre-wrap;
           }
         }
+        pre.mermaid {
+          > svg {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            margin: 0 auto;
+          }
+          .md-reader__mermaid-error {
+            white-space: normal;
+            margin-top: 12px;
+            color: #c03d3d;
+          }
+        }
         pre.mermaid[data-mermaid-style='anthropic-blog'] {
           background: #faf9f5;
           color: #24231f;

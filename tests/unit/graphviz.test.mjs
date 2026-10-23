@@ -1,9 +1,24 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import MarkdownIt from 'markdown-it'
-import MermaidPlugin from '@md-reader/markdown-it-mermaid'
+import MermaidPlugin from '../../src/plugins/mermaid-block.ts'
 
 const loadGraphviz = () => import('../../src/core/graphviz.ts')
+
+test('Mermaid placeholders escape untrusted source and keep only resolved style metadata', () => {
+  const md = new MarkdownIt().use(MermaidPlugin, {
+    style: 'anthropic-blog',
+    theme: 'dark',
+  })
+  const html = md.render(
+    '```mermaid\nflowchart LR\n A["<img src=x onerror=bad>"] --> B\n```',
+  )
+  assert.match(html, /data-mermaid-status="pending"/)
+  assert.match(html, /data-mermaid-style="anthropic-blog"/)
+  assert.match(html, /data-mermaid-theme="dark"/)
+  assert.match(html, /&lt;img/)
+  assert.doesNotMatch(html, /<img/)
+})
 
 test('treats digraph blocks as graphviz diagrams', async () => {
   const { isGraphvizCodeBlock } = await loadGraphviz()

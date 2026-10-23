@@ -6,6 +6,7 @@ const FriendlyErrors = require('@nuxt/friendly-errors-webpack-plugin')
 const SveltePreprocess = require('svelte-preprocess')
 
 module.exports = {
+  name: 'application',
   entry: {
     content: resolve(__dirname, '../src/main.ts'),
     background: resolve(__dirname, '../src/background.ts'),

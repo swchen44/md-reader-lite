@@ -1,6 +1,8 @@
-export async function connectFrame() {
+export async function connectFrame(
+  url = chrome.runtime.getURL('mermaid-frame.html'),
+) {
   const frame = document.createElement('iframe')
-  frame.src = chrome.runtime.getURL('frame.html')
+  frame.src = url
   frame.style.cssText =
     'position:fixed;left:-100000px;top:0;width:1200px;height:900px;visibility:hidden;border:0'
   frame.tabIndex = -1

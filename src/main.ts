@@ -198,7 +198,11 @@ function main(data: Data) {
   let isSideHover: boolean = false
   let globalEvent: Event = new Event()
 
-  initPlugins({ event: globalEvent, offlineMode: configData.offlineMode })
+  initPlugins({
+    event: globalEvent,
+    offlineMode: configData.offlineMode,
+    language: configData.language,
+  })
 
   /* init md page */
   setTheme(configData.pageTheme)
@@ -621,6 +625,9 @@ function main(data: Data) {
   // first render while `searchPanel` is still in its TDZ.
   globalEvent.on('contentRendered', () => {
     searchPanel.rebuild()
+  })
+  globalEvent.on('diagramsRendered', ({ container }) => {
+    if (container === mdContent.ele) searchPanel.rebuild()
   })
 
   function openSearch() {

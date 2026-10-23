@@ -3,15 +3,9 @@ import className from '@/config/class-name'
 import { GRAPHVIZ_CLASS, GRAPHVIZ_STATUS_ATTR } from '@/core/graphviz'
 
 const ATTACHED_FLAG = 'mdReaderPz'
-// Both diagram kinds render their SVG straight inside this container:
-//   Mermaid  -> <pre class="mermaid">...<svg>...</svg></pre>
-//     (see @md-reader/markdown-it-mermaid dist/index.js — rendered
-//     synchronously into the markdown-it output, so the <svg> is already
-//     present when `contentRendered` fires)
-//   Graphviz -> <pre class="md-reader__graphviz" ...><svg class="md-reader__graphviz-svg">
-//     (see src/plugins/graphviz-renderer.ts — rendered asynchronously
-//     *after* `contentRendered` fires, replacing the placeholder <code>)
+// Both renderers replace readable source placeholders with inline SVG asynchronously.
 const DIAGRAM_SELECTOR = `pre.mermaid, .${GRAPHVIZ_CLASS}`
+const observers = new WeakMap<ParentNode, Set<MutationObserver>>()
 
 function createButton(
   label: string,
@@ -91,11 +85,20 @@ function safeAttachPanzoom(
 // Graphviz renders its <svg> asynchronously (see graphviz-renderer.ts),
 // so at the time `contentRendered` fires the container may still only
 // hold the pending placeholder. Watch for the swap instead of missing it.
-function waitForSvg(diagramEle: HTMLElement): void {
+function waitForSvg(
+  diagramEle: HTMLElement,
+  pending: Set<MutationObserver>,
+): void {
+  const settle = () => {
+    observer.disconnect()
+    pending.delete(observer)
+  }
   const observer = new MutationObserver(() => {
-    const status = diagramEle.getAttribute(GRAPHVIZ_STATUS_ATTR)
-    if (status === 'error') {
-      observer.disconnect()
+    const status =
+      diagramEle.getAttribute(GRAPHVIZ_STATUS_ATTR) ||
+      diagramEle.dataset.mermaidStatus
+    if (status === 'error' || status === 'stale') {
+      settle()
       return
     }
 
@@ -104,17 +107,25 @@ function waitForSvg(diagramEle: HTMLElement): void {
       return
     }
 
-    observer.disconnect()
+    settle()
     if (diagramEle.dataset[ATTACHED_FLAG] === '1') {
       return
     }
     markAttached(diagramEle)
     safeAttachPanzoom(diagramEle, svgEle)
   })
-  observer.observe(diagramEle, { childList: true })
+  pending.add(observer)
+  observer.observe(diagramEle, {
+    childList: true,
+    attributes: true,
+    attributeFilter: [GRAPHVIZ_STATUS_ATTR, 'data-mermaid-status'],
+  })
 }
 
 export function attach(container: ParentNode): void {
+  observers.get(container)?.forEach(observer => observer.disconnect())
+  const pending = new Set<MutationObserver>()
+  observers.set(container, pending)
   const diagramElements = Array.from(
     container.querySelectorAll<HTMLElement>(DIAGRAM_SELECTOR),
   )
@@ -131,7 +142,11 @@ export function attach(container: ParentNode): void {
       return
     }
 
-    waitForSvg(diagramEle)
+    if (
+      diagramEle.dataset.mermaidStatus !== 'error' &&
+      diagramEle.getAttribute(GRAPHVIZ_STATUS_ATTR) !== 'error'
+    )
+      waitForSvg(diagramEle, pending)
   })
 }
 
