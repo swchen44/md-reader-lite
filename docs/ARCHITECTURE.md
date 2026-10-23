@@ -31,6 +31,7 @@
 - `src/core/mermaid/frame-transport.js` 雖位於 core 目錄，**是 extension/browser adapter，並非可攜純 core**：使用 chrome.runtime 取得本機 frame URL。PWA 移植時須替換此 transport，而非照搬 Chrome API。
 - `src/core/mermaid/frame-runtime.js` 在獨立本機 extension page 執行 Mermaid／ZenUML，使用 renderer-only CSP、private MessagePort 與序列佇列。`resource-preflight.mjs`／`css-policy.mjs` 檢查輸入，`svg-policy.js` 清理輸出並在受限文件內保留 HTML label typography。這些 DOM renderer 模組也不是 Node 純函式。
 - application 與 renderer 是獨立 webpack compilations，不共用跨世界 chunk。沒有 Mermaid 的文章不載入 engine frame；正常 Mermaid 不需網路。31 圖種與安全負例的產品驗收以 migration plan 為準。
+- sandbox 文件使用 runtime adapter 經 background broker 轉送到私有 offscreen host，host 再嵌入相同 renderer iframe；engine 的 CSP／preflight／SVG 清理不改。`offscreen-broker.js`、`offscreen-host.js` 與 frame transport 都是 extension shell，雖放在 core/mermaid 目錄，不能當純 core 移植。Offscreen 是唯一新增權限，不授予網站存取；建立／關閉序列化，閒置釋放，不持久化來源。永久設計與回歸見 [sandbox repair](testing/mermaid-sandbox.md)。
 - popup 全部分頁共用 `src/popup/index.css` tokens 與現有 SMUI 元件，固定 Anthropic 編輯風格；它不隨文章 CSS 或 Mermaid Original 切換。儲存 schema 未變，明確選擇 Original 的使用者不被預設值遷移覆蓋。
 
 ## 浮動側欄

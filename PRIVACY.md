@@ -16,12 +16,14 @@ MD Reader Lite renders Markdown files locally in your browser.
 - **GitHub directory listing.** On raw.githubusercontent.com pages the Files tab lists the folder via GitHub's public API (anonymous, read-only, no token); no other data is sent.
 - **PlantUML.** Off by default, and force-disabled whenever offline mode is on. When enabled with offline mode off, rendering a `plantuml` code fence — or a whole `.puml`/`.plantuml` file — sends the diagram source (your content) to the PlantUML server you configure (default `plantuml.com`; self-hostable, see docs/plantuml-server-setup.md). This is the only feature that sends document content to a third party. When off or offline, the diagram is not rendered and the source is shown as-is.
 - **Residual gap in the remote-resource sweep.** Offline mode blocks remote images and media referenced in the document, but the sweep targets element attributes, not CSS: inline `style="background-image:url(...)"`, `<style>`/`@import url()`, `<use xlink:href>`, and the legacy `background` attribute are not swept. These are vanishingly rare in Markdown, but this is not an absolute guarantee.
-- **Permissions.** No host permission is requested; `storage` keeps your settings; `activeTab` lets the extension apply setting changes to the current tab; file URL access (optional, off by default in Chrome) lets the extension render local files you open.
+- **Permissions.** No host permission is requested; `storage` keeps your settings; `activeTab` lets the extension apply setting changes to the current tab; `offscreen` provides a bundled hidden DOM document for local Mermaid rendering when a website sandbox blocks embedded scripts. It does not grant website access or send diagram source to a server. That document is shared only during active work and closes after idle; diagram source is not persisted. File URL access (optional, off by default in Chrome) lets the extension render local files you open.
 - **Honest caveat.** When you open the folder tree on a web page, or opt into auto-refresh, that request reveals your IP to that server (or to GitHub for the public API) — a property of HTTP, not something the extension adds. MD Reader Lite attaches no identifiers and keeps no log. For guaranteed zero network, keep offline mode on (the default) or use local `file://` documents.
 
 Questions: https://github.com/swchen44/md-reader-lite/issues
 
 Mermaid／ZenUML 使用本機封裝程式與系統字型，不連 CDN 或渲染伺服器。Mermaid 有獨立本機 frame、專用 CSP、結構化原生樣式前置檢查及 SVG/CSS 清理；資源語法遭拒時保留可讀原碼。這個 Mermaid 專用防護不代表下列既有的任意文件 HTML/CSS 清掃缺口已關閉。
+
+GitHub raw 等沙盒頁面改由 `offscreen` 權限建立插件自己的隱藏文件，再在其中執行相同 renderer；不增加網站存取權限、不外送或儲存圖表原碼，閒置後關閉隱藏文件。正常頁面仍沿用原有 iframe。[永久驗收](docs/testing/mermaid-sandbox.md) 分開驗證沙盒繪圖與文章媒體的既有網路行為。
 
 ---
 

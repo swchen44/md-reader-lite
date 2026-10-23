@@ -86,6 +86,7 @@ function background() {
     '@/core/storage': { default: storage },
     '@/core/commands': { default: commands },
     '@/core/charset': { canBgFetch: () => false },
+    '@/core/mermaid/offscreen-broker': { installOffscreenBroker() {} },
   })
   return {
     writes,

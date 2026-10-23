@@ -105,7 +105,11 @@
 
 純設定解析在 `src/core/mermaid-style.ts`。`src/plugins/mermaid-block.ts` 同步產生安全跳脫的原碼 placeholder；`src/plugins/mermaid-renderer.ts` 逐圖非同步渲染，在 active generation 完成後發出 `diagramsRendered` 並重建搜尋。過期工作在佇列開始與回傳時檢查，錯誤保留原碼，不阻塞後圖。每張圖重新初始化設定；圓角只套用一般矩形，保留膠囊與明確圓角形狀。popup 的新選單以不可變更新避開 `app.svelte` 的物件身分去重；SMUI plugin chips 則在使用者選取綁定完成後複製陣列再儲存。請勿以原地修改巢狀設定或陣列的方式觸發這兩個儲存流程。
 
-Mermaid 本體只載入本機 `mermaid-frame.html`。它和主程式使用獨立 webpack compilation，避免跨執行世界共用 chunk；production 與 dev 都要建置兩者。renderer-only CSP、結構化 HTML/CSS/config/flowchart metadata preflight、DOMPurify 與 SVG/CSS 清理共同限制資源。外部圖片、image nodes、資源 CSS 或不支援的 CSS 會拒絕並保留原碼；不新增權限、不下載字型、不降低 strict。這個政策適用 Mermaid，不代表文件中任意 raw HTML/CSS 的既有隱私缺口已消失。
+Mermaid 本體只載入本機 `mermaid-frame.html`。它和主程式使用獨立 webpack compilation，避免跨執行世界共用 chunk；production 與 dev 都要建置兩者。renderer-only CSP、結構化 HTML/CSS/config/flowchart metadata preflight、DOMPurify 與 SVG/CSS 清理共同限制資源。外部圖片、image nodes、資源 CSS 或不支援的 CSS 會拒絕並保留原碼；不下載字型、不降低 strict。這個政策適用 Mermaid，不代表文件中任意 raw HTML/CSS 的既有隱私缺口已消失。
+
+GitHub raw 的 CSP 額外帶 `sandbox`，會使網頁建立的子 iframe 無法執行 JS；單測 `default-src 'none'` 不涵蓋這個情境。`frame-transport.js` 在無法讀取 sessionStorage 的沙盒文件改走 runtime → background → 私有 `mermaid-offscreen.html`，由隱藏文件嵌入相同的 1200×900 renderer。新增 `offscreen` 權限只供本機 DOM／DOMParser 使用，不加 host permission。Chrome 109+ 才有此 API；不可用時提供明確錯誤，舊 Chrome 的沙盒路徑不宣稱支援。broker 序列建立／關閉、共用單一文件並在閒置後關閉；host 只在有工作時送本機 heartbeat，避免長圖繪製超過 SW 閒置期限。不可把圖表原碼寫入 storage 或 log。
+
+永久規格、回歸命令與權限說明見 [Mermaid Sandbox Test Plan](testing/mermaid-sandbox.md)。不要把正常 HTTP/file:// 圖種矩陣的通過外推為所有 CSP／sandbox 環境都通過。文章圖片的既有相對 URL 行為與 renderer 零 egress 是不同範圍。
 
 metadata preflight 不限 Flowchart：固定版本的 classes／states／entities／requirements／blocks／nodes／edges，以及 C4 shapes／boundaries／relationships 都須檢查。所有圖種先取得 parsed diagram 再呼叫 render；探測 receipt 的 `preflightPassed` 可區分前置拒絕與輸出清理。HTML label 的 computed typography 在安全檢查後、隔離文件內保留，避免文章 `p !important` 改寫作者字型。Architecture 只重著色內建 80×80 圖示底板，保留白色圖案與 Original，作者 themeCSS 不被這個補色規則蓋掉。
 

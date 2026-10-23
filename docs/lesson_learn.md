@@ -42,3 +42,6 @@
 35. viewport 是拖曳生命週期的一部分：拖曳中跳過 resize 會讓浮層超出視窗；取消復原到原顯示值也會丟失桌面寬度 → viewport 變化取消預覽，重新 clamp 儲存偏好。鍵盤與滑鼠都須對無可見變化的操作跳過寫回。
 36. 不可見與不可操作是兩個條件：raw 移除 body 樣式後，零高度 separator 仍在 Tab 順序中且能改寬 → raw lifecycle 明確隱藏與 inert，把手 handler 同時 guard；用原生 Tab 和 storage 斷言驗證。
 37. 驗證 Menu 按鈕不等於驗證選單：窄頁 dropdown 向左伸入浮層與高層把手 → 另外測文字區及把手交叉區的 elementFromPoint，維持 Menu、把手與 settings／path 浮層的層級順序。
+38. 嚴格 CSP 與 sandbox 必須分別驗證：正常 HTTP/file:// 的 31 圖種通過，仍漏掉 GitHub raw 的 `sandbox`；本機 iframe 也繼承禁用 scripts 的限制 → 同一份內容分別測無 CSP、嚴格 CSP、嚴格 CSP 加 sandbox，後者透過私有 offscreen host 使用同一個 renderer。套件內嵌不代表可忽略網頁的子瀏覽環境限制；加 CDN 或降低 Mermaid strict 都不能修正這個原因。
+39. Offscreen DOM 需要獨立生命週期：跨分頁同時建立、最後工作結束與新工作到達會競爭 → background 序列化 create/close，工作計數在 finally 釋放、閒置關閉；只有渲染期間送 heartbeat。把本機執行權限與 host permission 分開揭露，測試必須觀察真實沙盒頁面與資源請求，不能只用 parser 成功當驗收。
+40. 沙盒也會阻止測試工具的等待 callback：三張 SVG 已 ready，waitForFunction 的頁面世界 RAF 仍無法執行，造成假失敗 → 由 Node 輪詢 isolated locator 讀取，不放寬 host CSP；修好測試後回原 commit 重跑 RED，保留舊程式的實際 handshake 錯誤作對照。計算圖數時只算 pre 的直接 SVG 子節點，避免把圖示內嵌 SVG 算成新圖。

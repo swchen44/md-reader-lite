@@ -37,7 +37,7 @@
     "page": "popup.html",
     "open_in_tab": true
   },
-  "permissions": ["activeTab", "storage"],
+  "permissions": ["activeTab", "storage", "offscreen"],
   "content_scripts": [
     {
       "js": ["js/content.js"],

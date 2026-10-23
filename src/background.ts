@@ -1,6 +1,9 @@
 import storage from '@/core/storage'
 import commands from '@/core/commands'
 import { canBgFetch } from '@/core/charset'
+import { installOffscreenBroker } from '@/core/mermaid/offscreen-broker'
+
+installOffscreenBroker()
 
 chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   const { customCssDefaultPreset } = await storage.get('customCssDefaultPreset')
@@ -10,7 +13,15 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   })
 })
 
-chrome.runtime.onMessage.addListener(({ action, data }, sender, callback) => {
+chrome.runtime.onMessage.addListener((message, sender, callback) => {
+  const { action, data } = message
+  // The dedicated broker/host owns these replies; do not claim their channel.
+  if (
+    action === 'renderMermaid' ||
+    action === 'mermaidRendererHeartbeat' ||
+    message.target === 'mermaid-offscreen'
+  )
+    return
   messageHandler(action, data, sender, callback)
   return true
 })

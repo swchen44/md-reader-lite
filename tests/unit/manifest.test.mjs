@@ -103,9 +103,9 @@ test('manifest: every web_accessible_resources match pattern is structurally val
   assert.deepEqual(bad, [], `invalid web_accessible_resources patterns: ${bad}`)
 })
 
-test('manifest: permissions stay narrow (no host_permissions — zero-permission stance)', () => {
+test('manifest: permissions allow local offscreen rendering without host access', () => {
   const manifest = loadManifest()
-  assert.deepEqual(manifest.permissions, ['activeTab', 'storage'])
+  assert.deepEqual(manifest.permissions, ['activeTab', 'storage', 'offscreen'])
   assert.equal(
     manifest.host_permissions,
     undefined,

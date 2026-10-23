@@ -11,6 +11,10 @@ module.exports = {
     content: resolve(__dirname, '../src/main.ts'),
     background: resolve(__dirname, '../src/background.ts'),
     popup: resolve(__dirname, '../src/popup/index.ts'),
+    'mermaid-offscreen': resolve(
+      __dirname,
+      '../src/core/mermaid/offscreen-host.js',
+    ),
   },
   output: {
     filename: 'js/[name].js',
@@ -93,6 +97,10 @@ module.exports = {
         {
           from: resolve(__dirname, '../src/popup/index.html'),
           to: 'popup.html',
+        },
+        {
+          from: resolve(__dirname, '../src/core/mermaid/offscreen.html'),
+          to: 'mermaid-offscreen.html',
         },
       ],
     }),
