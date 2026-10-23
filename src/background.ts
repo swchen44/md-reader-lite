@@ -22,11 +22,14 @@ async function messageHandler(
   callback?: (response?: any) => void,
 ) {
   switch (action) {
-    case 'storage':
-      await storage.set({ [data.key]: data.value })
-      updatePage(data.key, data.value)
+    case 'storage': {
+      // Content settings belong to their sender; popup settings pin the active
+      // tab now, before storage can yield and the user can switch tabs.
+      const tabId = sender.tab?.id ?? (await getActiveTabId())
+      await persistSetting(data, tabId)
       callback?.(data)
       break
+    }
     case 'openOptions':
       chrome.runtime.openOptionsPage()
       callback?.()
@@ -60,9 +63,30 @@ async function messageHandler(
 }
 
 // Chrome extension shortcuts
-chrome.commands.onCommand.addListener(action => {
-  commands[action]?.(messageHandler)
+chrome.commands.onCommand.addListener(async action => {
+  const command = commands[action]
+  if (!command) return
+  // Pin before commands.ts reads storage, not just before the eventual write.
+  const tabId = await getActiveTabId()
+  await command((action, data) => {
+    if (action === 'storage')
+      return persistSetting(data, tabId, data.key === 'hiddenSide')
+  })
 })
+
+async function getActiveTabId(): Promise<number | undefined> {
+  const [tab] = await chrome.tabs.query({ currentWindow: true, active: true })
+  return tab?.id
+}
+
+async function persistSetting(
+  data: { key: keyof typeof actionMap; value: any },
+  tabId: number | undefined,
+  toggleSide = false,
+) {
+  await storage.set({ [data.key]: data.value })
+  updatePage(data.key, data.value, tabId, toggleSide)
+}
 
 const actionMap = {
   enable: 'reload',
@@ -70,7 +94,7 @@ const actionMap = {
   centered: 'toggleCentered',
   mdPlugins: 'updateMdPlugins',
   pageTheme: 'updatePageTheme',
-  hiddenSide: 'toggleSide',
+  hiddenSide: 'updateSideVisibility',
   folderTree: 'toggleFolderTree',
   language: 'reload',
   refreshInterval: 'applySetting',
@@ -96,22 +120,20 @@ const actionMap = {
   sideWidth: 'applySetting',
 }
 
-function updatePage(key: keyof typeof actionMap, value?: any) {
-  const action = actionMap[key]
-  action &&
-    chrome.tabs.query({ currentWindow: true, active: true }, tabs => {
-      tabs.length &&
-        // The active tab may have no content script listening (a non-markdown
-        // page, a chrome:// page, or the settings opened as an options tab), in
-        // which case sendMessage rejects with "Could not establish connection.
-        // Receiving end does not exist." Passing a callback that reads
-        // lastError uses callback style (no returned promise to reject) and
-        // marks the error handled — the setting is already persisted via
-        // storage.set, and there is simply no in-page view to live-update.
-        chrome.tabs.sendMessage(
-          tabs[0].id,
-          { action, data: { key, value } },
-          () => void chrome.runtime.lastError,
-        )
-    })
+function updatePage(
+  key: keyof typeof actionMap,
+  value: any,
+  tabId: number | undefined,
+  toggleSide: boolean,
+) {
+  const action =
+    key === 'hiddenSide' && toggleSide ? 'toggleSide' : actionMap[key]
+  if (!action || tabId === undefined) return
+  // A tab may close or have no reader. Persist the setting and handle the
+  // missing receiver, without falling back to a different active tab.
+  chrome.tabs.sendMessage(
+    tabId,
+    { action, data: { key, value } },
+    () => void chrome.runtime.lastError,
+  )
 }

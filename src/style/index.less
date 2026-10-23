@@ -968,7 +968,9 @@ body.md-reader {
     position: fixed;
     top: 16px;
     right: 16px;
-    z-index: 2;
+    // Above the floating sidebar and its resize edge; later modal overlays
+    // at this tier still cover Menu in DOM order.
+    z-index: 2147483646;
   }
   &__float-menu-btn {
     position: relative;

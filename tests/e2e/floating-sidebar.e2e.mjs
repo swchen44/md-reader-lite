@@ -125,6 +125,294 @@ describe('floating sidebar (e2e)', { timeout: 120000 }, () => {
     await page.mouse.down()
     await page.mouse.move(box.x + box.width / 2 + delta, 300, { steps: 8 })
   }
+  const displayedWidth = () =>
+    page
+      .locator('.md-reader__side-tabs')
+      .evaluate(el => el.getBoundingClientRect().width)
+  async function tracePointers() {
+    await page.evaluate(() => {
+      window.__sidebarPointerTrace = []
+      for (const type of [
+        'pointerdown',
+        'pointermove',
+        'pointerup',
+        'pointercancel',
+        'gotpointercapture',
+        'lostpointercapture',
+      ])
+        document.addEventListener(
+          type,
+          e =>
+            window.__sidebarPointerTrace.push({
+              type,
+              id: e.pointerId,
+              primary: e.isPrimary,
+              x: e.clientX,
+              width: document
+                .querySelector('.md-reader__side-tabs')
+                .getBoundingClientRect().width,
+              target: e.target.className,
+            }),
+          true,
+        )
+    })
+  }
+
+  test('delayed content setting updates its source tab and preserves the requested preference', async () => {
+    await open(1200, { hiddenSide: false })
+    const other = await ctx.newPage()
+    let release
+    try {
+      await setStorage({ hiddenSide: true })
+      await other.goto(url)
+      await other.waitForSelector(
+        'pre.mermaid[data-mermaid-status="ready"] svg',
+      )
+      await sw.evaluate(() => {
+        const original = chrome.storage.local.set.bind(chrome.storage.local)
+        globalThis.__sidebarOriginalSet = original
+        globalThis.__sidebarHeld = []
+        chrome.storage.local.set = (items, callback) => {
+          if ('hiddenSide' in items && callback)
+            return original(items, () =>
+              globalThis.__sidebarHeld.push(callback),
+            )
+          return original(items, callback)
+        }
+      })
+      release = () =>
+        sw.evaluate(() => {
+          chrome.storage.local.set = globalThis.__sidebarOriginalSet
+          for (const callback of globalThis.__sidebarHeld.splice(0)) callback()
+        })
+      await page.bringToFront()
+      await page.locator('.md-reader__btn--side-expand').click()
+      await page.waitForTimeout(100)
+      assert.equal(await sw.evaluate(() => globalThis.__sidebarHeld.length), 1)
+      await other.bringToFront()
+      await release()
+      await page.waitForTimeout(450)
+      assert.equal(await isOpen(), false, 'source A closes')
+      assert.equal(
+        await other
+          .locator('.md-reader__side-tabs')
+          .evaluate(el => el.getBoundingClientRect().right <= 1),
+        true,
+        'B stays closed',
+      )
+      assert.equal((await getStorage('hiddenSide')).hiddenSide, true)
+    } finally {
+      if (release) await release()
+      await other.close()
+      await page.bringToFront()
+    }
+  })
+
+  test('non-owner touch release does not cancel the primary resize', async () => {
+    await open()
+    await setOpen(true)
+    await tracePointers()
+    const cdp = await ctx.newCDPSession(page)
+    let a = { id: 1, x: 260, y: 300 },
+      b = { id: 2, x: 300, y: 400 }
+    try {
+      await cdp.send('Emulation.setTouchEmulationEnabled', {
+        enabled: true,
+        maxTouchPoints: 2,
+      })
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchStart',
+        touchPoints: [a],
+      })
+      a = { ...a, x: 300 }
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [a],
+      })
+      await page.waitForFunction(
+        () =>
+          document
+            .querySelector('.md-reader__side-tabs')
+            .getBoundingClientRect().width === 300,
+      )
+      assert.equal(await displayedWidth(), 300)
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchStart',
+        touchPoints: [a, b],
+      })
+      // CDP touchEnd points identify the contacts that END, not those remaining.
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchEnd',
+        touchPoints: [b],
+      })
+      assert.equal(await displayedWidth(), 300)
+      a = { ...a, x: 340 }
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [a],
+      })
+      await page.waitForFunction(
+        () =>
+          document
+            .querySelector('.md-reader__side-tabs')
+            .getBoundingClientRect().width === 340,
+      )
+      assert.equal(
+        await displayedWidth(),
+        340,
+        JSON.stringify(await page.evaluate(() => window.__sidebarPointerTrace)),
+      )
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchEnd',
+        touchPoints: [a],
+      })
+      await page.waitForTimeout(100)
+      assert.equal((await getStorage('sideWidth')).sideWidth, 340)
+      assert.equal(await isOpen(), true)
+    } finally {
+      await cdp
+        .send('Input.dispatchTouchEvent', {
+          type: 'touchCancel',
+          touchPoints: [],
+        })
+        .catch(error => {
+          if (!error.message.includes('Must send a TouchStart first'))
+            throw error
+        })
+      await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false })
+      await cdp.detach()
+    }
+  })
+
+  for (const [from, to, expected] of [
+    [1200, 320, 208],
+    [320, 1200, 480],
+  ])
+    test(`viewport change ${from}→${to} cancels drag and restores the clamped preference`, async () => {
+      await open(from, { sideWidth: 480 })
+      await setOpen(true)
+      try {
+        await dragBy(from === 1200 ? 20 : -10)
+        await page.setViewportSize({ width: to, height: 900 })
+        await page.waitForTimeout(100)
+        assert.equal(await displayedWidth(), expected)
+        assert.equal((await getStorage('sideWidth')).sideWidth, 480)
+        assert.notEqual(
+          await page.evaluate(() => document.body.style.userSelect),
+          'none',
+        )
+        await page.mouse.up()
+        await page.waitForTimeout(50)
+        await dragBy(-10)
+        await page.mouse.up()
+        await page.waitForTimeout(100)
+        assert.equal((await getStorage('sideWidth')).sideWidth, expected - 10)
+      } finally {
+        await page.mouse.up()
+      }
+    })
+
+  test('narrow Menu dropdown receives clicks above both sidebar and resize edge', async () => {
+    await open(320, { sideWidth: 480 })
+    await setOpen(true)
+    await page.locator('.md-reader__float-menu-btn').click()
+    const raw = page.locator('.md-reader__float-menu-item').first()
+    for (const x of [140, 208]) {
+      assert.equal(
+        await raw.evaluate((el, x) => {
+          const box = el.getBoundingClientRect()
+          return el.contains(
+            document.elementFromPoint(x, box.y + box.height / 2),
+          )
+        }, x),
+        true,
+        `Menu owns hit testing at x=${x}`,
+      )
+    }
+    await raw.click({ position: { x: 20, y: 15 } })
+    assert.equal(
+      await page
+        .locator('body')
+        .evaluate(el => el.classList.contains('md-reader')),
+      false,
+    )
+  })
+
+  test('raw view excludes the separator from native Tab order and width input', async () => {
+    await open()
+    await setOpen(true)
+    await page.locator('.md-reader__float-menu-btn').click()
+    await page.locator('.md-reader__float-menu-item').first().click()
+    await page.keyboard.press('Tab')
+    assert.notEqual(
+      await page.evaluate(() => document.activeElement?.getAttribute('role')),
+      'separator',
+    )
+    const handle = page.locator('.md-reader__side-resizer')
+    await handle.evaluate(el =>
+      el.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }),
+      ),
+    )
+    await page.waitForTimeout(100)
+    assert.equal((await getStorage('sideWidth')).sideWidth, 260)
+    await page.locator('.md-reader__float-menu-btn').click()
+    await page.locator('.md-reader__float-menu-item').first().click()
+    await handle.focus()
+    await page.keyboard.press('ArrowRight')
+    await page.waitForTimeout(100)
+    assert.equal(
+      (await getStorage('sideWidth')).sideWidth,
+      270,
+      'keyboard works after leaving raw',
+    )
+  })
+
+  test('clamped keyboard no-op preserves the saved desktop preference', async () => {
+    await open(320, { sideWidth: 480 })
+    await setOpen(true)
+    await page.getByRole('separator').focus()
+    await page.keyboard.press('ArrowRight')
+    await page.waitForTimeout(100)
+    assert.equal(await displayedWidth(), 208)
+    assert.equal((await getStorage('sideWidth')).sideWidth, 480)
+    await page.setViewportSize({ width: 1200, height: 900 })
+    await page.waitForTimeout(100)
+    assert.equal(await displayedWidth(), 480)
+  })
+
+  test('setting replies are idempotent while shortcuts toggle actual narrow visibility', async () => {
+    await open(320, { hiddenSide: false })
+    assert.equal(
+      await isOpen(),
+      false,
+      'narrow page starts closed independently of storage',
+    )
+    const send = (action, value) =>
+      sw.evaluate(
+        async ({ action, value }) => {
+          const [tab] = await chrome.tabs.query({
+            active: true,
+            currentWindow: true,
+          })
+          await chrome.tabs.sendMessage(tab.id, {
+            action,
+            data: { key: 'hiddenSide', value },
+          })
+        },
+        { action, value },
+      )
+    await send('toggleSide', true)
+    await page.waitForTimeout(350)
+    assert.equal(await isOpen(), true)
+    assert.equal((await getStorage('hiddenSide')).hiddenSide, false)
+    await send('updateSideVisibility', true)
+    await page.waitForTimeout(350)
+    assert.equal(await isOpen(), false)
+    await send('updateSideVisibility', true)
+    await page.waitForTimeout(350)
+    assert.equal(await isOpen(), false, 'duplicate setting must not reopen')
+  })
 
   for (const width of [1200, 390, 320])
     test(`open/close/drag preserves article layout at ${width}px`, async () => {
@@ -442,6 +730,7 @@ describe('floating sidebar (e2e)', { timeout: 120000 }, () => {
     test(`${cancellation} restores width and permits a later drag`, async () => {
       await open()
       await setOpen(true)
+      if (cancellation === 'lostpointercapture') await tracePointers()
       await dragBy(60)
       if (cancellation === 'lostpointercapture') {
         await page
@@ -481,7 +770,15 @@ describe('floating sidebar (e2e)', { timeout: 120000 }, () => {
       await dragBy(10)
       await page.mouse.up()
       await page.waitForTimeout(100)
-      assert.equal((await getStorage('sideWidth')).sideWidth, 270)
+      assert.equal(
+        (await getStorage('sideWidth')).sideWidth,
+        270,
+        cancellation === 'lostpointercapture'
+          ? JSON.stringify(
+              await page.evaluate(() => window.__sidebarPointerTrace),
+            )
+          : undefined,
+      )
     })
 
   test('raw and print do not leave a resize edge over content', async () => {
@@ -503,5 +800,39 @@ describe('floating sidebar (e2e)', { timeout: 120000 }, () => {
     )
     await page.emulateMedia({ media: 'screen' })
     assert.deepEqual(requests, [], 'floating controls add no external requests')
+  })
+
+  // Last: reloading the extension invalidates all old content-script contexts.
+  test('extension invalidation during resize cannot lock future drag or dismissal', async () => {
+    await open()
+    await setOpen(true)
+    const errors = []
+    const onError = error => errors.push(error.message)
+    page.on('pageerror', onError)
+    try {
+      await sw.evaluate(() => {
+        setTimeout(() => chrome.runtime.reload(), 0)
+        return true
+      })
+      await page.waitForTimeout(1200)
+      await dragBy(40)
+      await page.mouse.up()
+      await page.waitForTimeout(100)
+      await dragBy(30)
+      await page.mouse.up()
+      await page.waitForTimeout(100)
+      assert.equal(await displayedWidth(), 330, 'next drag remains usable')
+      await page.keyboard.press('Escape')
+      await page.waitForTimeout(350)
+      assert.equal(await isOpen(), false)
+      assert.deepEqual(
+        errors,
+        [],
+        'best-effort persistence handles invalid context',
+      )
+    } finally {
+      await page.mouse.up()
+      page.off('pageerror', onError)
+    }
   })
 })

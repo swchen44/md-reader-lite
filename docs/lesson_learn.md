@@ -36,3 +36,9 @@
 29. 祖先 inert 管不到 portal：檔案排序子選單在 body，收合側欄後仍會殘留 → FileTreeHandle 提供正式 closeMenus，由側欄收合／raw 切換呼叫，不靠測試專用清理方法。
 30. 動畫起點的幾何斷言可能 false green：IME Escape 已開始收合，但第一幀仍在原位 → 等 transition 完成再判斷；組字中的 Escape 與已處理的事件必須忽略，搜尋自己先處理一般 Escape。
 31. 窄頁浮層須驗證真實 hit-test：只留 64px 雖未超出 viewport，側欄開關仍與 Menu 重疊 → 保留 112px，測 elementFromPoint 命中正確按鈕；暫時縮窄不改寫儲存寬度。
+32. 非同步設定的 active tab 會漂移：storage 回覆前切分頁，原頁要求收合卻改到另一頁，還可能反寫偏好 → content 使用 sender.tab，popup 在寫入前、快捷鍵在讀取前固定目標；明確狀態回覆須可重複套用，快捷鍵另外保留實際 toggle 語意。
+33. 清理不能排在可失敗的儲存之後：extension reload 使 sendMessage 同步拋錯，留下永久 resize guard → finally 解鎖；儲存失敗容許本機互動繼續。測試真的重載擴充，再拖兩次與按 Escape。
+34. 多指 capture 的事件需要辨認擁有者：忽略次要 pointerdown 仍會有隱含 capture，其 lostpointercapture 不得取消主指拖曳 → pointercancel／lostcapture 比對 pointerId，blur／pagehide 分開處理。CDP touchEnd 指定的是結束的 contact；送錯會測到主指放開，造成錯誤結論。
+35. viewport 是拖曳生命週期的一部分：拖曳中跳過 resize 會讓浮層超出視窗；取消復原到原顯示值也會丟失桌面寬度 → viewport 變化取消預覽，重新 clamp 儲存偏好。鍵盤與滑鼠都須對無可見變化的操作跳過寫回。
+36. 不可見與不可操作是兩個條件：raw 移除 body 樣式後，零高度 separator 仍在 Tab 順序中且能改寬 → raw lifecycle 明確隱藏與 inert，把手 handler 同時 guard；用原生 Tab 和 storage 斷言驗證。
+37. 驗證 Menu 按鈕不等於驗證選單：窄頁 dropdown 向左伸入浮層與高層把手 → 另外測文字區及把手交叉區的 elementFromPoint，維持 Menu、把手與 settings／path 浮層的層級順序。

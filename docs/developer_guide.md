@@ -78,7 +78,7 @@
 
 坑：`node --test tests/unit/`（目錄模式）在本 repo 會誤判失敗；用 `tests/unit/*.test.mjs`（glob 展開為檔案清單）才對。
 
-當一個模組的 `@/` 別名依賴鏈太深（例如同時拉進 `@/config/*`、多層 core 互 import），不值得為了測一兩個純函式而改動 production import 佈線時，改**在測試檔內鏡射（mirror）那段純邏輯**（見 `graphviz.test.mjs`／`plantuml-plugin.test.mjs`／`file-tree.test.mjs`／`commands.test.mjs` 開頭註解）——鏡射範圍務必極小、逐字對照來源，且註解寫明「鏡射自何處」以防日後漂移。`tests/unit/manifest.test.mjs` 額外驗證 `src/manifest.json` 的 match pattern 結構合法性與零權限姿態（`permissions` 不得多出 `host_permissions`）——這是 2026-09-03 事故（見 lesson_learn.md #11）的迴歸守衛，但**此測試只驗證 Chrome 官方文件描述的通用 match-pattern 文法，不保證 `web_accessible_resources` 會接受**（實測發現 WAR 驗證比 content_scripts 更嚴格、且確切額外限制未完全隔離出來）；日後要再收窄 WAR matches，測試通過後仍須以 Chrome 實際載入驗證。
+當一個模組的 `@/` 別名依賴鏈太深（例如同時拉進 `@/config/*`、多層 core 互 import），不值得為了測一兩個純函式而改動 production import 佈線時，改**在測試檔內鏡射（mirror）那段純邏輯**（見 `graphviz.test.mjs`／`plantuml-plugin.test.mjs`／`file-tree.test.mjs` 開頭註解）——鏡射範圍務必極小、逐字對照來源，且註解寫明「鏡射自何處」以防日後漂移。`commands.test.mjs` 與 `background-routing.test.mjs` 已改為轉譯真正模組，只替換 Chrome／storage 邊界；用可控制的 Promise 延遲驗證訊息仍回到原分頁，不鏡射路由程式。`tests/unit/manifest.test.mjs` 額外驗證 `src/manifest.json` 的 match pattern 結構合法性與零權限姿態（`permissions` 不得多出 `host_permissions`）——這是 2026-09-03 事故（見 lesson_learn.md #11）的迴歸守衛，但**此測試只驗證 Chrome 官方文件描述的通用 match-pattern 文法，不保證 `web_accessible_resources` 會接受**（實測發現 WAR 驗證比 content_scripts 更嚴格、且確切額外限制未完全隔離出來）；日後要再收窄 WAR matches，測試通過後仍須以 Chrome 實際載入驗證。
 
 ### 端對端測試（tests/e2e/）
 

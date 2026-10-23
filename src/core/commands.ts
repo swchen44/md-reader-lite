@@ -14,12 +14,12 @@ export default {
     const { pageTheme = 'auto' } = await storage.get('pageTheme')
     const next =
       pageTheme === 'auto' ? 'light' : pageTheme === 'light' ? 'dark' : 'auto'
-    handler('storage', { key: 'pageTheme', value: next })
+    await handler('storage', { key: 'pageTheme', value: next })
   },
 }
 
 async function toggle(handler, key, defaultValue) {
   const data = await storage.get(key)
   const value = data[key] === undefined ? defaultValue : data[key]
-  handler('storage', { key, value: !value })
+  await handler('storage', { key, value: !value })
 }

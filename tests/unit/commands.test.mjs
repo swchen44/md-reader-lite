@@ -1,25 +1,32 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+import ts from 'typescript'
 
-// src/core/commands.ts imports `@/core/storage`, which node --test cannot
-// resolve (webpack-only alias — see lesson_learn.md #9), and storage.ts
-// itself uses `<T>expr` angle-bracket type assertions that Node's
-// type-stripping loader rejects (only `expr as T` is supported), so even
-// retrofitting the alias wouldn't make it importable here. We mirror the
-// toggle/toggleTheme logic verbatim instead, matching the established
-// pattern in graphviz.test.mjs / plantuml-plugin.test.mjs for modules that
-// pull in non-`#core` aliases.
+// Transpile the actual module and inject only the extension storage boundary.
+const compiled = ts.transpileModule(
+  readFileSync(new URL('../../src/core/commands.ts', import.meta.url), 'utf8'),
+  { compilerOptions: { module: ts.ModuleKind.CommonJS } },
+).outputText
+function commands(getStored) {
+  const exports = {}
+  new Function('require', 'exports', compiled)(name => {
+    assert.equal(name, '@/core/storage')
+    return { default: { get: getStored } }
+  }, exports)
+  return exports.default
+}
 async function toggle(getStored, handler, key, defaultValue) {
-  const data = await getStored(key)
-  const value = data[key] === undefined ? defaultValue : data[key]
-  handler('storage', { key, value: !value })
+  const name = {
+    hiddenSide: 'toggleSide',
+    centered: 'toggleCentered',
+    refresh: 'toggleRefresh',
+  }[key]
+  await commands(getStored)[name](handler)
 }
 
 async function toggleTheme(getStored, handler) {
-  const { pageTheme = 'auto' } = await getStored('pageTheme')
-  const next =
-    pageTheme === 'auto' ? 'light' : pageTheme === 'light' ? 'dark' : 'auto'
-  handler('storage', { key: 'pageTheme', value: next })
+  await commands(getStored).toggleTheme(handler)
 }
 
 function fakeGetStored(store) {

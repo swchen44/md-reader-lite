@@ -98,6 +98,9 @@ function main(data: Data) {
     toggleSide() {
       onToggleSide()
     },
+    updateSideVisibility(hidden: boolean) {
+      onToggleSide(hidden)
+    },
     toggleFolderTree(value) {
       setFolderTree(value)
     },
@@ -803,12 +806,14 @@ function main(data: Data) {
     svg(codeIcon),
   )
   function toggleRawView() {
+    cancelSideResize?.()
     if (searchOpen) closeSearch()
     fileTree?.closeMenus()
-    const eles: Ele<HTMLElement>[] = [mdBody, mdSide, sideTabs]
+    const eles: Ele<HTMLElement>[] = [mdBody, mdSide, sideTabs, sideResizer]
     if (filesPanel) eles.push(filesPanel)
     lifecycle.toggleRaw(eles)
     rawShown = !rawShown
+    sideResizer.ele.inert = rawShown
     if (!rawShown) {
       // lifecycle.toggleRaw() unconditionally re-shows every panel it was
       // given, so leaving raw view can make mdSide and filesPanel visible at
@@ -839,6 +844,7 @@ function main(data: Data) {
     })
   })
   let sideResizeActive = false
+  let cancelSideResize: (() => void) | undefined
   function setSideOpen(open: boolean, persist = true) {
     document.body.classList.toggle(className.SIDE_COLLAPSED, !open)
     document.body.classList.toggle(className.SIDE_EXPANDED, open)
@@ -850,11 +856,17 @@ function main(data: Data) {
     }
     // A narrow page starts closed independently of the saved desktop state.
     // Persist the actual result of a toggle, including keyboard commands.
-    if (persist) void storage.set({ hiddenSide: !open })
+    if (persist) void storage.set({ hiddenSide: !open }).catch(() => {})
   }
-  function onToggleSide() {
+  function onToggleSide(hidden?: boolean) {
     const collapsed = document.body.classList.contains(className.SIDE_COLLAPSED)
-    setSideOpen(sideResizeActive ? !collapsed : collapsed)
+    const open = hidden === undefined ? collapsed : !hidden
+    // Explicit setting replies are idempotent; shortcuts toggle the actual
+    // visibility, including narrow pages initially closed by the viewport.
+    setSideOpen(
+      sideResizeActive ? !collapsed : open,
+      hidden === undefined || sideResizeActive,
+    )
   }
   function foldSide(e: UIEvent) {
     if (
@@ -1107,22 +1119,35 @@ function main(data: Data) {
   function saveSideWidth(width: number) {
     configData.sideWidth = width
     applySideWidth()
-    chrome.runtime.sendMessage({
-      action: 'storage',
-      data: { key: 'sideWidth', value: width },
-    })
+    try {
+      chrome.runtime.sendMessage(
+        { action: 'storage', data: { key: 'sideWidth', value: width } },
+        () => void chrome.runtime.lastError,
+      )
+    } catch {
+      // Extension reload invalidates old content scripts. Local controls must
+      // remain usable even when their best-effort persistence is unavailable.
+    }
   }
   sideResizer.on('pointerdown', (e: PointerEvent) => {
-    if (e.button !== 0 || !e.isPrimary || sideResizeActive) return
+    if (
+      e.button !== 0 ||
+      !e.isPrimary ||
+      sideResizeActive ||
+      rawShown ||
+      document.body.classList.contains(className.SIDE_COLLAPSED)
+    )
+      return
     e.preventDefault()
     e.stopPropagation()
-    sideResizeActive = true
     sideResizer.ele.setPointerCapture(e.pointerId)
+    sideResizeActive = true
     const previousSelection = document.body.style.userSelect
     const initialWidth =
       sideResizer.ele.getBoundingClientRect().left +
       sideResizer.ele.getBoundingClientRect().width / 2
     let width = initialWidth
+    let finished = false
     document.body.style.userSelect = 'none'
     document.body.classList.add('md-reader-resizing-side')
     const onMove = (ev: PointerEvent) => {
@@ -1131,34 +1156,43 @@ function main(data: Data) {
       applySideWidth(width)
     }
     const finish = (cancelled: boolean) => {
+      if (finished) return
+      finished = true
+      cancelSideResize = undefined
       sideResizer.off('pointermove', onMove)
       sideResizer.off('pointerup', onUp)
       sideResizer.off('pointercancel', onCancel)
       sideResizer.off('lostpointercapture', onCancel)
-      window.removeEventListener('blur', onCancel)
-      window.removeEventListener('pagehide', onCancel)
-      if (sideResizer.ele.hasPointerCapture(e.pointerId))
-        sideResizer.ele.releasePointerCapture(e.pointerId)
-      document.body.style.userSelect = previousSelection
-      document.body.classList.remove('md-reader-resizing-side')
-      if (cancelled) applySideWidth(initialWidth)
-      else if (width !== initialWidth) saveSideWidth(width)
-      else applySideWidth()
-      // pointerup can be followed by a click over the article after capture ends.
-      setTimeout(() => {
-        sideResizeActive = false
-      }, 0)
+      window.removeEventListener('blur', cancel)
+      window.removeEventListener('pagehide', cancel)
+      try {
+        if (sideResizer.ele.hasPointerCapture(e.pointerId))
+          sideResizer.ele.releasePointerCapture(e.pointerId)
+        if (!cancelled && width !== initialWidth) saveSideWidth(width)
+        else applySideWidth()
+      } finally {
+        document.body.style.userSelect = previousSelection
+        document.body.classList.remove('md-reader-resizing-side')
+        // pointerup can be followed by a click over the article after capture ends.
+        setTimeout(() => {
+          sideResizeActive = false
+        }, 0)
+      }
     }
     const onUp = (ev: PointerEvent) => {
       if (ev.pointerId === e.pointerId) finish(false)
     }
-    const onCancel = () => finish(true)
+    const cancel = () => finish(true)
+    const onCancel = (ev: PointerEvent) => {
+      if (ev.pointerId === e.pointerId) cancel()
+    }
+    cancelSideResize = cancel
     sideResizer.on('pointermove', onMove)
     sideResizer.on('pointerup', onUp)
     sideResizer.on('pointercancel', onCancel)
     sideResizer.on('lostpointercapture', onCancel)
-    window.addEventListener('blur', onCancel)
-    window.addEventListener('pagehide', onCancel)
+    window.addEventListener('blur', cancel)
+    window.addEventListener('pagehide', cancel)
   })
   sideResizer.on('keydown', (e: KeyboardEvent) => {
     const current = Number(sideResizer.ele.getAttribute('aria-valuenow'))
@@ -1168,13 +1202,21 @@ function main(data: Data) {
       Home: 180,
       End: 560,
     }
-    if (!(e.key in widths) || sideResizeActive) return
+    if (
+      !(e.key in widths) ||
+      sideResizeActive ||
+      rawShown ||
+      document.body.classList.contains(className.SIDE_COLLAPSED)
+    )
+      return
     e.preventDefault()
     e.stopPropagation()
-    saveSideWidth(clampSideWidth(widths[e.key], window.innerWidth))
+    const width = clampSideWidth(widths[e.key], window.innerWidth)
+    if (width !== current) saveSideWidth(width)
   })
   window.addEventListener('resize', () => {
-    if (!sideResizeActive) applySideWidth()
+    cancelSideResize?.()
+    applySideWidth()
   })
 
   /* mount elements */

@@ -39,6 +39,10 @@
 
 FileTreeHandle.closeMenus 是 production lifecycle 介面，由 shell 在側欄收合與 raw 切換呼叫，清理移到 body 的排序子選單；不能依賴祖先 inert 控制 portal。側欄寬度與文章寬度是獨立設定。核准行為及永久回歸見 [Floating Sidebar Test Plan](testing/floating-sidebar.md)。
 
+設定回覆的分頁歸屬在 background 收到請求時決定：content script 使用 sender.tab.id，popup 在 storage.set 前取得 active tab，快捷鍵在 commands 讀取 storage 前取得 active tab。後續寫入或回覆不再查詢 active tab；目標已關閉或沒有 reader 時，只儲存設定，不轉送其他分頁。hiddenSide 的 updateSideVisibility 套用明確狀態，重複回覆不反轉畫面；快捷鍵的 toggleSide 仍依實際可見狀態切換，保留窄頁首次收起的行為。
+
+拖曳只由擁有 capture 的 pointerId 結束，blur／pagehide／viewport resize 則取消整次預覽。取消依目前 viewport 重新限制儲存的偏好，清理以 finally 保證解鎖；舊 content script 遇到 extension reload，儲存失敗不阻塞本機拖曳或收合。鍵盤無可見變化時不覆寫偏好；raw lifecycle 同時隱藏並 inert 把手，輸入 handler 也檢查 raw／收合狀態。Menu 在把手之上，後建立的 settings／path 浮層仍在 Menu 之上。
+
 ## 驗收檢查
 
     grep -n "chrome" src/core/markdown.ts src/core/graphviz.ts src/core/dir-listing.ts src/plugins/obsidian.ts src/plugins/alert.ts src/plugins/graphviz-block.ts src/config/md-plugins.ts   # 必須零命中
