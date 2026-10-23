@@ -46,7 +46,7 @@ const expectedNames = [
   'Cynefin',
   'TreeView',
 ]
-const supported = new Set(expectedNames.filter(name => name !== 'ZenUML'))
+const supported = new Set(expectedNames)
 const cases = []
 let heading
 const tokens = new MarkdownIt().parse(gallery, {})
@@ -75,7 +75,7 @@ test('compatibility inventory covers all 31 requested types on Mermaid 12.2.0', 
     cases.map(item => item.name),
     expectedNames,
   )
-  assert.equal(supported.size, 30)
+  assert.equal(supported.size, 31)
   assert.ok(cases.every(item => item.source.trim()))
 })
 

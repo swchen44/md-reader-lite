@@ -17,7 +17,7 @@
 - GitHub: baseline push to `origin/main` completed; verify remote SHA before subsequent push.
 - Current checkpoint: A4 in progress. A local renderer frame connects under strict host CSP and renders 31/31; the original four resource cases now reject before requests in confined mode. Expanded encoded/YAML/relative-input gates and security review are running. See [probe report](../../research/mermaid12-probe.md).
 - Product migration: B complete. Root Mermaid is 12.2.0, TypeScript 5.0.4; 228 unit tests, 68 compatibility cases, 20 style cases and 4 lifecycle cases pass without skip/TODO. Shared-policy probe rerun: 25/25 pass.
-- Next task after resume: C local ZenUML, then D including Anthropic styling for all newly supported types. Begin with `git status --short --branch`, read this file/spec/report and verify build fingerprints before rerunning. A4 is committed/pushed as `3b785a2`; B's commit follows the ledger below.
+- Next task after resume: D Anthropic styling for all newly supported types, then E. C browser verification is complete at 70/70. Begin with `git status --short --branch`, read this file/spec/report and verify build fingerprints before rerunning. A4 `3b785a2` and B `3d5fee5` are committed/pushed. Two D resolver tests plus their unused helper are deliberately unstaged during the C commit.
 
 ## Global Constraints
 
@@ -50,7 +50,7 @@
 - [x] A3: Run HTTP, file, strict-CSP and malicious-resource checks; B is not allowed yet because four privacy gates fail.
 - [x] A4: Prove a resource policy that acts before Mermaid can initiate requests, then repeat A's environment and safety gates.
 - [x] B: Migrate product rendering, security, completion/search lifecycle and corresponding permanent tests.
-- [ ] C: Integrate ZenUML and validate all 31 types in the product.
+- [x] C: Integrate ZenUML and validate all 31 types in the product.
 - [ ] D: Preserve styling, viewer controls, localization and reading position.
 - [ ] E: Run full matrix/regression, update documentation and record final review.
 - [ ] Commit all completed stages, push authorized verified changes and verify remote SHA / clean worktree.
@@ -109,10 +109,10 @@
 
 **Files:** Product dependency/lockfile, renderer registration, shared fixture if evidence requires syntax correction, compatibility and lifecycle e2e.
 
-- [ ] Write the failing product ZenUML case and mixed-gallery assertion before registration.
-- [ ] Pin 1.0.1 and register once per actual Mermaid instance, using only bundled resources. Test alias, nesting, branches, loops and broken → valid recovery in `.md` and `.mmd`.
-- [ ] Verify all 31 types individually and the unfiltered gallery; rerun network observation including first load and redraw. Keep rendering and style conformance as distinct assertions.
-- [ ] Commit `feat: support locally bundled ZenUML diagrams` with the independent ZenUML runtime receipt.
+- [x] Write the failing product ZenUML case and mixed-gallery assertion before registration.
+- [x] Pin 1.0.1 and register once per actual Mermaid instance, using only bundled resources. Test alias, nesting, branches, loops and broken → valid recovery in `.md` and `.mmd`.
+- [x] Verify all 31 types individually and the unfiltered gallery; rerun network observation including first load and redraw. Keep rendering and style conformance as distinct assertions.
+- [x] Commit `feat: support locally bundled ZenUML diagrams` with the independent ZenUML runtime receipt.
 
 **Gate:** 31/31 real product rendering without external assets, eval or expanded permissions. If ZenUML alone is blocked, record 30/31 and its exact failure; no automatic remote fallback.
 
@@ -221,3 +221,12 @@ Append each task's actual outcome here before stopping or handing off. Update Cu
 - Shared-module probe rerun: 25/25 pass, zero fail/unavailable/skip/TODO, cleanup errors empty. Product unit suite remains 228/228; typecheck/build exit 0.
 - Ruling: Adopt v12's native curved stadium SVG path instead of assuming it remains a rect. Tests still require a native curved shape and preserve an explicitly rounded rect's radius; the softening selector targets primary unrounded rectangles only, never invisible label rectangles.
 - Remaining boundary: ZenUML is intentionally still a negative product case. Per-type new-diagram palette/typography, structured author frontmatter isolation, delayed reading restoration and the full E matrix remain C/D/E work.
+
+### C Local ZenUML Accepted
+
+- Product baseline commit B: `3d5fee5`, pushed and remote SHA verified. C's new ZenUML test first failed before registration, then exposed the external wrapper's no-op parser: an unclosed brace produced an SVG instead of a rejected source.
+- Pin plugin 1.0.1 and direct core 3.50.1. Register once per renderer instance. Use core's public stateless `parse` method without constructing its React UI, after Mermaid's public Diagram parsing has removed frontmatter/directives. This relies on pinned 3.50.1 behavior and has an actual parser regression; future upgrades must revalidate it.
+- `node --test --test-concurrency=1 tests/e2e/mermaid-zenuml.e2e.mjs tests/e2e/mermaid-compatibility.e2e.mjs`: 70 pass, zero fail/skip/TODO. All 31 types work individually and in unfiltered galleries in both styles. Additional cases cover aliases, nested branches/loops, invalid→valid recovery and standalone `.mmd`; no external HTTP requests.
+- Compiler and production build exit 0. ZenUML syntax unit test passes without a DOM/React constructor, using only location/theme-storage shims for browser-module initialization.
+- Two concurrent browser suites stalled before recording cases; terminated only their owned Chrome processes and reran serially. Do not count the interrupted run as acceptance. Make the permanent e2e command serial in E.
+- Rendering acceptance does not mean ZenUML/C4/new-type Anthropic palette acceptance. D resolver tests observed RED and then GREEN in an unused helper; wiring and visual verification are next.

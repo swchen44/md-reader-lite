@@ -114,7 +114,9 @@ Mermaid 本體只載入本機 `mermaid-frame.html`。它和主程式使用獨立
 
 ### 圖種相容性
 
-產品已移除舊 wrapper，固定 **Mermaid 12.2.0**。B 階段已驗證 30 種核心；ZenUML 與全新圖種的 Anthropic 視覺驗收依 [migration plan/checklist](superpowers/plans/2026-10-23-mermaid-modernization.md) 接續。歷史 9.1.6 的 11/31 實測保留於 [Mermaid 圖種相容性測試](research/mermaid-diagram-compatibility.md)，不可當作目前版本的支援清單。檢查頁為 `example/mermaid-compatibility.md`。
+產品已移除舊 wrapper，固定 **Mermaid 12.2.0**，本機 ZenUML plugin **1.0.1**／core **3.50.1**。C 階段已驗證全部 **31 種**可渲染；全新圖種的 Anthropic 視覺驗收依 [migration plan/checklist](superpowers/plans/2026-10-23-mermaid-modernization.md) 接續。歷史 9.1.6 的 11/31 實測保留於 [Mermaid 圖種相容性測試](research/mermaid-diagram-compatibility.md)，不可當作目前版本的支援清單。檢查頁為 `example/mermaid-compatibility.md`。
+
+ZenUML 外掛本身的 parser 是 no-op。`src/core/mermaid/zenuml.js` 以固定版 core 的 stateless public parse method 補上語法錯誤檢查，不建立 React UI。升級 core 必須重跑 `tests/unit/zenuml.test.mjs` 與 `tests/e2e/mermaid-zenuml.e2e.mjs`；不能只用「產生了 SVG」當作語法正確。
 
     npm run build
     node --test tests/e2e/mermaid-compatibility.e2e.mjs

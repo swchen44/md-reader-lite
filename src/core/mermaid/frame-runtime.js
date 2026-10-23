@@ -6,7 +6,11 @@ import {
 } from './resource-preflight.mjs'
 export function startRenderer(
   mermaid,
-  { registerZen = async () => {}, injectFault = () => () => {} } = {},
+  {
+    registerZen = async () => {},
+    validateDiagram = async () => {},
+    injectFault = () => () => {},
+  } = {},
 ) {
   let connected = false
   let registeredZen = false
@@ -85,6 +89,7 @@ export function startRenderer(
       const parsed = await mermaid.parse(job.source)
       result.syntax = 'valid'
       checkConfig(parsed.config)
+      await validateDiagram(job, parsed)
       if (parsed.diagramType.startsWith('flowchart')) {
         const diagram = await mermaid.mermaidAPI.getDiagramFromText(job.source)
         if (typeof diagram.db.getVertices !== 'function')

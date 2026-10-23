@@ -23,6 +23,7 @@ export default function MermaidRendererPlugin({ event, language }) {
       reply = await renderer.render({
         source: job.source,
         renderId: job.id,
+        zen: true,
         config: resolveMermaidRenderOptions(
           hasMermaidThemeDirective(job.source)
             ? undefined

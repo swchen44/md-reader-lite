@@ -65,6 +65,8 @@
     "webpack-merge": "^5.8.0"
   },
   "dependencies": {
+    "@mermaid-js/mermaid-zenuml": "1.0.1",
+    "@zenuml/core": "3.50.1",
     "mermaid": "12.2.0",
     "css-tree": "3.2.1",
     "dompurify": "3.4.17",
