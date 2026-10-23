@@ -14,11 +14,12 @@
 
 - Updated: 2026-10-23, Asia/Taipei.
 - Product baseline: `5df0a82`, version 1.8.2, wrapper 0.5.1 / Mermaid 9.1.6.
-- GitHub: baseline push to `origin/main` completed; verify remote SHA before subsequent push.
-- Probe checkpoint: A4 accepted, 25/25 confined gates; raw resource counterexamples remain as comparison evidence. See [probe report](../../research/mermaid12-probe.md).
-- Product migration: B complete. Root Mermaid is 12.2.0, TypeScript 5.0.4; 228 unit tests, 68 compatibility cases, 20 style cases and 4 lifecycle cases pass without skip/TODO. Shared-policy probe rerun: 25/25 pass.
-- Current work: D/D2/D3 and all material review fixes are verified: **238 unit, 146 serial e2e, 33 confined probe**, zero fail/cancel/skip/TODO; evidence helpers 3/3, compiler/build exit 0. Width is 85% for new/reset settings; saved pixel/percent/disabled choices remain unchanged. Production zip includes full third-party notices.
-- Next task after resume: commit verified D/settings/defaults, run final-source performance for shared-11/gallery-31/ZenUML, preserve raw receipts and finish E documentation/push. C `35b4294` is already pushed. Do not restart A–C, release or bump version.
+- GitHub: C `35b4294` is pushed; D `4eea56a`, CI notices `1065b21` and E receipt await the final authorized push/remote verification.
+- Probe checkpoint: expanded shared confined suite **33/33** pass; raw strict resource counterexamples remain as comparison evidence. See [probe report](../../research/mermaid12-probe.md).
+- Product migration: A–E runtime accepted. Root Mermaid 12.2.0, TypeScript 5.0.4, ZenUML plugin 1.0.1/core 3.50.1. Both styles cover 31 fixtures and all 372 matrix outputs.
+- Final checks: **239 unit, 146 serial e2e, 33 confined probe**, zero fail/cancel/skip/TODO; evidence helpers 3/3, compiler/build/zip checks pass. Width is 85% for new/reset settings; saved pixel/percent/disabled choices remain unchanged. Full notices ship in the zip.
+- Performance/audit: final clean-source raw JSON and [acceptance/handoff report](../../research/2026-10-23-mermaid12-acceptance.md) are saved under docs. Shared-11 cold median is 3.05/3.11× baseline, warm 4.37/3.60×; zip 2.33×. Tradeoff explicitly reviewed below. No new audit advisory IDs; four existing high advisories remain.
+- Next task after resume: commit E documentation/receipts, push authorized main and verify SHA/clean status. The clean owned baseline worktree has been removed after preserving its raw measurements; do not remove other worktrees. No remaining feature implementation; do not restart A–C, release, bump version or claim hosted CI ran.
 
 ## Global Constraints
 
@@ -55,7 +56,7 @@
 - [x] D: Preserve styling, viewer controls, localization and reading position.
 - [x] D2: Default Mermaid to Anthropic without overwriting saved Original; restyle all settings tabs and preserve controls/accessibility (user approved 2026-10-23).
 - [x] D3: Default new/reset custom width to 85 percent; preserve existing pixel/percent/disabled settings (user approved 2026-10-23).
-- [ ] E: Run full matrix/regression, update documentation and record final review.
+- [x] E: Run full matrix/regression, update documentation and record final review.
 - [ ] Commit all completed stages, push authorized verified changes and verify remote SHA / clean worktree.
 
 ## Task A: Reproducible MV3 Probe
@@ -130,7 +131,7 @@
 - [x] Ensure viewer observers settle on ready/error/stale and do not attach duplicate controls. Restore reading anchors after current work completes only when the user has not scrolled meanwhile.
 - [x] Localize new pending/error messages in all five existing languages. Test CSS off / Developer / Editorial / User1 / User2 without altering Mermaid settings.
 - [x] Run the existing 20 style e2e plus added lifecycle/author tests. Capture C4 and ZenUML and document any native styling limits.
-- [ ] Commit `fix: preserve Mermaid styling and reading behavior after upgrade`.
+- [x] Commit verified styling/defaults as `4eea56a` (`fix: preserve Mermaid styling and settings after upgrade`).
 
 ## Task D2: Settings and Default
 
@@ -141,7 +142,7 @@ Design: [approved default/settings addendum](../specs/2026-10-22-mermaid-moderni
 - [x] Preserve all settings, SMUI native control hitboxes, disabled state, monospace editor and keyboard interaction.
 - [x] Verify General/Appearance/Plugins, expanded menus, five locales and 320/360/390 px; capture screenshots and assert no horizontal overflow.
 - [x] Verify embedded settings, reset defaults, legacy missing choice and saved Original across reloads; no unexpected network.
-- [ ] Update developer guide, current design/checklist and lessons learned; commit verified changes with Why/What/How/Boundary.
+- [x] Update developer guide, current design/checklist and lessons learned; commit verified changes with Why/What/How/Boundary (`4eea56a`, `1065b21`).
 
 This additive bounded change was explicitly approved in chat. It does not authorize a release or override E's remaining acceptance gates.
 
@@ -150,19 +151,19 @@ This additive bounded change was explicitly approved in chat. It does not author
 - [x] Confirm new/reset 85%, preserving saved pixel/percent/disabled choices, including legacy pixels without a unit.
 - [x] Observe failing unit and actual-browser tests before changing grouped width/unit default resolution.
 - [x] Verify new/legacy/disabled article width, popup controls, Reset and five-locale narrow layout.
-- [ ] Update design, developer guide, lessons and final receipts; commit with verified settings changes.
+- [x] Update design, developer guide, lessons and final receipts; commit with verified settings changes (`4eea56a`).
 
 ## Task E: Permanent Test Plan and Regression
 
 **Files:** `tests/e2e/mermaid-compatibility.e2e.mjs`, style/lifecycle tests, `example/mermaid-compatibility.md`, `docs/research/mermaid-diagram-compatibility.md`, `docs/developer_guide.md`, `docs/ARCHITECTURE.md`, this plan/spec/indexes and the appropriate changelog. Review README/PRIVACY for changed claims.
 
 - [x] Measure 31 types × two styles × light/dark × 1200/390/320 px = 372 diagram outputs. Check visible labels, positive dimensions, no error diagrams and initial frame fit. This is fixture coverage, not every possible syntax combination.
-- [ ] Exercise auto-theme changes twice, authored configuration isolation, malformed and excessive input, duplicate diagrams, rapid changes, HTTP/file/`.mmd`, DOT and PlantUML privacy gates.
-- [ ] Keep 62 desktop crops plus dark/mobile/full-gallery screenshots. Manually inspect text, shapes, titles, contrast, C4 and long labels; do not count automated dimensions as full visual approval.
-- [ ] Measure old 11-type baseline and candidate on the same hardware/viewport with at least five cold and ten warm runs; record median/max, raw values and browser. Review a greater-than-twofold size or median-time increase before acceptance.
-- [ ] Check production dependency audit/license and record newly introduced issues separately from existing ones.
-- [ ] Run the regression commands below; remove the old GitGraph TODO only after its real assertion passes. Record skips as unverified.
-- [ ] Review the whole change against the spec and fix material findings; commit `test: verify Mermaid 12 diagram coverage and document migration`.
+- [x] Exercise auto-theme changes twice, authored configuration isolation, malformed and excessive input, duplicate diagrams, rapid changes, HTTP/file/`.mmd`, DOT and PlantUML privacy gates.
+- [x] Keep 62 desktop crops plus dark/mobile/full-gallery screenshots. Manually inspect text, shapes, titles, contrast, C4 and long labels; do not count automated dimensions as full visual approval.
+- [x] Measure old 11-type baseline and candidate on the same hardware/viewport with at least five cold and ten warm runs; record median/max, raw values and browser. Review a greater-than-twofold size or median-time increase before acceptance.
+- [x] Check production dependency audit/license and record newly introduced issues separately from existing ones.
+- [x] Run the regression commands below; remove the old GitGraph TODO only after its real assertion passes. Record skips as unverified.
+- [x] Review the whole change against the spec and fix material findings; preserve final receipts in the E documentation commit.
 - [ ] Push completed verified commits within the user's authorization; verify `HEAD`, `origin/main`, `git ls-remote origin refs/heads/main` and clean status. A release requires a separate version/tag request.
 
 ```sh
@@ -310,3 +311,15 @@ Append each task's actual outcome here before stopping or handing off. Update Cu
 
 - D/D2/D3 source, tests and handoff docs committed as `4eea56a4bb86801f9fca1c19111504c5bdb99b25`; clean worktree before all three final benchmark scopes. Product asset/zip digests match the measured reports. Full raw performance receipts are ready for E documentation.
 - Release workflow independently ran manifest/webpack/zip and omitted new notices. Added a YAML-parsed permanent order test, observed RED, then inserted notices before zip. This follow-up changes CI/test/docs only, not measured browser assets. Local production packaging includes the notices; hosted Actions/release is not performed or authorized in this round.
+
+### E Accepted Measurements and Durable Receipt
+
+- Runtime source `4eea56a`, CI-only follow-up `1065b21`. Final **239 unit / 146 e2e / 33 confined probe / 3 evidence helpers**, zero fail/cancel/skip/TODO. Typecheck/build/zip/diff checks pass. Source/frame/zip digests match all final clean-source performance reports; no product edits after measurement.
+- Apple M1/8 GiB, CfT 147.0.7727.15. Shared old 11 fixtures: baseline Original cold/warm medians 438.5/67.25 ms; Anthropic 432.0/86.65 ms. Candidate Original 1337.8/294.2 ms; Anthropic 1344.5/312.2 ms. Every variant/style has five cold and ten warm samples.
+- Full candidate 31: cold/warm medians 1953.3/674.15 ms Original, 2012.1/715.2 ms Anthropic. Standalone ZenUML: 768.3/20.2 ms and 738.8/25.15 ms. All observed normal benchmark external-request lists are empty. These are absolute measurements, not additive CPU attribution or p95.
+- Baseline content/zip 4,369,101/1,706,477 B; candidate content/frame/zip 3,258,761/9,263,059/3,973,064 B. Aggregate JS 2.87×, zip 2.33×. Historical earlier artifact sizes remain dated and are not substituted for this fresh baseline.
+- Ruling: Retain the eager local frame architecture despite >2× size/render medians because it delivers the requested 31 types and pre-render confinement while text/source stay usable. Cost: shared-11 cold 3.05/3.11×, warm 4.37/3.60× and the larger zip; no claim of unchanged performance. Future chunk optimization requires a separate CSP/WAR/all-type review, not an untested late architecture change.
+- Audit inventory: 55→21 advisories, no new IDs, 34 removed; existing four high remain disclosed. Notices retain full original texts for 240 macOS package versions with four README fallbacks; CI now has the same packaging step. Audit exit 1 is not a green vulnerability scan, and licenses are not legal certification.
+- Six committed JSON receipts under `docs/research/data/` preserve samples, matrix, audit comparison, source/bundle fingerprints and zip/notices digests. [Final acceptance/handoff](../../research/2026-10-23-mermaid12-acceptance.md) includes permanent commands, failures, all residual verification limits and agent entry points. Hosted CI, release and actual BFCache hit rate remain not-performed.
+- Final minor findings deferred: none reported by the fresh reviewer. Native limitations and unrelated existing vulnerabilities remain disclosed boundaries, not silently removed tests.
+- Removed only `/tmp/md-reader-mermaid9-baseline-20261023` after checking clean status and exact `3b785a2` HEAD; `git worktree list` now contains only the original main workspace. No owned test browser/dev-server processes remain. Source/CI commits use multiline Why/What/How/Boundary; the E receipt commit follows.

@@ -1,0 +1,611 @@
+{
+  "observedOn": "2026-10-23",
+  "command": "COREPACK_ENABLE_AUTO_PIN=0 corepack pnpm audit --prod --json",
+  "exitCode": 1,
+  "baseline": {
+    "sourceCommit": "3b785a27c669e45a08c2578afac3a7aced68d16f",
+    "metadata": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 8,
+        "moderate": 36,
+        "high": 10,
+        "critical": 1
+      },
+      "dependencies": 158,
+      "devDependencies": 0,
+      "optionalDependencies": 0,
+      "totalDependencies": 158
+    },
+    "advisories": [
+      {
+        "id": "GHSA-q8gg-vj6m-hgmj",
+        "severity": "moderate",
+        "module": "@braintree/sanitize-url",
+        "url": "https://github.com/advisories/GHSA-q8gg-vj6m-hgmj",
+        "versions": ["6.0.0"]
+      },
+      {
+        "id": "GHSA-3wc5-fcw2-2329",
+        "severity": "moderate",
+        "module": "katex",
+        "url": "https://github.com/advisories/GHSA-3wc5-fcw2-2329",
+        "versions": ["0.15.6", "0.16.2"]
+      },
+      {
+        "id": "GHSA-f98w-7cxr-ff2h",
+        "severity": "moderate",
+        "module": "katex",
+        "url": "https://github.com/advisories/GHSA-f98w-7cxr-ff2h",
+        "versions": ["0.15.6", "0.16.2"]
+      },
+      {
+        "id": "GHSA-cvr6-37gx-v8wc",
+        "severity": "moderate",
+        "module": "katex",
+        "url": "https://github.com/advisories/GHSA-cvr6-37gx-v8wc",
+        "versions": ["0.15.6", "0.16.2"]
+      },
+      {
+        "id": "GHSA-8266-84wp-wv5c",
+        "severity": "moderate",
+        "module": "svelte",
+        "url": "https://github.com/advisories/GHSA-8266-84wp-wv5c",
+        "versions": ["3.50.0"]
+      },
+      {
+        "id": "GHSA-mmhx-hmjr-r674",
+        "severity": "high",
+        "module": "dompurify",
+        "url": "https://github.com/advisories/GHSA-mmhx-hmjr-r674",
+        "versions": ["2.3.10"]
+      },
+      {
+        "id": "GHSA-m4gq-x24j-jpmf",
+        "severity": "high",
+        "module": "mermaid",
+        "url": "https://github.com/advisories/GHSA-m4gq-x24j-jpmf",
+        "versions": ["9.1.6"]
+      },
+      {
+        "id": "GHSA-vhxf-7vqr-mrjg",
+        "severity": "moderate",
+        "module": "dompurify",
+        "url": "https://github.com/advisories/GHSA-vhxf-7vqr-mrjg",
+        "versions": ["2.3.10"]
+      },
+      {
+        "id": "GHSA-cg87-wmx4-v546",
+        "severity": "moderate",
+        "module": "katex",
+        "url": "https://github.com/advisories/GHSA-cg87-wmx4-v546",
+        "versions": ["0.15.6", "0.16.2"]
+      },
+      {
+        "id": "GHSA-p3vf-v8qc-cwcr",
+        "severity": "critical",
+        "module": "dompurify",
+        "url": "https://github.com/advisories/GHSA-p3vf-v8qc-cwcr",
+        "versions": ["2.3.10"]
+      },
+      {
+        "id": "GHSA-gx9m-whjm-85jf",
+        "severity": "high",
+        "module": "dompurify",
+        "url": "https://github.com/advisories/GHSA-gx9m-whjm-85jf",
+        "versions": ["2.3.10"]
+      },
+      {
+        "id": "GHSA-gw32-9rmw-qwww",
+        "severity": "high",
+        "module": "svelte",
+        "url": "https://github.com/advisories/GHSA-gw32-9rmw-qwww",
+        "versions": ["3.50.0"]
+      },
+      {
+        "id": "GHSA-64fm-8hw2-v72w",
+        "severity": "moderate",
+        "module": "katex",
+        "url": "https://github.com/advisories/GHSA-64fm-8hw2-v72w",
+        "versions": ["0.15.6", "0.16.2"]
+      },
+      {
+        "id": "GHSA-38c4-r59v-3vqw",
+        "severity": "moderate",
+        "module": "markdown-it",
+        "url": "https://github.com/advisories/GHSA-38c4-r59v-3vqw",
+        "versions": ["13.0.1"]
+      },
+      {
+        "id": "GHSA-crpf-4hrx-3jrp",
+        "severity": "moderate",
+        "module": "svelte",
+        "url": "https://github.com/advisories/GHSA-crpf-4hrx-3jrp",
+        "versions": ["3.50.0"]
+      },
+      {
+        "id": "GHSA-m56q-vw4c-c2cp",
+        "severity": "moderate",
+        "module": "svelte",
+        "url": "https://github.com/advisories/GHSA-m56q-vw4c-c2cp",
+        "versions": ["3.50.0"]
+      },
+      {
+        "id": "GHSA-f7gr-6p89-r883",
+        "severity": "moderate",
+        "module": "svelte",
+        "url": "https://github.com/advisories/GHSA-f7gr-6p89-r883",
+        "versions": ["3.50.0"]
+      },
+      {
+        "id": "GHSA-phwv-c562-gvmh",
+        "severity": "moderate",
+        "module": "svelte",
+        "url": "https://github.com/advisories/GHSA-phwv-c562-gvmh",
+        "versions": ["3.50.0"]
+      },
+      {
+        "id": "GHSA-r5fr-rjxr-66jc",
+        "severity": "high",
+        "module": "lodash",
+        "url": "https://github.com/advisories/GHSA-r5fr-rjxr-66jc",
+        "versions": ["4.17.21"]
+      },
+      {
+        "id": "GHSA-f23m-r3pf-42rh",
+        "severity": "moderate",
+        "module": "lodash",
+        "url": "https://github.com/advisories/GHSA-f23m-r3pf-42rh",
+        "versions": ["4.17.21"]
+      },
+      {
+        "id": "GHSA-h7mw-gpvr-xq4m",
+        "severity": "moderate",
+        "module": "dompurify",
+        "url": "https://github.com/advisories/GHSA-h7mw-gpvr-xq4m",
+        "versions": ["2.3.10"]
+      },
+      {
+        "id": "GHSA-crv5-9vww-q3g8",
+        "severity": "moderate",
+        "module": "dompurify",
+        "url": "https://github.com/advisories/GHSA-crv5-9vww-q3g8",
+        "versions": ["2.3.10"]
+      },
+      {
+        "id": "GHSA-ghcm-xqfw-q4vr",
+        "severity": "moderate",
+        "module": "mermaid",
+        "url": "https://github.com/advisories/GHSA-ghcm-xqfw-q4vr",
+        "versions": ["9.1.6"]
+      },
+      {
+        "id": "GHSA-xcj9-5m2h-648r",
+        "severity": "moderate",
+        "module": "mermaid",
+        "url": "https://github.com/advisories/GHSA-xcj9-5m2h-648r",
+        "versions": ["9.1.6"]
+      },
+      {
+        "id": "GHSA-6m6c-36f7-fhxh",
+        "severity": "moderate",
+        "module": "mermaid",
+        "url": "https://github.com/advisories/GHSA-6m6c-36f7-fhxh",
+        "versions": ["9.1.6"]
+      },
+      {
+        "id": "GHSA-xxjr-mmjv-4gpg",
+        "severity": "moderate",
+        "module": "lodash",
+        "url": "https://github.com/advisories/GHSA-xxjr-mmjv-4gpg",
+        "versions": ["4.17.21"]
+      },
+      {
+        "id": "GHSA-rcqx-6q8c-2c42",
+        "severity": "moderate",
+        "module": "svelte",
+        "url": "https://github.com/advisories/GHSA-rcqx-6q8c-2c42",
+        "versions": ["3.50.0"]
+      },
+      {
+        "id": "GHSA-pr6f-5x2q-rwfp",
+        "severity": "moderate",
+        "module": "svelte",
+        "url": "https://github.com/advisories/GHSA-pr6f-5x2q-rwfp",
+        "versions": ["3.50.0"]
+      },
+      {
+        "id": "GHSA-hpcv-96wg-7vj8",
+        "severity": "moderate",
+        "module": "dompurify",
+        "url": "https://github.com/advisories/GHSA-hpcv-96wg-7vj8",
+        "versions": ["2.3.10"]
+      },
+      {
+        "id": "GHSA-r47g-fvhr-h676",
+        "severity": "moderate",
+        "module": "dompurify",
+        "url": "https://github.com/advisories/GHSA-r47g-fvhr-h676",
+        "versions": ["2.3.10"]
+      },
+      {
+        "id": "GHSA-rp9w-3fw7-7cwq",
+        "severity": "moderate",
+        "module": "dompurify",
+        "url": "https://github.com/advisories/GHSA-rp9w-3fw7-7cwq",
+        "versions": ["2.3.10"]
+      },
+      {
+        "id": "GHSA-6v5v-wf23-fmfq",
+        "severity": "moderate",
+        "module": "markdown-it",
+        "url": "https://github.com/advisories/GHSA-6v5v-wf23-fmfq",
+        "versions": ["13.0.1"]
+      },
+      {
+        "id": "GHSA-22p9-wv53-3rq4",
+        "severity": "high",
+        "module": "linkify-it",
+        "url": "https://github.com/advisories/GHSA-22p9-wv53-3rq4",
+        "versions": ["4.0.1"]
+      },
+      {
+        "id": "GHSA-87f9-hvmw-gh4p",
+        "severity": "moderate",
+        "module": "mermaid",
+        "url": "https://github.com/advisories/GHSA-87f9-hvmw-gh4p",
+        "versions": ["9.1.6"]
+      },
+      {
+        "id": "GHSA-v245-v573-v5vm",
+        "severity": "high",
+        "module": "linkify-it",
+        "url": "https://github.com/advisories/GHSA-v245-v573-v5vm",
+        "versions": ["4.0.1"]
+      },
+      {
+        "id": "GHSA-cmwh-pvxp-8882",
+        "severity": "moderate",
+        "module": "dompurify",
+        "url": "https://github.com/advisories/GHSA-cmwh-pvxp-8882",
+        "versions": ["2.3.10"]
+      },
+      {
+        "id": "GHSA-vxr8-fq34-vvx9",
+        "severity": "low",
+        "module": "dompurify",
+        "url": "https://github.com/advisories/GHSA-vxr8-fq34-vvx9",
+        "versions": ["2.3.10"]
+      },
+      {
+        "id": "GHSA-x4vx-rjvf-j5p4",
+        "severity": "low",
+        "module": "dompurify",
+        "url": "https://github.com/advisories/GHSA-x4vx-rjvf-j5p4",
+        "versions": ["2.3.10"]
+      },
+      {
+        "id": "GHSA-76mc-f452-cxcm",
+        "severity": "moderate",
+        "module": "dompurify",
+        "url": "https://github.com/advisories/GHSA-76mc-f452-cxcm",
+        "versions": ["2.3.10"]
+      },
+      {
+        "id": "GHSA-39q2-94rc-95cp",
+        "severity": "moderate",
+        "module": "dompurify",
+        "url": "https://github.com/advisories/GHSA-39q2-94rc-95cp",
+        "versions": ["2.3.10"]
+      },
+      {
+        "id": "GHSA-cjmm-f4jc-qw8r",
+        "severity": "moderate",
+        "module": "dompurify",
+        "url": "https://github.com/advisories/GHSA-cjmm-f4jc-qw8r",
+        "versions": ["2.3.10"]
+      },
+      {
+        "id": "GHSA-cj63-jhhr-wcxv",
+        "severity": "moderate",
+        "module": "dompurify",
+        "url": "https://github.com/advisories/GHSA-cj63-jhhr-wcxv",
+        "versions": ["2.3.10"]
+      },
+      {
+        "id": "GHSA-h8r8-wccr-v5f2",
+        "severity": "moderate",
+        "module": "dompurify",
+        "url": "https://github.com/advisories/GHSA-h8r8-wccr-v5f2",
+        "versions": ["2.3.10"]
+      },
+      {
+        "id": "GHSA-36jr-mh4h-2g58",
+        "severity": "high",
+        "module": "d3-color",
+        "url": "https://github.com/advisories/GHSA-36jr-mh4h-2g58",
+        "versions": ["1.4.1"]
+      },
+      {
+        "id": "GHSA-c4c3-pg64-4m4v",
+        "severity": "low",
+        "module": "mermaid",
+        "url": "https://github.com/advisories/GHSA-c4c3-pg64-4m4v",
+        "versions": ["9.1.6"]
+      },
+      {
+        "id": "GHSA-6x64-9x62-f2gx",
+        "severity": "moderate",
+        "module": "mermaid",
+        "url": "https://github.com/advisories/GHSA-6x64-9x62-f2gx",
+        "versions": ["9.1.6"]
+      },
+      {
+        "id": "GHSA-55q2-fjhq-7xh7",
+        "severity": "moderate",
+        "module": "dompurify",
+        "url": "https://github.com/advisories/GHSA-55q2-fjhq-7xh7",
+        "versions": ["2.3.10"]
+      },
+      {
+        "id": "GHSA-c2j3-45gr-mqc4",
+        "severity": "low",
+        "module": "dompurify",
+        "url": "https://github.com/advisories/GHSA-c2j3-45gr-mqc4",
+        "versions": ["2.3.10"]
+      },
+      {
+        "id": "GHSA-6688-9rhm-gjv2",
+        "severity": "low",
+        "module": "dompurify",
+        "url": "https://github.com/advisories/GHSA-6688-9rhm-gjv2",
+        "versions": ["2.3.10"]
+      },
+      {
+        "id": "GHSA-238p-pmpm-9mq7",
+        "severity": "low",
+        "module": "katex",
+        "url": "https://github.com/advisories/GHSA-238p-pmpm-9mq7",
+        "versions": ["0.15.6", "0.16.2"]
+      },
+      {
+        "id": "GHSA-r7fv-28h4-cvq7",
+        "severity": "high",
+        "module": "markdown-it",
+        "url": "https://github.com/advisories/GHSA-r7fv-28h4-cvq7",
+        "versions": ["13.0.1"]
+      },
+      {
+        "id": "GHSA-vfgh-jcmw-g37q",
+        "severity": "low",
+        "module": "markdown-it",
+        "url": "https://github.com/advisories/GHSA-vfgh-jcmw-g37q",
+        "versions": ["13.0.1"]
+      },
+      {
+        "id": "GHSA-mrv2-3pqr-j5jr",
+        "severity": "high",
+        "module": "dompurify",
+        "url": "https://github.com/advisories/GHSA-mrv2-3pqr-j5jr",
+        "versions": ["2.3.10"]
+      },
+      {
+        "id": "GHSA-c6gr-qvv4-5v3f",
+        "severity": "low",
+        "module": "dompurify",
+        "url": "https://github.com/advisories/GHSA-c6gr-qvv4-5v3f",
+        "versions": ["2.3.10"]
+      },
+      {
+        "id": "GHSA-253c-mchw-3w2r",
+        "severity": "moderate",
+        "module": "markdown-it",
+        "url": "https://github.com/advisories/GHSA-253c-mchw-3w2r",
+        "versions": ["13.0.1"]
+      }
+    ]
+  },
+  "candidate": {
+    "sourceCommit": "4eea56a4bb86801f9fca1c19111504c5bdb99b25",
+    "metadata": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 2,
+        "moderate": 15,
+        "high": 4,
+        "critical": 0
+      },
+      "dependencies": 237,
+      "devDependencies": 0,
+      "optionalDependencies": 13,
+      "totalDependencies": 250
+    },
+    "advisories": [
+      {
+        "id": "GHSA-3wc5-fcw2-2329",
+        "severity": "moderate",
+        "module": "katex",
+        "url": "https://github.com/advisories/GHSA-3wc5-fcw2-2329",
+        "versions": ["0.15.6", "0.16.2"]
+      },
+      {
+        "id": "GHSA-f98w-7cxr-ff2h",
+        "severity": "moderate",
+        "module": "katex",
+        "url": "https://github.com/advisories/GHSA-f98w-7cxr-ff2h",
+        "versions": ["0.15.6", "0.16.2"]
+      },
+      {
+        "id": "GHSA-cvr6-37gx-v8wc",
+        "severity": "moderate",
+        "module": "katex",
+        "url": "https://github.com/advisories/GHSA-cvr6-37gx-v8wc",
+        "versions": ["0.15.6", "0.16.2"]
+      },
+      {
+        "id": "GHSA-8266-84wp-wv5c",
+        "severity": "moderate",
+        "module": "svelte",
+        "url": "https://github.com/advisories/GHSA-8266-84wp-wv5c",
+        "versions": ["3.50.0"]
+      },
+      {
+        "id": "GHSA-cg87-wmx4-v546",
+        "severity": "moderate",
+        "module": "katex",
+        "url": "https://github.com/advisories/GHSA-cg87-wmx4-v546",
+        "versions": ["0.15.6", "0.16.2"]
+      },
+      {
+        "id": "GHSA-gw32-9rmw-qwww",
+        "severity": "high",
+        "module": "svelte",
+        "url": "https://github.com/advisories/GHSA-gw32-9rmw-qwww",
+        "versions": ["3.50.0"]
+      },
+      {
+        "id": "GHSA-64fm-8hw2-v72w",
+        "severity": "moderate",
+        "module": "katex",
+        "url": "https://github.com/advisories/GHSA-64fm-8hw2-v72w",
+        "versions": ["0.15.6", "0.16.2"]
+      },
+      {
+        "id": "GHSA-38c4-r59v-3vqw",
+        "severity": "moderate",
+        "module": "markdown-it",
+        "url": "https://github.com/advisories/GHSA-38c4-r59v-3vqw",
+        "versions": ["13.0.1"]
+      },
+      {
+        "id": "GHSA-crpf-4hrx-3jrp",
+        "severity": "moderate",
+        "module": "svelte",
+        "url": "https://github.com/advisories/GHSA-crpf-4hrx-3jrp",
+        "versions": ["3.50.0"]
+      },
+      {
+        "id": "GHSA-m56q-vw4c-c2cp",
+        "severity": "moderate",
+        "module": "svelte",
+        "url": "https://github.com/advisories/GHSA-m56q-vw4c-c2cp",
+        "versions": ["3.50.0"]
+      },
+      {
+        "id": "GHSA-f7gr-6p89-r883",
+        "severity": "moderate",
+        "module": "svelte",
+        "url": "https://github.com/advisories/GHSA-f7gr-6p89-r883",
+        "versions": ["3.50.0"]
+      },
+      {
+        "id": "GHSA-phwv-c562-gvmh",
+        "severity": "moderate",
+        "module": "svelte",
+        "url": "https://github.com/advisories/GHSA-phwv-c562-gvmh",
+        "versions": ["3.50.0"]
+      },
+      {
+        "id": "GHSA-rcqx-6q8c-2c42",
+        "severity": "moderate",
+        "module": "svelte",
+        "url": "https://github.com/advisories/GHSA-rcqx-6q8c-2c42",
+        "versions": ["3.50.0"]
+      },
+      {
+        "id": "GHSA-pr6f-5x2q-rwfp",
+        "severity": "moderate",
+        "module": "svelte",
+        "url": "https://github.com/advisories/GHSA-pr6f-5x2q-rwfp",
+        "versions": ["3.50.0"]
+      },
+      {
+        "id": "GHSA-6v5v-wf23-fmfq",
+        "severity": "moderate",
+        "module": "markdown-it",
+        "url": "https://github.com/advisories/GHSA-6v5v-wf23-fmfq",
+        "versions": ["13.0.1"]
+      },
+      {
+        "id": "GHSA-22p9-wv53-3rq4",
+        "severity": "high",
+        "module": "linkify-it",
+        "url": "https://github.com/advisories/GHSA-22p9-wv53-3rq4",
+        "versions": ["4.0.1"]
+      },
+      {
+        "id": "GHSA-v245-v573-v5vm",
+        "severity": "high",
+        "module": "linkify-it",
+        "url": "https://github.com/advisories/GHSA-v245-v573-v5vm",
+        "versions": ["4.0.1"]
+      },
+      {
+        "id": "GHSA-238p-pmpm-9mq7",
+        "severity": "low",
+        "module": "katex",
+        "url": "https://github.com/advisories/GHSA-238p-pmpm-9mq7",
+        "versions": ["0.15.6", "0.16.2"]
+      },
+      {
+        "id": "GHSA-r7fv-28h4-cvq7",
+        "severity": "high",
+        "module": "markdown-it",
+        "url": "https://github.com/advisories/GHSA-r7fv-28h4-cvq7",
+        "versions": ["13.0.1"]
+      },
+      {
+        "id": "GHSA-vfgh-jcmw-g37q",
+        "severity": "low",
+        "module": "markdown-it",
+        "url": "https://github.com/advisories/GHSA-vfgh-jcmw-g37q",
+        "versions": ["13.0.1"]
+      },
+      {
+        "id": "GHSA-253c-mchw-3w2r",
+        "severity": "moderate",
+        "module": "markdown-it",
+        "url": "https://github.com/advisories/GHSA-253c-mchw-3w2r",
+        "versions": ["13.0.1"]
+      }
+    ]
+  },
+  "newAdvisoryIds": [],
+  "removedAdvisoryIds": [
+    "GHSA-q8gg-vj6m-hgmj",
+    "GHSA-mmhx-hmjr-r674",
+    "GHSA-m4gq-x24j-jpmf",
+    "GHSA-vhxf-7vqr-mrjg",
+    "GHSA-p3vf-v8qc-cwcr",
+    "GHSA-gx9m-whjm-85jf",
+    "GHSA-r5fr-rjxr-66jc",
+    "GHSA-f23m-r3pf-42rh",
+    "GHSA-h7mw-gpvr-xq4m",
+    "GHSA-crv5-9vww-q3g8",
+    "GHSA-ghcm-xqfw-q4vr",
+    "GHSA-xcj9-5m2h-648r",
+    "GHSA-6m6c-36f7-fhxh",
+    "GHSA-xxjr-mmjv-4gpg",
+    "GHSA-hpcv-96wg-7vj8",
+    "GHSA-r47g-fvhr-h676",
+    "GHSA-rp9w-3fw7-7cwq",
+    "GHSA-87f9-hvmw-gh4p",
+    "GHSA-cmwh-pvxp-8882",
+    "GHSA-vxr8-fq34-vvx9",
+    "GHSA-x4vx-rjvf-j5p4",
+    "GHSA-76mc-f452-cxcm",
+    "GHSA-39q2-94rc-95cp",
+    "GHSA-cjmm-f4jc-qw8r",
+    "GHSA-cj63-jhhr-wcxv",
+    "GHSA-h8r8-wccr-v5f2",
+    "GHSA-36jr-mh4h-2g58",
+    "GHSA-c4c3-pg64-4m4v",
+    "GHSA-6x64-9x62-f2gx",
+    "GHSA-55q2-fjhq-7xh7",
+    "GHSA-c2j3-45gr-mqc4",
+    "GHSA-6688-9rhm-gjv2",
+    "GHSA-mrv2-3pqr-j5jr",
+    "GHSA-c6gr-qvv4-5v3f"
+  ],
+  "boundary": "Inventory advisory comparison, not exploitability certification. Existing unrelated advisories remain; registry results are time-sensitive."
+}

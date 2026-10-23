@@ -24,6 +24,8 @@
 
 ## 維護策略
 
+2026-10-23：Mermaid 12.2.0／本機 ZenUML、31 圖種、Anthropic 預設與設定面板、85% 新／重設寬度已完成固定環境驗收，尚未 release。永久 Test Plan、原始量測、效能增加及既有依賴風險見 [驗收與交接](research/2026-10-23-mermaid12-acceptance.md)；不將產品版號 1.8.2 視為這批改動已上架。
+
 - 上游 sync：上游 remote 名 upstream，僅挑選性 cherry-pick；版號與上游脫鉤（本 fork 自 1.0.0 起算）。
 - 商店版本：送審一次一版，store 材料在 docs/store-listing.md。
 - 依據研究：docs/research/ 與 swchen44/personal-knowledge-base-from-ai 的 2026-08-30 Markdown 規格研究。

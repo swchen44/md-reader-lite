@@ -1,0 +1,262 @@
+{
+  "recordedAt": "2026-10-23T04:44:15.960Z",
+  "sourceCommit": "1065b219416feede0f50092ab15e49eec10a6de2",
+  "runtimeSourceCommit": "4eea56a4bb86801f9fca1c19111504c5bdb99b25",
+  "boundary": "Later CI/test/docs-only changes do not change measured product assets. Probe sourceCommit predates uncommitted fixes; verified input hashes identify exact shared source.",
+  "tests": {
+    "unit": {
+      "exitCode": 0,
+      "logSha256": "d3561436bb9b226572f601bde1029c5d4d9474a3e2be4e7a4f49aeb80dc3509e",
+      "tests": 239,
+      "pass": 239,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "e2e": {
+      "exitCode": 0,
+      "logSha256": "691c1ecaa7e8a4f4419dd7efca61e42d9374da895452fd46c2453546f89b3bb3",
+      "tests": 146,
+      "pass": 146,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "confinedProbe": {
+      "exitCode": 0,
+      "logSha256": "a6be9bf2d506f2c5d78d02bad6f640dbffe39877db6edbe3677cae7a5ecb0454",
+      "tests": 33,
+      "pass": 33,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "evidenceHelpers": {
+      "exitCode": 0,
+      "logSha256": "a52b844b93c3ed222a30c0063e69bc5bf3de89412105111cb37bc0f468afa9a9",
+      "tests": 3,
+      "pass": 3,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    }
+  },
+  "typecheck": {
+    "exitCode": 0,
+    "logSha256": "d9bfa40b96c9900c39ed6c445479a07e5d8468071a65a33f291b218a1049df43"
+  },
+  "build": {
+    "exitCode": 0,
+    "logSha256": "b640c6796925fb0e40720cc055eed427631420d568a138458bfe4b8227394ee6"
+  },
+  "probe": {
+    "started": "2026-10-23T04:33:33.907Z",
+    "finished": "2026-10-23T04:34:24.629Z",
+    "browser": "147.0.7727.15",
+    "sourceCommit": "35b429420259b659b24762807ea4ef89d02e4992",
+    "fixtureSha256": "2621e1a07de3571baebe2b800c7ea07eccb131c76651723ebaf3d6e749401b5e",
+    "testSha256": "98b305b7faeb62691a8fa9192eac40d506b42a3f36c93ec7f7a064f22a204052",
+    "summary": {
+      "pass": 33,
+      "fail": 0,
+      "unavailable": 0
+    },
+    "gates": [
+      {
+        "name": "all 30 core types render in an isolated-world MV3 content script",
+        "status": "pass"
+      },
+      {
+        "name": "local renderer frame can connect under strict host CSP",
+        "status": "pass"
+      },
+      {
+        "name": "ZenUML renders in the unfiltered 31-type gallery",
+        "status": "pass"
+      },
+      {
+        "name": "all 31 types render under strict host-page CSP",
+        "status": "pass"
+      },
+      {
+        "name": "local file injection renders all 31 types",
+        "status": "pass"
+      },
+      {
+        "name": "malformed input preserves source and later diagrams recover",
+        "status": "pass"
+      },
+      {
+        "name": "cleanup and recovery after stylesheet failure",
+        "status": "pass"
+      },
+      {
+        "name": "cleanup and recovery after serialization failure",
+        "status": "pass"
+      },
+      {
+        "name": "strict rendering makes no remote attempt: html-image",
+        "status": "pass"
+      },
+      {
+        "name": "strict rendering makes no remote attempt: image-node",
+        "status": "pass"
+      },
+      {
+        "name": "strict rendering makes no remote attempt: theme-css",
+        "status": "pass"
+      },
+      {
+        "name": "strict rendering makes no remote attempt: security-directive",
+        "status": "pass"
+      },
+      {
+        "name": "protected rendering limit: source-size-limit",
+        "status": "pass"
+      },
+      {
+        "name": "protected rendering limit: edge-limit",
+        "status": "pass"
+      },
+      {
+        "name": "returned SVG styles cannot select the host body",
+        "status": "pass"
+      },
+      {
+        "name": "safe authored class styles survive the resource policy",
+        "status": "pass"
+      },
+      {
+        "name": "Sankey filters authored URL paints and rejects unsafe caller configuration",
+        "status": "pass"
+      },
+      {
+        "name": "preflight blocks encoded or structured resources: state-class-resource",
+        "status": "pass"
+      },
+      {
+        "name": "preflight blocks encoded or structured resources: state-inline-resource",
+        "status": "pass"
+      },
+      {
+        "name": "preflight blocks encoded or structured resources: c4-relation-paint",
+        "status": "pass"
+      },
+      {
+        "name": "preflight blocks encoded or structured resources: swimlane-image-node",
+        "status": "pass"
+      },
+      {
+        "name": "preflight blocks encoded or structured resources: c4-element-paint",
+        "status": "pass"
+      },
+      {
+        "name": "preflight blocks encoded or structured resources: entity-image",
+        "status": "pass"
+      },
+      {
+        "name": "preflight blocks encoded or structured resources: mermaid-entity-image",
+        "status": "pass"
+      },
+      {
+        "name": "preflight blocks encoded or structured resources: relative-image",
+        "status": "pass"
+      },
+      {
+        "name": "preflight blocks encoded or structured resources: svg-image",
+        "status": "pass"
+      },
+      {
+        "name": "preflight blocks encoded or structured resources: svg-use",
+        "status": "pass"
+      },
+      {
+        "name": "preflight blocks encoded or structured resources: inline-css",
+        "status": "pass"
+      },
+      {
+        "name": "preflight blocks encoded or structured resources: escaped-css",
+        "status": "pass"
+      },
+      {
+        "name": "preflight blocks encoded or structured resources: image-set",
+        "status": "pass"
+      },
+      {
+        "name": "preflight blocks encoded or structured resources: variable-url",
+        "status": "pass"
+      },
+      {
+        "name": "preflight blocks encoded or structured resources: yaml-relative-css",
+        "status": "pass"
+      },
+      {
+        "name": "preflight blocks encoded or structured resources: yaml-font",
+        "status": "pass"
+      }
+    ],
+    "build": {
+      "bytes": 14130097,
+      "node": "v26.0.0",
+      "webpack": "5.74.0",
+      "inputs": {
+        "content.js": "dd164499fb6358e147ac61668f28dcf45a6054bcb1ced969ac175c8300836077",
+        "frame.js": "d5a770cd25e1797efd21322e73422d568937db009b34ed4521ea744a296dce02",
+        "frame.html": "83bffde845f3c8ef7e1609e99b50eec485a46b52e5c3740ee8fa7aa2e0a20272",
+        "../../../src/core/mermaid/frame-runtime.js": "3ab55570ea4a3bc22bd0b6c7b061f24fcaff6830be0b6c12f1b07a560ef9f9a9",
+        "../../../src/core/mermaid/frame-transport.js": "df09ca85976621c7a7cee8a60962c97852dd727ab70dd40f0062d2d8e5326f12",
+        "../../../src/core/mermaid/css-policy.mjs": "e44de1295809f2585fb379b38a4a34ee4c33e551adc0128edd8d44b3afbf504f",
+        "../../../src/core/mermaid/svg-policy.js": "f165b3a7b09dec17a41a2190668335cf2992d6522a3154747cb466b53a57a0f1",
+        "../../../src/core/mermaid/resource-preflight.mjs": "898b92c4676f575608c3d2e91278ea8ace26d9b6ff1a25a84b17dbdf0d637a31",
+        "fault-injection.js": "cf6eb4dfac34f666117ccf60b032ad680a63dc8edc04cc1f6e679880d5368ff5",
+        "background.js": "6652be84df55b9f9ec1440a28f1b02b0ad5407620dd31ee5ea62b1e2605fa7ee",
+        "manifest.json": "12a2d24ef667a7450bc26f4ba6f942be38f1d0966fbfaa6ec6be9c7dccdacde2",
+        "package.json": "91a232f4f6f1c659d90ebaa01a789e7bc648671e7aeecc2f3235369e4d8a54c5",
+        "package-lock.json": "0fdf8790ec9cfcbc605aa778cb1bf694d0a19691b163120b3fdcfcc2dfa91b2b",
+        "build.cjs": "8a82ecea9301b6417b08df5b846c762001d5c56fb0f4c44a72e369795a506d21",
+        "evidence.cjs": "414ac6d8285397d895800573a75387bfe2ab338a9c313c33f6af0a963576a211",
+        "../../../pnpm-lock.yaml": "81e3b3ded0738d74161a9beb3bf738be2d033e41404510cd4d4d8b59faea0407"
+      },
+      "outputs": {
+        "js/content.js": "3d2d16074d041d31e8ea0904bd2943cee49058a05bca1db7f3dc9769779502b6",
+        "js/frame.js": "716cdb4a6024f5df0b1c7e9c7cf69805b0982dfc58caf209d29aa58f4dc4ea97",
+        "frame.html": "83bffde845f3c8ef7e1609e99b50eec485a46b52e5c3740ee8fa7aa2e0a20272",
+        "background.js": "6652be84df55b9f9ec1440a28f1b02b0ad5407620dd31ee5ea62b1e2605fa7ee",
+        "manifest.json": "12a2d24ef667a7450bc26f4ba6f942be38f1d0966fbfaa6ec6be9c7dccdacde2"
+      },
+      "warnings": []
+    },
+    "cleanupErrors": []
+  },
+  "matrix": {
+    "version": "12.2.0",
+    "testedAt": "2026-10-23T04:36:40.147Z",
+    "individual": 62,
+    "outputs": 372,
+    "externalRequests": []
+  },
+  "packaging": {
+    "zip": {
+      "bytes": 3973064,
+      "sha256": "4ef56204d29f9d36f639fe8c982d70ae172bf3cbafc06407bf128176d4d7a115",
+      "entries": 60
+    },
+    "notices": {
+      "bytes": 709898,
+      "sha256": "6904b6e4751d890d0e28c1e0d680dfc1b5f824959694363feea6ba7a6ffaf6ce",
+      "packageVersions": 240,
+      "readmeFallbacks": [
+        "@napi-rs/canvas-darwin-arm64@0.1.100",
+        "@panzoom/panzoom@4.6.2",
+        "@viz-js/viz@3.29.0",
+        "antlr4@4.11.0"
+      ]
+    },
+    "hostedWorkflow": "not-performed",
+    "release": "not-performed"
+  }
+}

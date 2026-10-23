@@ -1,0 +1,240 @@
+{
+  "testedAt": "2026-10-23T04:38:54.479Z",
+  "scope": "shared-11",
+  "node": "v26.0.0",
+  "hardware": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M1",
+    "memoryBytes": 8589934592
+  },
+  "methodology": "Fresh persistent profile per cold run; navigation to all selected SVGs. Warm redraw includes extension storage, direct tab messaging and all SVG replacement. OS disk cache is not flushed. Browser timings include polling overhead. No p95 claim. Standalone ZenUML and full gallery are absolute costs, not an additive attribution.",
+  "viewport": {
+    "width": 1200,
+    "height": 900
+  },
+  "width": "760px",
+  "customCssEnabled": false,
+  "fixtures": [
+    "Flowchart",
+    "Sequence Diagram",
+    "Class Diagram",
+    "State Diagram",
+    "Entity Relationship Diagram",
+    "User Journey",
+    "Gantt",
+    "Pie Chart",
+    "Requirement Diagram",
+    "GitGraph (Git) Diagram",
+    "C4 Diagram"
+  ],
+  "results": [
+    {
+      "variant": "baseline",
+      "style": "original",
+      "coldSamples": [
+        531.3999999910593, 447.09999999403954, 432.5, 438.5, 435.09999999403954
+      ],
+      "warmSamples": [
+        86.09999999403954, 67.79999999701977, 65.69999998807907,
+        68.69999998807907, 65.29999999701977, 66.70000000298023,
+        71.6000000089407, 68.40000000596046, 64.3999999910593, 66.20000000298023
+      ],
+      "browser": "147.0.7727.15",
+      "commit": "3b785a27c669e45a08c2578afac3a7aced68d16f",
+      "dirty": "",
+      "assets": {
+        "content": {
+          "bytes": 4369101,
+          "sha256": "2c8ed1dcc274246414a30fc9f71d9d351b01129cc69c156f0e9142e11b0cc417"
+        },
+        "zip": {
+          "bytes": 1706477,
+          "sha256": "d760709ba518e04fe6cb4ef673c6c6c898703fba5dbdd1516851431a03059789"
+        }
+      },
+      "cold": {
+        "samples": [
+          531.3999999910593, 447.09999999403954, 432.5, 438.5,
+          435.09999999403954
+        ],
+        "count": 5,
+        "median": 438.5,
+        "max": 531.3999999910593
+      },
+      "warm": {
+        "samples": [
+          86.09999999403954, 67.79999999701977, 65.69999998807907,
+          68.69999998807907, 65.29999999701977, 66.70000000298023,
+          71.6000000089407, 68.40000000596046, 64.3999999910593,
+          66.20000000298023
+        ],
+        "count": 10,
+        "median": 67.25,
+        "max": 86.09999999403954
+      },
+      "requests": []
+    },
+    {
+      "variant": "baseline",
+      "style": "anthropic-blog",
+      "coldSamples": [
+        449.09999999403954, 427.69999998807907, 432, 430.1000000089407, 623.5
+      ],
+      "warmSamples": [
+        88.79999999701977, 103.6000000089407, 92, 81.79999999701977,
+        88.29999999701977, 85, 104.5, 73, 81.3999999910593, 73.1000000089407
+      ],
+      "browser": "147.0.7727.15",
+      "commit": "3b785a27c669e45a08c2578afac3a7aced68d16f",
+      "dirty": "",
+      "assets": {
+        "content": {
+          "bytes": 4369101,
+          "sha256": "2c8ed1dcc274246414a30fc9f71d9d351b01129cc69c156f0e9142e11b0cc417"
+        },
+        "zip": {
+          "bytes": 1706477,
+          "sha256": "d760709ba518e04fe6cb4ef673c6c6c898703fba5dbdd1516851431a03059789"
+        }
+      },
+      "cold": {
+        "samples": [
+          449.09999999403954, 427.69999998807907, 432, 430.1000000089407, 623.5
+        ],
+        "count": 5,
+        "median": 432,
+        "max": 623.5
+      },
+      "warm": {
+        "samples": [
+          88.79999999701977, 103.6000000089407, 92, 81.79999999701977,
+          88.29999999701977, 85, 104.5, 73, 81.3999999910593, 73.1000000089407
+        ],
+        "count": 10,
+        "median": 86.64999999850988,
+        "max": 104.5
+      },
+      "requests": []
+    },
+    {
+      "variant": "candidate",
+      "style": "original",
+      "coldSamples": [
+        1635.1000000089407, 1336, 1311.199999988079, 1337.7999999970198,
+        1370.1000000089407
+      ],
+      "warmSamples": [
+        309.80000001192093, 313.29999999701977, 296.1000000089407,
+        309.70000000298023, 292.8999999910593, 292.09999999403954,
+        293.29999999701977, 295.09999999403954, 287.09999999403954,
+        276.20000000298023
+      ],
+      "browser": "147.0.7727.15",
+      "commit": "4eea56a4bb86801f9fca1c19111504c5bdb99b25",
+      "dirty": "",
+      "assets": {
+        "content": {
+          "bytes": 3258761,
+          "sha256": "5959e61c0bae1047776ff4a682b14ba3814384b87265bb15bbcc6cbe4cca0bb6"
+        },
+        "frame": {
+          "bytes": 9263059,
+          "sha256": "ce8ec9f13ca2d8ee8bd3ca0c486a50766ede52bab0810e576cc581b1c55bbbe4"
+        },
+        "zip": {
+          "bytes": 3973064,
+          "sha256": "4ef56204d29f9d36f639fe8c982d70ae172bf3cbafc06407bf128176d4d7a115"
+        }
+      },
+      "cold": {
+        "samples": [
+          1635.1000000089407, 1336, 1311.199999988079, 1337.7999999970198,
+          1370.1000000089407
+        ],
+        "count": 5,
+        "median": 1337.7999999970198,
+        "max": 1635.1000000089407
+      },
+      "warm": {
+        "samples": [
+          309.80000001192093, 313.29999999701977, 296.1000000089407,
+          309.70000000298023, 292.8999999910593, 292.09999999403954,
+          293.29999999701977, 295.09999999403954, 287.09999999403954,
+          276.20000000298023
+        ],
+        "count": 10,
+        "median": 294.19999999552965,
+        "max": 313.29999999701977
+      },
+      "requests": []
+    },
+    {
+      "variant": "candidate",
+      "style": "anthropic-blog",
+      "coldSamples": [
+        1368.9000000059605, 1348.5999999940395, 1344.5, 1344.4000000059605,
+        1323.6000000089407
+      ],
+      "warmSamples": [
+        334.90000000596046, 327.59999999403954, 319.79999999701977, 311,
+        311.09999999403954, 311.59999999403954, 353.29999999701977,
+        311.09999999403954, 302.90000000596046, 312.79999999701977
+      ],
+      "browser": "147.0.7727.15",
+      "commit": "4eea56a4bb86801f9fca1c19111504c5bdb99b25",
+      "dirty": "",
+      "assets": {
+        "content": {
+          "bytes": 3258761,
+          "sha256": "5959e61c0bae1047776ff4a682b14ba3814384b87265bb15bbcc6cbe4cca0bb6"
+        },
+        "frame": {
+          "bytes": 9263059,
+          "sha256": "ce8ec9f13ca2d8ee8bd3ca0c486a50766ede52bab0810e576cc581b1c55bbbe4"
+        },
+        "zip": {
+          "bytes": 3973064,
+          "sha256": "4ef56204d29f9d36f639fe8c982d70ae172bf3cbafc06407bf128176d4d7a115"
+        }
+      },
+      "cold": {
+        "samples": [
+          1368.9000000059605, 1348.5999999940395, 1344.5, 1344.4000000059605,
+          1323.6000000089407
+        ],
+        "count": 5,
+        "median": 1344.5,
+        "max": 1368.9000000059605
+      },
+      "warm": {
+        "samples": [
+          334.90000000596046, 327.59999999403954, 319.79999999701977, 311,
+          311.09999999403954, 311.59999999403954, 353.29999999701977,
+          311.09999999403954, 302.90000000596046, 312.79999999701977
+        ],
+        "count": 10,
+        "median": 312.19999999552965,
+        "max": 353.29999999701977
+      },
+      "requests": []
+    }
+  ],
+  "comparisons": [
+    {
+      "style": "original",
+      "coldMedianRatio": 3.050855188134595,
+      "warmMedianRatio": 4.374721189524604,
+      "zipRatio": 2.3282259297957135,
+      "engineAndContentRatio": 2.865994629101044
+    },
+    {
+      "style": "anthropic-blog",
+      "coldMedianRatio": 3.1122685185185186,
+      "warmMedianRatio": 3.6030005770444147,
+      "zipRatio": 2.3282259297957135,
+      "engineAndContentRatio": 2.865994629101044
+    }
+  ],
+  "status": "complete"
+}

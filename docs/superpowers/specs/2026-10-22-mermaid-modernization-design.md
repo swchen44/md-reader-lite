@@ -2,7 +2,7 @@
 
 狀態：**2026-10-23 使用者授權開始分階段執行。** 四項 review 修正已納入；依賴與 runtime 的實際進度以 [實作計畫與續接 checklist](../plans/2026-10-23-mermaid-modernization.md) 為準。先通過 PoC 關卡，再替換產品 renderer。
 
-2026-10-23 checkpoint：[獨立 MV3 probe](../../research/mermaid12-probe.md) 保留 raw strict 四個資源失敗，擴充後 confined 33/33 已通過。B/C 已整合 Mermaid 12.2.0 與本機 ZenUML，31 圖種可用且已推 main；D/D2/D3 新圖種風格、設定面板與 85% 寬度已通過完整回歸，E 最終效能與驗收文件待完成。實際測試計數與續接位置以計畫 ledger 為準。
+2026-10-23 checkpoint：A–E 已完成固定環境 runtime 驗收：239 unit、146 e2e、33 confined probe，31 圖種／372 outputs，包含 Anthropic 預設、整體設定面板與 85% 寬度。完整效能、包體取捨、audit 與未驗證範圍見 [驗收與交接](../../research/2026-10-23-mermaid12-acceptance.md)；push receipt 及續接位置以計畫 ledger 為準。原始 strict 四個資源失敗保留在 probe report，不因後續成功被改成通過。版號仍為 1.8.2，未 release。
 
 ## 目標
 

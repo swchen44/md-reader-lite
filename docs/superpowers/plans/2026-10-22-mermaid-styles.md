@@ -1,5 +1,7 @@
 # Mermaid Style Selection Implementation Plan
 
+> Historical 2026-10-22 design. The next day's [modernization plan](2026-10-23-mermaid-modernization.md) supersedes the Mermaid 9 wrapper, Original default and synchronous rendering details below. Current product defaults to Anthropic and uses a confined async Mermaid 12 renderer; the permanent behavioral cases remain regression references.
+
 > **For agentic workers:** Use `superpowers:executing-plans` to implement this plan task by task. Steps use checkbox syntax for tracking. Follow the repository's Why / What / How / Boundary commit format.
 
 **Goal:** Let readers choose Original or Anthropic blog style for Mermaid diagrams so diagrams can complement the current Developer CSS reading experience.

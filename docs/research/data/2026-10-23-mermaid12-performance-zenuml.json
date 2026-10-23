@@ -1,0 +1,121 @@
+{
+  "testedAt": "2026-10-23T04:41:33.850Z",
+  "scope": "zenuml",
+  "node": "v26.0.0",
+  "hardware": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M1",
+    "memoryBytes": 8589934592
+  },
+  "methodology": "Fresh persistent profile per cold run; navigation to all selected SVGs. Warm redraw includes extension storage, direct tab messaging and all SVG replacement. OS disk cache is not flushed. Browser timings include polling overhead. No p95 claim. Standalone ZenUML and full gallery are absolute costs, not an additive attribution.",
+  "viewport": {
+    "width": 1200,
+    "height": 900
+  },
+  "width": "760px",
+  "customCssEnabled": false,
+  "fixtures": ["ZenUML"],
+  "results": [
+    {
+      "variant": "candidate",
+      "style": "original",
+      "coldSamples": [
+        790.2000000029802, 757.3000000119209, 768.2999999970198, 1055.5, 757
+      ],
+      "warmSamples": [
+        26.600000008940697, 20.700000002980232, 18.299999997019768, 18.5,
+        20.399999991059303, 19.5, 20.299999997019768, 19.599999994039536,
+        21.599999994039536, 20.100000008940697
+      ],
+      "browser": "147.0.7727.15",
+      "commit": "4eea56a4bb86801f9fca1c19111504c5bdb99b25",
+      "dirty": "",
+      "assets": {
+        "content": {
+          "bytes": 3258761,
+          "sha256": "5959e61c0bae1047776ff4a682b14ba3814384b87265bb15bbcc6cbe4cca0bb6"
+        },
+        "frame": {
+          "bytes": 9263059,
+          "sha256": "ce8ec9f13ca2d8ee8bd3ca0c486a50766ede52bab0810e576cc581b1c55bbbe4"
+        },
+        "zip": {
+          "bytes": 3973064,
+          "sha256": "4ef56204d29f9d36f639fe8c982d70ae172bf3cbafc06407bf128176d4d7a115"
+        }
+      },
+      "cold": {
+        "samples": [
+          790.2000000029802, 757.3000000119209, 768.2999999970198, 1055.5, 757
+        ],
+        "count": 5,
+        "median": 768.2999999970198,
+        "max": 1055.5
+      },
+      "warm": {
+        "samples": [
+          26.600000008940697, 20.700000002980232, 18.299999997019768, 18.5,
+          20.399999991059303, 19.5, 20.299999997019768, 19.599999994039536,
+          21.599999994039536, 20.100000008940697
+        ],
+        "count": 10,
+        "median": 20.200000002980232,
+        "max": 26.600000008940697
+      },
+      "requests": []
+    },
+    {
+      "variant": "candidate",
+      "style": "anthropic-blog",
+      "coldSamples": [
+        750.3999999910593, 1060.7999999970198, 729.1000000089407,
+        718.9000000059605, 738.7999999970198
+      ],
+      "warmSamples": [
+        26.700000002980232, 31.899999991059303, 32, 25.400000005960464,
+        24.900000005960464, 22.599999994039536, 19.700000002980232,
+        20.200000002980232, 31.899999991059303, 23
+      ],
+      "browser": "147.0.7727.15",
+      "commit": "4eea56a4bb86801f9fca1c19111504c5bdb99b25",
+      "dirty": "",
+      "assets": {
+        "content": {
+          "bytes": 3258761,
+          "sha256": "5959e61c0bae1047776ff4a682b14ba3814384b87265bb15bbcc6cbe4cca0bb6"
+        },
+        "frame": {
+          "bytes": 9263059,
+          "sha256": "ce8ec9f13ca2d8ee8bd3ca0c486a50766ede52bab0810e576cc581b1c55bbbe4"
+        },
+        "zip": {
+          "bytes": 3973064,
+          "sha256": "4ef56204d29f9d36f639fe8c982d70ae172bf3cbafc06407bf128176d4d7a115"
+        }
+      },
+      "cold": {
+        "samples": [
+          750.3999999910593, 1060.7999999970198, 729.1000000089407,
+          718.9000000059605, 738.7999999970198
+        ],
+        "count": 5,
+        "median": 738.7999999970198,
+        "max": 1060.7999999970198
+      },
+      "warm": {
+        "samples": [
+          26.700000002980232, 31.899999991059303, 32, 25.400000005960464,
+          24.900000005960464, 22.599999994039536, 19.700000002980232,
+          20.200000002980232, 31.899999991059303, 23
+        ],
+        "count": 10,
+        "median": 25.150000005960464,
+        "max": 32
+      },
+      "requests": []
+    }
+  ],
+  "comparisons": [],
+  "status": "complete"
+}

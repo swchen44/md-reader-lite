@@ -2,7 +2,7 @@
 
 日期：2026-10-23。此報告記錄 A 階段的獨立 probe，當時產品使用 Mermaid 9.1.6。後續 B 的 12.2.0 產品整合與目前狀態見 [migration checklist](../superpowers/plans/2026-10-23-mermaid-modernization.md)。
 
-最新 A4 結果：**confined 候選 25/25 browser gates、15/15 helper tests 通過，可進入產品整合。** 下方原始 strict 失敗證據保留；它不會因新增隔離政策而變成通過。產品與 Anthropic 風格遷移尚未驗收。
+最新結果：A4 最初 **25/25**，產品 shared policy 擴充後為 **33/33 confined browser gates 通過**，cleanupErrors 為空。產品與 Anthropic／settings／85% 寬度已完成固定環境驗收，完整 counts、原始樣本與限制見 [最終驗收與交接](2026-10-23-mermaid12-acceptance.md)。下方原始 strict 失敗證據保留；它不會因新增隔離政策而變成通過。
 
 ## 關卡結果
 

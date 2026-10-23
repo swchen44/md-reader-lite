@@ -1,0 +1,155 @@
+{
+  "testedAt": "2026-10-23T04:40:28.677Z",
+  "scope": "gallery-31",
+  "node": "v26.0.0",
+  "hardware": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M1",
+    "memoryBytes": 8589934592
+  },
+  "methodology": "Fresh persistent profile per cold run; navigation to all selected SVGs. Warm redraw includes extension storage, direct tab messaging and all SVG replacement. OS disk cache is not flushed. Browser timings include polling overhead. No p95 claim. Standalone ZenUML and full gallery are absolute costs, not an additive attribution.",
+  "viewport": {
+    "width": 1200,
+    "height": 900
+  },
+  "width": "760px",
+  "customCssEnabled": false,
+  "fixtures": [
+    "Flowchart",
+    "Swimlanes Diagram",
+    "Sequence Diagram",
+    "Class Diagram",
+    "State Diagram",
+    "Entity Relationship Diagram",
+    "User Journey",
+    "Gantt",
+    "Pie Chart",
+    "Quadrant Chart",
+    "Requirement Diagram",
+    "Use Case Diagram",
+    "GitGraph (Git) Diagram",
+    "C4 Diagram",
+    "Mindmaps",
+    "Timeline",
+    "ZenUML",
+    "Sankey",
+    "XY Chart",
+    "Block Diagram",
+    "Packet",
+    "Kanban",
+    "Architecture",
+    "Radar",
+    "Event Modeling",
+    "Treemap",
+    "Venn",
+    "Ishikawa",
+    "Wardley",
+    "Cynefin",
+    "TreeView"
+  ],
+  "results": [
+    {
+      "variant": "candidate",
+      "style": "original",
+      "coldSamples": [
+        2073.699999988079, 2005.699999988079, 1953.300000011921,
+        1915.7999999970198, 1916.8999999910593
+      ],
+      "warmSamples": [
+        708.1000000089407, 662.5999999940395, 647.4000000059605,
+        714.2000000029802, 656.5, 644.6999999880791, 692.7999999970198,
+        685.7000000029802, 686.2999999970198, 637.4000000059605
+      ],
+      "browser": "147.0.7727.15",
+      "commit": "4eea56a4bb86801f9fca1c19111504c5bdb99b25",
+      "dirty": "",
+      "assets": {
+        "content": {
+          "bytes": 3258761,
+          "sha256": "5959e61c0bae1047776ff4a682b14ba3814384b87265bb15bbcc6cbe4cca0bb6"
+        },
+        "frame": {
+          "bytes": 9263059,
+          "sha256": "ce8ec9f13ca2d8ee8bd3ca0c486a50766ede52bab0810e576cc581b1c55bbbe4"
+        },
+        "zip": {
+          "bytes": 3973064,
+          "sha256": "4ef56204d29f9d36f639fe8c982d70ae172bf3cbafc06407bf128176d4d7a115"
+        }
+      },
+      "cold": {
+        "samples": [
+          2073.699999988079, 2005.699999988079, 1953.300000011921,
+          1915.7999999970198, 1916.8999999910593
+        ],
+        "count": 5,
+        "median": 1953.300000011921,
+        "max": 2073.699999988079
+      },
+      "warm": {
+        "samples": [
+          708.1000000089407, 662.5999999940395, 647.4000000059605,
+          714.2000000029802, 656.5, 644.6999999880791, 692.7999999970198,
+          685.7000000029802, 686.2999999970198, 637.4000000059605
+        ],
+        "count": 10,
+        "median": 674.1499999985099,
+        "max": 714.2000000029802
+      },
+      "requests": []
+    },
+    {
+      "variant": "candidate",
+      "style": "anthropic-blog",
+      "coldSamples": [
+        2259.5999999940395, 2069.8999999910593, 2007.5, 1983.8999999910593,
+        2012.0999999940395
+      ],
+      "warmSamples": [
+        755.3999999910593, 727.4000000059605, 710.7000000029802,
+        720.7999999970198, 759.8999999910593, 688, 687.3000000119209, 685,
+        719.7000000029802, 705.6000000089407
+      ],
+      "browser": "147.0.7727.15",
+      "commit": "4eea56a4bb86801f9fca1c19111504c5bdb99b25",
+      "dirty": "",
+      "assets": {
+        "content": {
+          "bytes": 3258761,
+          "sha256": "5959e61c0bae1047776ff4a682b14ba3814384b87265bb15bbcc6cbe4cca0bb6"
+        },
+        "frame": {
+          "bytes": 9263059,
+          "sha256": "ce8ec9f13ca2d8ee8bd3ca0c486a50766ede52bab0810e576cc581b1c55bbbe4"
+        },
+        "zip": {
+          "bytes": 3973064,
+          "sha256": "4ef56204d29f9d36f639fe8c982d70ae172bf3cbafc06407bf128176d4d7a115"
+        }
+      },
+      "cold": {
+        "samples": [
+          2259.5999999940395, 2069.8999999910593, 2007.5, 1983.8999999910593,
+          2012.0999999940395
+        ],
+        "count": 5,
+        "median": 2012.0999999940395,
+        "max": 2259.5999999940395
+      },
+      "warm": {
+        "samples": [
+          755.3999999910593, 727.4000000059605, 710.7000000029802,
+          720.7999999970198, 759.8999999910593, 688, 687.3000000119209, 685,
+          719.7000000029802, 705.6000000089407
+        ],
+        "count": 10,
+        "median": 715.2000000029802,
+        "max": 759.8999999910593
+      },
+      "requests": []
+    }
+  ],
+  "comparisons": [],
+  "status": "complete"
+}
