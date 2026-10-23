@@ -9,6 +9,7 @@ export function startRenderer(
   {
     registerZen = async () => {},
     validateDiagram = async () => {},
+    resolveConfig = job => job.config,
     injectFault = () => () => {},
   } = {},
 ) {
@@ -70,40 +71,57 @@ export function startRenderer(
         await registerZen()
         registeredZen = true
       }
-      mermaid.initialize({
-        ...job.config,
-        startOnLoad: false,
-        securityLevel: 'strict',
-        suppressErrorRendering: true,
-        maxTextSize: 50000,
-        maxEdges: 500,
-        secure: [
-          'secure',
-          'securityLevel',
-          'startOnLoad',
-          'suppressErrorRendering',
-          'maxTextSize',
-          'maxEdges',
-        ],
-      })
+      const initialize = config =>
+        mermaid.initialize({
+          ...config,
+          startOnLoad: false,
+          securityLevel: 'strict',
+          suppressErrorRendering: true,
+          maxTextSize: 50000,
+          maxEdges: 500,
+          secure: [
+            'secure',
+            'securityLevel',
+            'startOnLoad',
+            'suppressErrorRendering',
+            'maxTextSize',
+            'maxEdges',
+          ],
+        })
+      initialize(job.config)
       const parsed = await mermaid.parse(job.source)
       result.syntax = 'valid'
       checkConfig(parsed.config)
       await validateDiagram(job, parsed)
-      if (parsed.diagramType.startsWith('flowchart')) {
+      const { svgCSS, ...config } = (await resolveConfig(job, parsed)) || {}
+      checkConfig({ ...config, svgCSS })
+      initialize(config)
+      {
         const diagram = await mermaid.mermaidAPI.getDiagramFromText(job.source)
-        if (typeof diagram.db.getVertices !== 'function')
+        if (
+          (parsed.diagramType.startsWith('flowchart') ||
+            parsed.diagramType === 'swimlane') &&
+          typeof diagram.db.getVertices !== 'function'
+        )
           throw new Error(
             'Blocked resource policy: flowchart metadata API changed',
           )
+        if (
+          parsed.diagramType === 'c4' &&
+          ['getC4ShapeArray', 'getBoundaries', 'getRels'].some(
+            method => typeof diagram.db[method] !== 'function',
+          )
+        )
+          throw new Error('Blocked resource policy: C4 metadata API changed')
         checkDiagram(diagram)
       }
       const renderId = /^md-reader-mermaid-\d+$/.test(job.renderId)
         ? job.renderId
         : `confined-${id}`
       restoreFault = injectFault(job.failAt, renderId)
+      result.preflightPassed = true
       const rendered = await mermaid.render(renderId, job.source, scratch)
-      result.svg = sanitizeSVG(rendered.svg)
+      result.svg = sanitizeSVG(rendered.svg, svgCSS)
       result.status = 'ready'
     } catch (error) {
       result.error = error instanceof Error ? error.message : String(error)

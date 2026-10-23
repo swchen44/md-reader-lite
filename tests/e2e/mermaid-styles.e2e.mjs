@@ -102,6 +102,34 @@ describe('Mermaid styles (e2e)', () => {
             '\n\n' +
             fence(FLOW.replace('Start', 'Plain')),
         )
+      if (path === '/author-font.md')
+        return res.end(
+          '# Authored typography\n\n' +
+            fence(
+              '---\nconfig:\n  theme: base\n  fontFamily: Courier New\n  themeVariables:\n    fontFamily: Courier New\n    primaryTextColor: "#166534"\n---\n' +
+                FLOW,
+            ) +
+            '\n\n' +
+            fence(FLOW),
+        )
+      if (path === '/author-c4.md')
+        return res.end(
+          '# Authored C4\n\n' +
+            fence(
+              'C4Context\n Person(reader, "Reader")\n System(app, "Application")\n Rel(reader, app, "Reads")\n UpdateElementStyle(reader, $bgColor="#123456", $fontColor="#ffffff", $borderColor="#654321")',
+            ) +
+            '\n\n' +
+            fence('C4Context\n Person(reader, "Plain")'),
+        )
+      if (path === '/author-sankey.md')
+        return res.end(
+          '# Authored Sankey\n\n' +
+            fence(
+              '---\nconfig:\n  sankey:\n    nodeColors:\n      Documents: "#123456"\n---\nsankey\nDocuments,Text,55',
+            ) +
+            '\n\n' +
+            fence('sankey\nDocuments,Text,55'),
+        )
       if (path === '/mixed.md')
         return res.end(
           '# Mixed\n\n' +
@@ -234,7 +262,7 @@ describe('Mermaid styles (e2e)', () => {
   test('Original renders nonblank SVGs in light and dark', async () => {
     const baseline = {}
     for (const theme of ['light', 'dark']) {
-      await open(theme)
+      await open(theme, '/flow.md', { mdPluginOptions: OPTIONS('original') })
       const actual = await readFlowchart()
       assert.ok(actual.width > 0 && actual.height > 0)
       assert.ok(
@@ -377,6 +405,64 @@ describe('Mermaid styles (e2e)', () => {
       colors[1],
       'explicit forest theme should take precedence over either preset',
     )
+  })
+
+  test('authored YAML typography survives host paragraph CSS without leaking to the next graph', async () => {
+    await open('light', '/author-font.md', {
+      mdPluginOptions: OPTIONS('anthropic-blog'),
+    })
+    const labels = await page.locator('pre.mermaid').evaluateAll(containers =>
+      containers.map(container =>
+        [...container.querySelectorAll('foreignObject p')].map(label => {
+          const style = getComputedStyle(label)
+          return {
+            font: style.fontFamily,
+            color: style.color,
+            size: style.fontSize,
+          }
+        }),
+      ),
+    )
+    assert.ok(labels.every(items => items.length > 0))
+    assert.ok(
+      labels[0].every(label => /Courier New/.test(label.font)),
+      JSON.stringify(labels),
+    )
+    assert.ok(
+      labels[0].every(label => label.color === 'rgb(22, 101, 52)'),
+      JSON.stringify(labels),
+    )
+    assert.ok(
+      labels[1].every(label => /Georgia/.test(label.font)),
+      JSON.stringify(labels),
+    )
+    assert.ok(
+      labels[1].every(label => label.size === '16px'),
+      JSON.stringify(labels),
+    )
+  })
+
+  test('C4 and Sankey preserve authored native colors without preset leakage', async () => {
+    for (const path of ['/author-c4.md', '/author-sankey.md']) {
+      await open('light', path, { mdPluginOptions: OPTIONS('anthropic-blog') })
+      const colors = await page
+        .locator('pre.mermaid > svg')
+        .evaluateAll(svgs =>
+          svgs.map(svg =>
+            [...svg.querySelectorAll('rect,path,circle')].map(
+              element => getComputedStyle(element).fill,
+            ),
+          ),
+        )
+      assert.ok(
+        colors[0].includes('rgb(18, 52, 86)'),
+        `${path}: ${JSON.stringify(colors)}`,
+      )
+      assert.ok(
+        !colors[1].includes('rgb(18, 52, 86)'),
+        `${path}: ${JSON.stringify(colors)}`,
+      )
+    }
   })
 
   test('standalone .mmd uses the selected style; DOT and PlantUML retain their rendering paths', async () => {
@@ -620,10 +706,10 @@ describe('Mermaid styles (e2e)', () => {
     }
   })
 
-  test('Reset to Defaults restores Original', async () => {
+  test('Reset to Defaults restores Anthropic and 85 percent width', async () => {
     await open('light', '/flow.md', {
       language: 'en',
-      mdPluginOptions: OPTIONS('anthropic-blog'),
+      mdPluginOptions: OPTIONS('original'),
     })
     const frame = await openSettings()
     await frame.locator('.tab-btn').nth(0).press('Enter')
@@ -631,11 +717,17 @@ describe('Mermaid styles (e2e)', () => {
       .getByRole('button', { name: 'Reset to Defaults', exact: true })
       .press('Enter')
     await frame.locator('.btn-reset.danger').press('Enter')
-    await page.waitForSelector('pre.mermaid[data-mermaid-style="original"] svg')
+    await page.waitForSelector(
+      'pre.mermaid[data-mermaid-style="anthropic-blog"] svg',
+    )
     assert.equal(
       (await getStorage('mdPluginOptions')).mdPluginOptions.Mermaid.style,
-      'original',
+      'anthropic-blog',
     )
+    assert.deepEqual(await getStorage(['customWidth', 'customWidthUnit']), {
+      customWidth: 85,
+      customWidthUnit: 'percent',
+    })
   })
 
   test('CSS presets and disabling customization retain the independent Mermaid choice', async () => {

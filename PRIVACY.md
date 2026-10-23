@@ -1,8 +1,10 @@
 # Privacy Policy — MD Reader Lite
 
-_Last updated: 2026-09-03_
+_Last updated: 2026-10-23_
 
 MD Reader Lite renders Markdown files locally in your browser.
+
+**Mermaid and ZenUML:** Both engines, fonts and settings styles use bundled code or local system fonts, with no CDN or rendering server. Mermaid runs in an extension-local frame with its own restrictive CSP. Structured input checks reject resource-bearing markup/CSS and native diagram styles before rendering; returned SVG/CSS is sanitized and scoped. Unsupported resource syntax stays as readable source. This Mermaid-specific boundary does not close the existing arbitrary-document HTML/CSS sweep gaps disclosed below. Runtime gates and limitations: [Mermaid migration test plan](docs/superpowers/plans/2026-10-23-mermaid-modernization.md).
 
 - **Offline mode, on by default.** One setting blocks every outbound request the extension itself can trigger, with one deliberate exception: auto-refresh re-fetching, the GitHub API folder tree, PlantUML diagram rendering, and — after the page renders — remote images, video, audio, `<iframe>`/`<embed>`/`<object>`/`<track>`, and SVG/`<input type="image">` references found inside the document itself (this also stops tracking pixels) are all blocked. The exception: opening the Files tab on a page you're already viewing over http(s) still lists that **same server's** folder even with offline mode on — see "Zero network by default, feature by feature" below for why. Local `file://` features are unaffected while offline: the folder tree reading the browser's own native directory page via a hidden same-extension frame (falling back to a picked local folder only if that fails), charset compatibility, and local/relative/`data:` images all keep working. Verified with a Playwright network-listener test suite (11/11 passing): with offline mode on and no same-server Files tab opened, zero outbound requests occur.
 - **Zero network by default, feature by feature.** With offline mode off, auto-refresh, charset compatibility, and PlantUML are each still individually **off by default**. The folder tree tab is **on by default** — that's a visibility setting, not a network one; the directory listing itself is still lazy and nothing is fetched until you actually open the Files tab. **Opening the Files tab on a same-server http(s) page works even with offline mode on** (loading the document itself already established a connection to that server; browsing its folder listing is a user-initiated extension of that same trust relationship — GitHub's directory API, a different host, is not included and stays blocked while offline).
@@ -18,6 +20,8 @@ MD Reader Lite renders Markdown files locally in your browser.
 - **Honest caveat.** When you open the folder tree on a web page, or opt into auto-refresh, that request reveals your IP to that server (or to GitHub for the public API) — a property of HTTP, not something the extension adds. MD Reader Lite attaches no identifiers and keeps no log. For guaranteed zero network, keep offline mode on (the default) or use local `file://` documents.
 
 Questions: https://github.com/swchen44/md-reader-lite/issues
+
+Mermaid／ZenUML 使用本機封裝程式與系統字型，不連 CDN 或渲染伺服器。Mermaid 有獨立本機 frame、專用 CSP、結構化原生樣式前置檢查及 SVG/CSS 清理；資源語法遭拒時保留可讀原碼。這個 Mermaid 專用防護不代表下列既有的任意文件 HTML/CSS 清掃缺口已關閉。
 
 ---
 

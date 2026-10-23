@@ -60,8 +60,8 @@ export function startMdServer() {
 // plus storage helpers that talk to the extension's chrome.storage.local via
 // the background service worker. Throws if extension/ is unbuilt or Playwright
 // / the browser is unavailable.
-export async function launchExtension() {
-  if (!existsSync(join(EXT, 'manifest.json'))) {
+export async function launchExtension({ extensionPath = EXT } = {}) {
+  if (!existsSync(join(extensionPath, 'manifest.json'))) {
     throw new Error('extension/ not built — run `npm run build` first')
   }
   const { chromium } = await import('playwright')
@@ -70,8 +70,8 @@ export async function launchExtension() {
     headless: false,
     viewport: { width: 1200, height: 900 },
     args: [
-      `--disable-extensions-except=${EXT}`,
-      `--load-extension=${EXT}`,
+      `--disable-extensions-except=${extensionPath}`,
+      `--load-extension=${extensionPath}`,
       '--no-first-run',
     ],
   })

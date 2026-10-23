@@ -45,6 +45,7 @@
   // is event-driven in tab-general's Select (on:MDCSelect:change), so this must
   // NOT call updateConfig (which previously fired on every unrelated data change).
   $: localize = i18n(data.language || i18n().locale)
+  $: document.documentElement.lang = localize.locale
 
   function updateConfig(key, value, force = false) {
     if (!force && persisted[key] === value) return
@@ -105,33 +106,41 @@
     overflow: auto;
     box-sizing: border-box;
     width: 360px;
+    max-width: 100%;
     max-height: 599px;
     padding: 22px 24px 10px;
-    border: 1px solid #24315870;
-    border-radius: 1px;
+    border: 1px solid var(--settings-border);
+    background: var(--settings-paper);
   }
   .tabs {
     display: flex;
     gap: 6px;
     margin-bottom: 14px;
-    border-bottom: 1px solid #24315824;
+    border-bottom: 1px solid var(--settings-rule);
   }
   .tab-btn {
     flex: 1;
     padding: 8px 4px;
     font-size: 13px;
     font-weight: bolder;
-    color: #243158a3;
+    color: var(--settings-muted);
+    font-family: inherit;
+    line-height: 1.4;
     background: none;
     border: none;
     border-bottom: 2px solid transparent;
     cursor: pointer;
   }
   .tab-btn:hover {
-    color: #243158e3;
+    color: var(--settings-ink);
   }
   .tab-btn.active {
-    color: #607cd2;
-    border-bottom-color: #607cd2;
+    color: var(--settings-accent);
+    border-bottom-color: var(--settings-accent);
+  }
+  @media (max-width: 340px) {
+    main {
+      padding: 18px 16px 10px;
+    }
   }
 </style>

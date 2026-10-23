@@ -4,7 +4,7 @@ export function getDefaultPluginOptions(): PluginOptions {
   return {
     Linkify: { fuzzyLink: true, fuzzyIP: false, fuzzyEmail: true },
     Alert: { deep: true },
-    Mermaid: { style: 'original' },
+    Mermaid: { style: 'anthropic-blog' },
   }
 }
 

@@ -2,13 +2,24 @@
 
 狀態：**2026-10-23 使用者授權開始分階段執行。** 四項 review 修正已納入；依賴與 runtime 的實際進度以 [實作計畫與續接 checklist](../plans/2026-10-23-mermaid-modernization.md) 為準。先通過 PoC 關卡，再替換產品 renderer。
 
-2026-10-23 checkpoint：[獨立 MV3 probe](../../research/mermaid12-probe.md) 保留 raw strict 四個資源失敗，A4 confined 25/25 已通過。B 已整合 Mermaid 12.2.0，30 核心圖種可用；接續 C ZenUML、D 新圖種 Anthropic 風格與 E 最終驗收。實際測試計數與續接位置以計畫 ledger 為準。
+2026-10-23 checkpoint：[獨立 MV3 probe](../../research/mermaid12-probe.md) 保留 raw strict 四個資源失敗，擴充後 confined 33/33 已通過。B/C 已整合 Mermaid 12.2.0 與本機 ZenUML，31 圖種可用且已推 main；D/D2/D3 新圖種風格、設定面板與 85% 寬度已通過完整回歸，E 最終效能與驗收文件待完成。實際測試計數與續接位置以計畫 ledger 為準。
 
 ## 目標
 
+### 2026-10-23 核准追加：預設與設定面板
+
+使用者確認 Mermaid 預設採 `anthropic-blog`，整個設定面板也使用同一個編輯風格。這是既有三分頁的視覺調整，不新增另一套主題設定，不更動文章的 CSS 客製化選擇。
+
+- 新安裝、缺少 Mermaid 選項的舊資料及 Reset to Defaults 採 Anthropic；明確儲存的 `original` 必須保留。未知值採目前預設。
+- 設定面板固定淺色紙面 `#faf9f5`、深灰文字 `#24231f`、陶土重點 `#a34f37`、灰褐框線 `#8a8074`、淡綠輔色 `#e7ede5`；不是 Anthropic 官方整合，也不下載字型。
+- 標題使用本機 Georgia／Times New Roman／Noto Serif TC fallback；控制項使用本機易讀 sans-serif，CSS editor 保留 monospace。
+- 保留 General／Appearance／Plugins、既有 SMUI 控制項、鍵盤操作、disabled／focus／error 狀態。分頁與工具維持緊湊尺寸；不增加行銷區塊、巢狀卡片或裝飾圖片。
+- 所有下拉選單、選取項目、開關、按鈕、輸入框、提示及標頭使用一致 tokens。popup 與文章內 iframe 共用外觀，切圖表 Original 不影響設定面板。
+- 驗收涵蓋新舊設定、Reset、三分頁、下拉選單展開、五種語言、320／360／390 px 與文章內浮層；檢查水平溢出、長文字、鍵盤焦點及網路請求。永久案例與實際計數記在 plan，教訓記在 `docs/lesson_learn.md`。
+
 使用最新正式版 Mermaid，盡量支援使用者指定的全部 31 種圖。優先確保既有文件可讀、離線本機渲染、設定相容及 Original／Anthropic blog style 切換，不以「核心有註冊圖種」取代擴充功能內的實際驗證。
 
-目標為 **30 種核心圖種 + ZenUML = 31/31**。這是驗收目標，尚未達成；若有 MV3、CSP、安全或原生圖種問題，逐項揭露並保留可讀原碼，不為湊數使用遠端服務或不受控 fork。
+目標為 **30 種核心圖種 + ZenUML = 31/31**。C 已達成圖種可渲染驗收；全矩陣、風格、效能與最終回歸仍依計畫分開判定。若有 MV3、CSP、安全或原生圖種問題，逐項揭露並保留可讀原碼，不為湊數使用遠端服務或不受控 fork。
 
 ## 已核對的事實
 
@@ -118,6 +129,14 @@
 - loading／失敗文字須涵蓋全部既有語言；不在這一階段加入額外主題選單。
 - **通過條件：** 既有 20 條 Mermaid 風格 e2e 全過；無過期圖表／控制鈕、閱讀位置跳動或主題污染。C4／ZenUML 若未完整風格化，列出具體限制並交付截圖。
 - **建議 commit：** `fix: preserve Mermaid styling and reading behavior after upgrade`。
+
+### D3. 2026-10-23 核准追加：自訂寬度 85%
+
+- 使用者核准新安裝與 Reset to Defaults 使用 `customWidth: 85`、`customWidthUnit: 'percent'`。
+- 已儲存的像素、百分比或關閉狀態不變；舊版只有數字而沒有單位時仍視為 px，不能把 `900px` 解讀成 `900%`。
+- 只在讀取時解析預設，不因開啟文件或設定面板就覆寫舊資料；只有重設會主動寫入新預設。
+- 寬度控制列須在五語及 320px 面板下不溢出，數字欄有本地化 accessible label；保留 SMUI 原生 radio hitbox。
+- 永久測試：`tests/unit/settings.test.mjs`、`tests/e2e/settings-theme.e2e.mjs` 的新舊寬度案例，以及 `tests/e2e/mermaid-styles.e2e.mjs` 的 Reset 案例。
 
 ### E. 永久測試、文件與候選驗收
 

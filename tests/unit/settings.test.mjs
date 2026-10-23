@@ -3,6 +3,29 @@ import assert from 'node:assert/strict'
 
 const load = () => import('#core/settings')
 
+test('width defaults are 85 percent while legacy pixels, percent choices and disabled state survive', async () => {
+  const { resolveCustomWidthDefaults } = await load()
+  assert.equal(typeof resolveCustomWidthDefaults, 'function')
+  assert.deepEqual(resolveCustomWidthDefaults(), {
+    customWidth: 85,
+    customWidthUnit: 'percent',
+  })
+  for (const [stored, expected] of [
+    [{ customWidth: 900 }, { customWidth: 900, customWidthUnit: 'px' }],
+    [
+      { customWidth: 67, customWidthUnit: 'percent' },
+      { customWidth: 67, customWidthUnit: 'percent' },
+    ],
+    [{ customWidth: null }, { customWidth: null, customWidthUnit: 'px' }],
+    [{ customWidthUnit: 'px' }, { customWidth: null, customWidthUnit: 'px' }],
+    [
+      { customWidthUnit: 'percent' },
+      { customWidth: null, customWidthUnit: 'percent' },
+    ],
+  ])
+    assert.deepEqual(resolveCustomWidthDefaults(stored), expected)
+})
+
 test('clampRefreshInterval: min/max boundaries', async () => {
   const { clampRefreshInterval } = await load()
   assert.equal(clampRefreshInterval(0.5), 0.5)

@@ -7,6 +7,69 @@ import {
   checkDiagram,
 } from '../../src/core/mermaid/resource-preflight.mjs'
 
+test('native paint configuration and C4 metadata reject resource values', () => {
+  assert.throws(
+    () =>
+      checkConfig({
+        sankey: {
+          nodeColors: { Reader: 'url(https://probe.invalid/paint.svg)' },
+        },
+      }),
+    /Blocked resource policy/,
+  )
+  assert.throws(
+    () =>
+      checkDiagram({
+        db: {
+          getC4ShapeArray: () => [
+            { bgColor: 'url(https://probe.invalid/paint.svg)' },
+          ],
+        },
+      }),
+    /Blocked resource policy/,
+  )
+})
+
+test('native node styles and C4 relationship paints are checked before rendering', () => {
+  for (const method of [
+    'getStates',
+    'getEntities',
+    'getRequirements',
+    'getElements',
+    'getBlocksFlat',
+    'getNodes',
+  ])
+    assert.throws(
+      () =>
+        checkDiagram({
+          db: {
+            [method]: () =>
+              new Map([
+                [
+                  'node',
+                  {
+                    cssStyles: [
+                      'background-image:url(https://probe.invalid/style.png)',
+                    ],
+                  },
+                ],
+              ]),
+          },
+        }),
+      /Blocked resource policy/,
+      method,
+    )
+  assert.throws(
+    () =>
+      checkDiagram({
+        db: {
+          getRels: () => [{ lineColor: 'url(https://probe.invalid/c4.svg)' }],
+        },
+      }),
+    /Blocked resource policy/,
+  )
+})
+
 test('plain URLs and safe formatting remain readable without treating them as resources', () => {
   assert.doesNotThrow(() =>
     checkMarkup(

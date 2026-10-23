@@ -199,7 +199,7 @@
     padding: 4px 6px;
     box-sizing: border-box;
     font-size: 13px;
-    border: 1px solid #24315840;
+    border: 1px solid var(--settings-border);
     border-radius: 4px;
   }
   .sub-label {
@@ -207,6 +207,6 @@
     margin-bottom: 4px;
     font-size: 12px;
     font-weight: bolder;
-    color: #243158a3;
+    color: var(--settings-muted);
   }
 </style>

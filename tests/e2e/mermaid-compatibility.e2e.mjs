@@ -139,10 +139,10 @@ describe('Mermaid diagram compatibility (e2e)', () => {
     }
   })
 
-  async function open(path, style, width = 1200) {
+  async function open(path, style, width = 1200, theme = 'light') {
     await page.setViewportSize({ width, height: width === 1200 ? 900 : 844 })
     await setStorage({
-      pageTheme: 'light',
+      pageTheme: theme,
       offlineMode: true,
       mdPluginOptions: options(style),
     })
@@ -172,6 +172,32 @@ describe('Mermaid diagram compatibility (e2e)', () => {
       containerWidth: container.getBoundingClientRect().width,
       errors: svg?.querySelectorAll('.error-icon, .error-text').length || 0,
       labels: svg?.querySelectorAll('text, foreignObject').length || 0,
+      fontFamilies: svg
+        ? [
+            ...new Set(
+              [
+                ...svg.querySelectorAll(
+                  'text,foreignObject p,foreignObject span',
+                ),
+              ]
+                .filter(
+                  el =>
+                    el.textContent.trim() &&
+                    el.getBoundingClientRect().width > 0,
+                )
+                .map(el => getComputedStyle(el).fontFamily),
+            ),
+          ]
+        : [],
+      fills: svg
+        ? [
+            ...new Set(
+              [...svg.querySelectorAll('rect,path,circle,polygon')].map(
+                el => getComputedStyle(el).fill,
+              ),
+            ),
+          ].slice(0, 24)
+        : [],
       text: svg
         ? [...svg.querySelectorAll('text, foreignObject')]
             .map(label => label.textContent.trim())
@@ -200,9 +226,24 @@ describe('Mermaid diagram compatibility (e2e)', () => {
         results.push({ name: item.name, style, supported: native, ...result })
         if (native) {
           assertRendered(result, style)
+          if (item.name === 'Architecture') {
+            assert.equal(
+              result.fills.includes('rgb(8, 126, 191)'),
+              style === 'original',
+              'Anthropic recolors built-in icon backgrounds, Original preserves them',
+            )
+          }
           await blocks.first().screenshot({
             path: new URL(`${style}-${index + 1}.png`, QA).pathname,
           })
+          if (style === 'anthropic-blog')
+            assert.ok(
+              result.fontFamilies.length &&
+                result.fontFamilies.every(font => /Georgia/.test(font)),
+              `${item.name} has unthemed fonts: ${JSON.stringify(
+                result.fontFamilies,
+              )}`,
+            )
         } else {
           assert.equal(result.rendered, false, JSON.stringify(result))
           assert.ok(
@@ -216,51 +257,70 @@ describe('Mermaid diagram compatibility (e2e)', () => {
       })
     }
 
-    for (const width of [1200, 390]) {
-      test(`${style}: complete mixed gallery at ${width}px`, async () => {
-        await open('/gallery.md', style, width)
-        const blocks = page.locator('.md-reader__markdown-content > pre')
-        assert.equal(await blocks.count(), 31)
-        for (const [index, item] of cases.entries()) {
-          const result = await blocks.nth(index).evaluate(inspect)
-          if (supported.has(item.name)) {
-            assertRendered(result, style)
-            const fits = result.width <= result.containerWidth + 2
-            layoutResults.push({
-              name: item.name,
-              style,
-              viewport: width,
-              fits,
-            })
-            assert.ok(
-              fits,
-              `${item.name} exceeds its initial viewport: ${JSON.stringify(
-                result,
-              )}`,
-            )
-          } else assert.equal(result.rendered, false, item.name)
-        }
-        assert.deepEqual(
-          externalRequests,
-          [],
-          'Offline diagrams must stay local',
-        )
-        await page.screenshot({
-          path: new URL(`${style}-gallery-${width}.png`, QA).pathname,
-          fullPage: true,
+    for (const theme of ['light', 'dark'])
+      for (const width of [1200, 390, 320]) {
+        test(`${style}: complete ${theme} mixed gallery at ${width}px`, async () => {
+          await open('/gallery.md', style, width, theme)
+          const blocks = page.locator('.md-reader__markdown-content > pre')
+          assert.equal(await blocks.count(), 31)
+          for (const [index, item] of cases.entries()) {
+            const result = await blocks.nth(index).evaluate(inspect)
+            if (supported.has(item.name)) {
+              assertRendered(result, style)
+              const fits = result.width <= result.containerWidth + 2
+              layoutResults.push({
+                name: item.name,
+                style,
+                theme,
+                viewport: width,
+                fits,
+                ...result,
+              })
+              if (style === 'anthropic-blog')
+                assert.ok(
+                  result.fontFamilies.length &&
+                    result.fontFamilies.every(font => /Georgia/.test(font)),
+                  `${item.name}: ${JSON.stringify(result.fontFamilies)}`,
+                )
+              assert.ok(
+                fits,
+                `${item.name} exceeds its initial viewport: ${JSON.stringify(
+                  result,
+                )}`,
+              )
+            } else assert.equal(result.rendered, false, item.name)
+          }
+          assert.deepEqual(
+            externalRequests,
+            [],
+            'Offline diagrams must stay local',
+          )
+          await page.screenshot({
+            path: new URL(`${style}-${theme}-gallery-${width}.png`, QA)
+              .pathname,
+            fullPage: true,
+          })
         })
-      })
-    }
+      }
   }
 
-  test('Original GitGraph initially fits a 390px viewport', async () => {
-    await open('/probe.md?case=12', 'original', 390)
-    const block = page.locator('.md-reader__markdown-content > pre').first()
-    const result = await block.evaluate(inspect)
-    await block.screenshot({
-      path: new URL('original-gitgraph-390.png', QA).pathname,
+  for (const width of [320, 390])
+    test(`Original GitGraph initially fits a ${width}px viewport`, async () => {
+      await open('/probe.md?case=12', 'original', width)
+      const block = page.locator('.md-reader__markdown-content > pre').first()
+      const result = await block.evaluate(inspect)
+      await block.screenshot({
+        path: new URL(`original-gitgraph-${width}.png`, QA).pathname,
+      })
+      assertRendered(result, 'original')
+      assert.ok(
+        result.width <= result.containerWidth + 2,
+        JSON.stringify(result),
+      )
     })
-    assertRendered(result, 'original')
-    assert.ok(result.width <= result.containerWidth + 2, JSON.stringify(result))
+
+  test('all 372 matrix outputs were measured without remote requests', () => {
+    assert.equal(layoutResults.length, 31 * 2 * 2 * 3)
+    assert.deepEqual(externalRequests, [])
   })
 })

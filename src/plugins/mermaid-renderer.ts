@@ -1,7 +1,6 @@
 import { createMermaidQueue } from '@/core/mermaid-renderer'
 import { connectFrame } from '@/core/mermaid/frame-transport'
 import {
-  hasMermaidThemeDirective,
   resolveMermaidRenderOptions,
   resolveMermaidStyle,
 } from '@/core/mermaid-style'
@@ -12,31 +11,32 @@ export default function MermaidRendererPlugin({ event, language }) {
   let connection: ReturnType<typeof connectFrame> | null = null
   let serial = 0
   let generation = 0
+  let suspended = false
+  let pageEpoch = 0
   const generations = new WeakMap<HTMLElement, number>()
+  const containers = new Set<HTMLElement>()
   const queue = createMermaidQueue(async job => {
     if (!connection) connection = connectFrame()
+    const activeConnection = connection
     let renderer: Awaited<ReturnType<typeof connectFrame>>
     let reply
     try {
-      renderer = await connection
+      renderer = await activeConnection
       if (!job.isCurrent()) return ''
       reply = await renderer.render({
         source: job.source,
         renderId: job.id,
         zen: true,
-        config: resolveMermaidRenderOptions(
-          hasMermaidThemeDirective(job.source)
-            ? undefined
-            : { style: job.style },
-          job.theme,
-        ),
+        style: job.style,
+        theme: job.theme,
+        config: resolveMermaidRenderOptions({ style: job.style }, job.theme),
       })
     } catch (error) {
-      connection?.then(
+      activeConnection.then(
         frame => frame.dispose(),
         () => {},
       )
-      connection = null
+      if (connection === activeConnection) connection = null
       throw error
     }
     if (reply.status !== 'ready')
@@ -44,13 +44,36 @@ export default function MermaidRendererPlugin({ event, language }) {
     return reply.svg
   })
   window.addEventListener('pagehide', () => {
+    suspended = true
+    pageEpoch++
     connection?.then(
       frame => frame.dispose(),
       () => {},
     )
     connection = null
   })
-  event.on('contentRendered', (container: HTMLElement) => {
+  window.addEventListener('pageshow', () => {
+    if (!suspended) return
+    suspended = false
+    for (const container of containers) {
+      if (!container.isConnected) {
+        containers.delete(container)
+        continue
+      }
+      for (const element of Array.from(
+        container.querySelectorAll<HTMLElement>(
+          'pre.mermaid[data-mermaid-status="rendering"],pre.mermaid[data-mermaid-status="pending"]',
+        ),
+      ))
+        element.dataset.mermaidStatus = 'pending'
+      renderContainer(container)
+    }
+  })
+  function renderContainer(container: HTMLElement) {
+    for (const known of containers)
+      if (!known.isConnected) containers.delete(known)
+    containers.add(container)
+    const epoch = pageEpoch
     const current = ++generation
     generations.set(container, current)
     container.dataset.mermaidGeneration = String(current)
@@ -62,13 +85,15 @@ export default function MermaidRendererPlugin({ event, language }) {
     )
     // Initial contentRendered happens before mount; defer until main has appended the article.
     queueMicrotask(async () => {
+      const isActive = () =>
+        !suspended &&
+        pageEpoch === epoch &&
+        container.isConnected &&
+        generations.get(container) === current
       const tasks = elements.map(async element => {
         const code = element.querySelector('code')
         if (!code) return
-        const isCurrent = () =>
-          container.isConnected &&
-          element.isConnected &&
-          generations.get(container) === current
+        const isCurrent = () => isActive() && element.isConnected
         if (!isCurrent()) return
         element.dataset.mermaidStatus = 'rendering'
         element.setAttribute('aria-busy', 'true')
@@ -94,10 +119,11 @@ export default function MermaidRendererPlugin({ event, language }) {
         }
       })
       await Promise.all(tasks)
-      if (container.isConnected && generations.get(container) === current) {
+      if (isActive()) {
         container.dataset.mermaidComplete = String(current)
         event.emit('diagramsRendered', { container, generation: current })
       }
     })
-  })
+  }
+  event.on('contentRendered', renderContainer)
 }

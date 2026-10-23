@@ -15,9 +15,10 @@
 - Updated: 2026-10-23, Asia/Taipei.
 - Product baseline: `5df0a82`, version 1.8.2, wrapper 0.5.1 / Mermaid 9.1.6.
 - GitHub: baseline push to `origin/main` completed; verify remote SHA before subsequent push.
-- Current checkpoint: A4 in progress. A local renderer frame connects under strict host CSP and renders 31/31; the original four resource cases now reject before requests in confined mode. Expanded encoded/YAML/relative-input gates and security review are running. See [probe report](../../research/mermaid12-probe.md).
+- Probe checkpoint: A4 accepted, 25/25 confined gates; raw resource counterexamples remain as comparison evidence. See [probe report](../../research/mermaid12-probe.md).
 - Product migration: B complete. Root Mermaid is 12.2.0, TypeScript 5.0.4; 228 unit tests, 68 compatibility cases, 20 style cases and 4 lifecycle cases pass without skip/TODO. Shared-policy probe rerun: 25/25 pass.
-- Next task after resume: D Anthropic styling for all newly supported types, then E. C browser verification is complete at 70/70. Begin with `git status --short --branch`, read this file/spec/report and verify build fingerprints before rerunning. A4 `3b785a2` and B `3d5fee5` are committed/pushed. Two D resolver tests plus their unused helper are deliberately unstaged during the C commit.
+- Current work: D/D2/D3 and all material review fixes are verified: **238 unit, 146 serial e2e, 33 confined probe**, zero fail/cancel/skip/TODO; evidence helpers 3/3, compiler/build exit 0. Width is 85% for new/reset settings; saved pixel/percent/disabled choices remain unchanged. Production zip includes full third-party notices.
+- Next task after resume: commit verified D/settings/defaults, run final-source performance for shared-11/gallery-31/ZenUML, preserve raw receipts and finish E documentation/push. C `35b4294` is already pushed. Do not restart A–C, release or bump version.
 
 ## Global Constraints
 
@@ -51,7 +52,9 @@
 - [x] A4: Prove a resource policy that acts before Mermaid can initiate requests, then repeat A's environment and safety gates.
 - [x] B: Migrate product rendering, security, completion/search lifecycle and corresponding permanent tests.
 - [x] C: Integrate ZenUML and validate all 31 types in the product.
-- [ ] D: Preserve styling, viewer controls, localization and reading position.
+- [x] D: Preserve styling, viewer controls, localization and reading position.
+- [x] D2: Default Mermaid to Anthropic without overwriting saved Original; restyle all settings tabs and preserve controls/accessibility (user approved 2026-10-23).
+- [x] D3: Default new/reset custom width to 85 percent; preserve existing pixel/percent/disabled settings (user approved 2026-10-23).
 - [ ] E: Run full matrix/regression, update documentation and record final review.
 - [ ] Commit all completed stages, push authorized verified changes and verify remote SHA / clean worktree.
 
@@ -120,20 +123,40 @@
 
 **Files:** `src/core/mermaid-style.ts`, `src/style/index.less`, `src/main.ts`, `src/plugins/diagram-viewer.ts`, affected keys in `src/config/i18n/locale.json`, style/lifecycle unit and e2e tests.
 
-- [ ] Keep the stored style schema. Resolve directive/frontmatter author configuration through public Mermaid parsing or a structured parser; protected security values remain authoritative.
-- [ ] For old diagram types choose explicit compatible theme/look/layout settings; retain required native layout for new types such as Swimlanes. Test authored colors, fonts, shapes and absence of theme leakage.
-- [ ] Extend Anthropic blog style to every newly supported diagram type, not just the previous 11. Verify each type in both styles for palette, local typography, borders, titles and light/dark behavior; preserve meaningful native shapes and document any renderer-specific limitation.
-- [ ] Fit Original GitGraph within 320/390 px frames; preserve meaningful shapes and C4 styling without broad shape overrides.
-- [ ] Ensure viewer observers settle on ready/error/stale and do not attach duplicate controls. Restore reading anchors after current work completes only when the user has not scrolled meanwhile.
-- [ ] Localize new pending/error messages in all five existing languages. Test CSS off / Developer / Editorial / User1 / User2 without altering Mermaid settings.
-- [ ] Run the existing 20 style e2e plus added lifecycle/author tests. Capture C4 and ZenUML and document any native styling limits.
+- [x] Keep the stored style schema. Resolve directive/frontmatter author configuration through public Mermaid parsing or a structured parser; protected security values remain authoritative.
+- [x] For old diagram types choose explicit compatible theme/look/layout settings; retain required native layout for new types such as Swimlanes. Test authored colors, fonts, shapes and absence of theme leakage.
+- [x] Extend Anthropic blog style to every newly supported diagram type, not just the previous 11. Verify each type in both styles for palette, local typography, borders, titles and light/dark behavior; preserve meaningful native shapes and document any renderer-specific limitation.
+- [x] Fit Original GitGraph within 320/390 px frames; preserve meaningful shapes and C4 styling without broad shape overrides.
+- [x] Ensure viewer observers settle on ready/error/stale and do not attach duplicate controls. Restore reading anchors after current work completes only when the user has not scrolled meanwhile.
+- [x] Localize new pending/error messages in all five existing languages. Test CSS off / Developer / Editorial / User1 / User2 without altering Mermaid settings.
+- [x] Run the existing 20 style e2e plus added lifecycle/author tests. Capture C4 and ZenUML and document any native styling limits.
 - [ ] Commit `fix: preserve Mermaid styling and reading behavior after upgrade`.
+
+## Task D2: Settings and Default
+
+Design: [approved default/settings addendum](../specs/2026-10-22-mermaid-modernization-design.md#2026-10-23-核准追加預設與設定面板).
+
+- [x] Observe failing default/legacy/explicit-Original unit tests before changing the resolver and plugin defaults.
+- [x] Observe failing real-popup appearance/default tests; then use shared local tokens in popup CSS and scoped component styles.
+- [x] Preserve all settings, SMUI native control hitboxes, disabled state, monospace editor and keyboard interaction.
+- [x] Verify General/Appearance/Plugins, expanded menus, five locales and 320/360/390 px; capture screenshots and assert no horizontal overflow.
+- [x] Verify embedded settings, reset defaults, legacy missing choice and saved Original across reloads; no unexpected network.
+- [ ] Update developer guide, current design/checklist and lessons learned; commit verified changes with Why/What/How/Boundary.
+
+This additive bounded change was explicitly approved in chat. It does not authorize a release or override E's remaining acceptance gates.
+
+## Task D3: Width Default
+
+- [x] Confirm new/reset 85%, preserving saved pixel/percent/disabled choices, including legacy pixels without a unit.
+- [x] Observe failing unit and actual-browser tests before changing grouped width/unit default resolution.
+- [x] Verify new/legacy/disabled article width, popup controls, Reset and five-locale narrow layout.
+- [ ] Update design, developer guide, lessons and final receipts; commit with verified settings changes.
 
 ## Task E: Permanent Test Plan and Regression
 
 **Files:** `tests/e2e/mermaid-compatibility.e2e.mjs`, style/lifecycle tests, `example/mermaid-compatibility.md`, `docs/research/mermaid-diagram-compatibility.md`, `docs/developer_guide.md`, `docs/ARCHITECTURE.md`, this plan/spec/indexes and the appropriate changelog. Review README/PRIVACY for changed claims.
 
-- [ ] Measure 31 types × two styles × light/dark × 1200/390/320 px = 372 diagram outputs. Check visible labels, positive dimensions, no error diagrams and initial frame fit. This is fixture coverage, not every possible syntax combination.
+- [x] Measure 31 types × two styles × light/dark × 1200/390/320 px = 372 diagram outputs. Check visible labels, positive dimensions, no error diagrams and initial frame fit. This is fixture coverage, not every possible syntax combination.
 - [ ] Exercise auto-theme changes twice, authored configuration isolation, malformed and excessive input, duplicate diagrams, rapid changes, HTTP/file/`.mmd`, DOT and PlantUML privacy gates.
 - [ ] Keep 62 desktop crops plus dark/mobile/full-gallery screenshots. Manually inspect text, shapes, titles, contrast, C4 and long labels; do not count automated dimensions as full visual approval.
 - [ ] Measure old 11-type baseline and candidate on the same hardware/viewport with at least five cold and ten warm runs; record median/max, raw values and browser. Review a greater-than-twofold size or median-time increase before acceptance.
@@ -230,3 +253,55 @@ Append each task's actual outcome here before stopping or handing off. Update Cu
 - Compiler and production build exit 0. ZenUML syntax unit test passes without a DOM/React constructor, using only location/theme-storage shims for browser-module initialization.
 - Two concurrent browser suites stalled before recording cases; terminated only their owned Chrome processes and reran serially. Do not count the interrupted run as acceptance. Make the permanent e2e command serial in E.
 - Rendering acceptance does not mean ZenUML/C4/new-type Anthropic palette acceptance. D resolver tests observed RED and then GREEN in an unused helper; wiring and visual verification are next.
+
+### D Working Checkpoint
+
+- Wired structured Mermaid parse/config into per-diagram options; new types retain required native layout, old supported types use classic look. Added nested chart palettes, C4 muted high-contrast element colors, local serif settings and a scoped ZenUML SVG stylesheet. Removed the parent renderer's regex-based theme decision; the old unused helper/test still needs cleanup.
+- Added delayed reading restoration with generation checks and wheel/touch/key cancellation. New browser test first failed on the early-RAF implementation, then passed with 20 preceding diagrams and native scroll anchoring disabled.
+- First D browser run: 95 cases, 83 pass/12 fail, zero skip/TODO. All 31 still render; failures were typography: Developer paragraph CSS leaked into foreignObject p; Journey/UseCase use their own font options; Wardley inherited pre's monospace font. Applied scoped p font inheritance, native per-type font config and a Wardley text rule; fresh compatibility/font run is in `dist/mermaid-upgrade-d-fonts.log`.
+- Packet uses nested `themeVariables.packet`; Sankey uses per-node configured colors from the pinned diagram metadata. Added paint-value/C4 metadata preflight regression RED→GREEN; runtime now also inspects Swimlanes/C4 metadata before rendering. Still add browser resource regressions for those paths and rerun the shared probe.
+- Pending before D commit: verify current font run, add authored YAML/C4/font regressions and screenshots, remove dead v9 theme detector, rerun styles/lifecycle/ZenUML and unit/typecheck/build. Then E's 372 outputs, regression, performance/size/audit/licenses/docs/final review. No release authorized.
+
+### D/D2 Verification and Handoff Checkpoint
+
+- User approved default Anthropic plus all three settings tabs using the same editorial appearance. Explicit saved Original remains unchanged; default/legacy/reset and resolver fallback are updated together. Authored theme bypass now passes explicit Original instead of undefined.
+- Observed RED: default tests (3 failures), real-popup default/paper tests (2 failures), author YAML typography (system sans/16.8px/host color instead of Courier New). GREEN: 232 unit, typecheck/build exit 0; first complete focused browser run 98/98, zero fail/skip/TODO (`dist/mermaid-upgrade-d2-e2e.log`).
+- The intermediate font run had 58/68 pass: a normal inheritance rule cannot beat host `!important`. The final sanitizer snapshots already-validated HTML label typography inside the confined frame, not arbitrary host styles. All 31 Anthropic font fixtures and authored Courier New/color/16px isolation now pass.
+- Additional C4 native authored color and Sankey nodeColors isolation pass. Expanded menus initially failed because Escape was sent back to the closed-menu anchor; changed the key target to the actual option after animation. A later full settings check could not find English Settings; explicit fixture locale and diagnostic assertion now isolate the embedded check. The filtered menu/embedded rerun passes 1/1. User noted possible interaction with the test window; do not claim that as the proven cause.
+- Visual inspection: C4 preserves person/database shapes with muted high-contrast colors; ZenUML has serif labels, paper surface and native message semantics. Inspected settings screenshots include zh-TW 320px Plugins and en 360px Appearance; no text overlap observed. Five locales × three widths × three tabs produce 45 permanent screenshot cases.
+- Design addendum lives in the modernization spec; checklists here; runtime/development notes in developer guide and architecture; lessons 12–17 in `docs/lesson_learn.md`. Those files form the handoff entry points, not only the chat.
+- Native limit: ZenUML's renderer does not implement every core Mermaid theme variable. Explicit Mermaid themes bypass our SVG preset; this preserves the external renderer's native behavior, not a claim that forest/neo become native ZenUML themes.
+- Remaining: await complete regression exit status; run the rebuilt shared-policy probe including new Swimlane/C4/Sankey negatives; commit/push verified D/D2. E performance, size/audit/licenses and fresh final review are still unaccepted. Artifacts under ignored dist are machine-local; committed ledger receipts are the cross-machine record.
+
+### D/D2 Accepted Runtime Gates
+
+- `npm run test:e2e` (serial): exit 0, **144 pass**, zero fail/cancel/skip/TODO. Includes 62 individual diagram crops, **372 gallery outputs** (31 × two styles × light/dark × 1200/390/320), narrow GitGraph, 22 style cases, lifecycle, ZenUML, all existing file-tree/UI cases and three settings-theme cases. `dist/mermaid-upgrade-full-e2e.log`; matrix details `dist/qa/mermaid-compatibility/results.json`.
+- Shared confined probe: exit 0, **28 pass**, zero fail/skip/TODO; no cleanup errors. New Swimlane image and C4 element paint are rejected before requests/CSP violations. Sankey URL dictionary paint is removed by pinned Mermaid's native sanitizer; raw and confined render locally, while unsafe caller config is rejected by our preflight. The first expanded run was 27/28 because the test incorrectly required an already-filtered native value to be blocked; preserve `dist/mermaid-upgrade-d-probe.log` as evidence, use `dist/mermaid-upgrade-d-probe-final.log` for acceptance.
+- Unit/typecheck/build remain green at 232 unit. Performance aggregation adds one further unit test after this receipt; rerun the final suite before E completion.
+- Full review is running in a fresh read-only reviewer. Performance compares baseline commit `3b785a2` in the owned detached worktree `/tmp/md-reader-mermaid9-baseline-20261023`; preserve its output before removing only that worktree. First warm benchmark attempt incorrectly sent runtime messages from the SW to itself; second attempted to inspect tab URL without tabs permission. Both failed artifacts are retained, neither is a performance result. Current probe pins the active tab's ID, then uses direct storage + tab messaging, without expanding permissions.
+- Production audit: baseline 55 advisories (1 critical/10 high/36 moderate/8 low), candidate 21 (0 critical/4 high/15 moderate/2 low), no newly introduced advisory IDs at this check. Existing Svelte/KaTeX/MarkdownIt/Linkify issues remain out of the Mermaid scope; do not call the product vulnerability-free. Inventory: 229 production package records; khroma's missing package metadata license is resolved from its installed `license` file and README as MIT. ELK retains EPL-2.0; DOMPurify offers MPL-2.0 or Apache-2.0. These are source/inventory checks, not legal certification.
+- New user request: custom width default **85%**; user subsequently approved new/reset only with saved choices preserved. The D3 addendum records the final scope.
+
+### D3 Width Default in Progress
+
+- User explicitly approved new/reset 85%, saved choices unchanged. Unit RED: missing resolver; actual-browser RED: fresh article width is empty instead of `85%` (`dist/width-default-{red,e2e-red}.log`).
+- Group width and unit defaults so legacy unit-less pixel values and disabled null remain unchanged. Popup percent fallback is 85; width controls use a wrapping grid for narrow locales. No implicit storage migration.
+- Final-source build/regression/performance and final D–E commits/push remain pending. Do not use earlier benchmark values as the final artifact receipt.
+
+### Final Whole-change Review and Fix Pass
+
+- Fresh read-only reviewer inspected the full migration from `6c92d3f`, including uncommitted D/settings work. Three material findings were accepted: native State/C4 resource metadata gaps, retained-DOM pagehide reconnects, and pointer/hash navigation not cancelling reading restoration.
+- Final: fixed native-resource preflight — State class/inline and C4 relationship browser regressions RED→GREEN. The State RED run included intercepted request attempts; do not describe that old path as safe. All types now expose parsed metadata before rendering; `preflightPassed` distinguishes front-loaded rejection from output cleaning. Source/edge limits have explicit runtime cases.
+- Final: fixed retained-DOM lifecycle — actual plugin unit regression RED→GREEN (one connection while hidden; resume unfinished sources on pageshow), plus a synthetic browser page-transition case. This does not prove real BFCache eligibility/hit rate.
+- Final: fixed pointer reading cancellation — actual mouse relocation regression RED→GREEN, with the existing delayed 20-diagram anchor case still passing. No separate claim for native scrollbar dragging.
+- Architecture icon backgrounds were additionally observed RED (native blue in Anthropic), then GREEN with a narrowly scoped 80×80 background rule. Original and authored themeCSS retain priority.
+- Final reviewer is closed; there is no second whole-branch review. The final green suites are the fix-pass gate. D3 is a later bounded, explicitly approved default change with unit/browser/reset tests.
+- Notices collect full installed original license documents for 240 package versions, four README fallbacks; missing documents fail the build. New unit test was RED before implementation, then GREEN. Zip contains the notice and machine-readable inventory, not local paths.
+- Benchmark scopes cover shared old 11 types, candidate full 31 and standalone ZenUML; inventory-selection regression observed RED→GREEN. Final counts and timings follow after the current full run exits.
+
+### D3 Width Verification
+
+- Unit/typecheck/production build: 238 unit pass, zero fail/skip/TODO, compiler/build exit 0. Width/default/reset plus style/settings focused browser suite: 26/26 pass.
+- First full run after width: 145/146 pass, one existing CSS toggle test failed. Its hard-coded frame coordinates pointed below the scrollable panel after width controls became visible. Filtered case reproduced RED; adding scrollIntoViewIfNeeded before its existing coordinate/real-mouse click produced GREEN 1/1. Product CSS toggle behavior and assertions are unchanged. Preserve `dist/width-css-switch-{red,green}.log`; fresh complete regression follows.
+- Visual review inspected all 62 individual outputs via eight contact sheets in `dist/qa/visual-review/`, plus narrow CJK, dark/Developer and zh-TW/ja 320px settings screenshots. No blank diagrams or incoherent overlap observed in these fixtures. Very wide Gantt/Packet/C4 scale down initially and remain zoomable; thumbnail legibility is not a claim for arbitrary large input.
+- Final complete serial regression after scrolling the test target: **146/146 pass**, zero fail/cancel/skip/TODO, exit 0 (`dist/mermaid-final-e2e.log`). Shared probe rebuilt/fingerprinted and rerun: **33/33 pass**, cleanupErrors empty; evidence helpers **3/3 pass**. Current production zip: 3,973,064 B. E final-source performance and acceptance report still pending.

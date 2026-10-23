@@ -50,10 +50,11 @@
     export npm_package_version=<version> npm_package_name=md-reader-lite
     node ./scripts/manifest.mjs
     node_modules/.bin/webpack --config ./build/webpack.prod.js
+    node ./scripts/notices.mjs    # 從已安裝的 production inventory 收集原始授權文本
     node ./scripts/zip.mjs        # 產出 dist/md-reader-lite-<version>.zip
 
 未壓縮輸出在 extension/。
-坑：`corepack pnpm build` 的 deps 檢查在部分環境會失敗，直接用上面三步。
+坑：`corepack pnpm build` 的 deps 檢查在部分環境會失敗，直接用上面四步。`npm run build` 也包含 notices；zip 需包含 `THIRD_PARTY_NOTICES.txt` 與 `third-party-licenses.json`，不能只保留 minifier 的短版 legal comments。notices 是 production inventory 的授權文件集合，部分套件會被 tree-shake；這不是法律認證。缺少文件會使 build 失敗，勿跳過。
 
 ## 測試
 
@@ -88,7 +89,7 @@
     pnpm add -D playwright   # 或全域安裝；本 repo 上層 node_modules 已有時亦可直接跑
     npm run build && npm run test:e2e
 
-瀏覽器或 Playwright 不可用時，e2e 會在 `before` 掛鉤捕捉並整組 **skip**（不硬性失敗）。
+部分舊 e2e 在瀏覽器或 Playwright 不可用時會在 `before` 掛鉤捕捉並整組 **skip**；新增的 Mermaid／settings 驗收會明確失敗。skip 不能算驗收通過。`test:e2e` 固定 `--test-concurrency=1`，避免多個 headed 擴充測試瀏覽器同時啟動而卡住。
 
 坑：headed 瀏覽器偶爾啟動卡住——**若自動化瀏覽器無故 hang，先懷疑 `extension/manifest.json` 無效**（無效的 `web_accessible_resources` match pattern 會讓擴充載入失敗、Chrome 一開就卡，表象像環境壞掉）。手動 `chrome://extensions → 載入未封裝項目` 會跳出真正的錯誤對話框（見 lesson_learn.md）。
 
@@ -96,13 +97,19 @@
 
 ## Mermaid 風格
 
-「設定 → 插件 → 插件子選項 → Mermaid → Mermaid 風格」提供 Original 與 Anthropic blog style。儲存欄位為 `mdPluginOptions.Mermaid.style`，值為 `original` 或 `anthropic-blog`；新安裝與缺少此設定的舊版皆採 Original。Original 隨頁面 light／dark／auto 使用既有 Mermaid 主題。Anthropic blog style 是本專案的編輯風格詮釋，固定使用淺色紙面與本機 serif fallback，即使頁面為 dark 也維持淺色圖表；不載入網路字型，也不代表 Anthropic 官方整合。
+「設定 → 插件 → 插件子選項 → Mermaid → Mermaid 風格」提供 Original 與 Anthropic blog style。儲存欄位為 `mdPluginOptions.Mermaid.style`，值為 `original` 或 `anthropic-blog`；新安裝、缺少此設定的舊版、未知值及 Reset to Defaults 皆採 Anthropic，明確儲存的 Original 保留不變。Original 隨頁面 light／dark／auto 使用既有 Mermaid 主題。Anthropic blog style 是本專案的編輯風格詮釋，固定使用淺色紙面與本機 serif fallback，即使頁面為 dark 也維持淺色圖表；不載入網路字型，也不代表 Anthropic 官方整合。
+
+設定面板的 General／Appearance／Plugins 固定沿用同一個編輯風格，與圖表的風格切換及文章 CSS 客製化分開。tokens 在 `src/popup/index.css`；標題使用本機 serif、控制項使用本機 sans-serif、CSS editor 保留 monospace。SMUI 使用 `--mdc-theme-*` 和有範圍的 selector，不能縮小 switch 的 native checkbox。popup 與文章內 iframe 共用相同 UI；根節點 `lang` 隨設定語言更新。永久案例為 `tests/e2e/settings-theme.e2e.mjs`，截圖在 `dist/qa/settings-theme/`，涵蓋五語、320／360／390 px、三分頁、展開選單、新舊設定、重載與嵌入浮層。
 
 選取後立即儲存並重繪目前分頁，保留閱讀錨點，圖表縮放回到初始狀態。其他已開文件於下次載入採用已儲存的選擇。此設定獨立於 CSS 客製化開關與 Developer／Editorial／User slots；文件作者的 `classDef`、`style`、`linkStyle` 與 Mermaid 支援的 init 指令保留優先順序。Markdown fences 與 `.mmd` 使用同一路徑，DOT 仍分流 Graphviz，PlantUML 的隱私閘門不變。
 
 純設定解析在 `src/core/mermaid-style.ts`。`src/plugins/mermaid-block.ts` 同步產生安全跳脫的原碼 placeholder；`src/plugins/mermaid-renderer.ts` 逐圖非同步渲染，在 active generation 完成後發出 `diagramsRendered` 並重建搜尋。過期工作在佇列開始與回傳時檢查，錯誤保留原碼，不阻塞後圖。每張圖重新初始化設定；圓角只套用一般矩形，保留膠囊與明確圓角形狀。popup 的新選單以不可變更新避開 `app.svelte` 的物件身分去重；SMUI plugin chips 則在使用者選取綁定完成後複製陣列再儲存。請勿以原地修改巢狀設定或陣列的方式觸發這兩個儲存流程。
 
 Mermaid 本體只載入本機 `mermaid-frame.html`。它和主程式使用獨立 webpack compilation，避免跨執行世界共用 chunk；production 與 dev 都要建置兩者。renderer-only CSP、結構化 HTML/CSS/config/flowchart metadata preflight、DOMPurify 與 SVG/CSS 清理共同限制資源。外部圖片、image nodes、資源 CSS 或不支援的 CSS 會拒絕並保留原碼；不新增權限、不下載字型、不降低 strict。這個政策適用 Mermaid，不代表文件中任意 raw HTML/CSS 的既有隱私缺口已消失。
+
+metadata preflight 不限 Flowchart：固定版本的 classes／states／entities／requirements／blocks／nodes／edges，以及 C4 shapes／boundaries／relationships 都須檢查。所有圖種先取得 parsed diagram 再呼叫 render；探測 receipt 的 `preflightPassed` 可區分前置拒絕與輸出清理。HTML label 的 computed typography 在安全檢查後、隔離文件內保留，避免文章 `p !important` 改寫作者字型。Architecture 只重著色內建 80×80 圖示底板，保留白色圖案與 Original，作者 themeCSS 不被這個補色規則蓋掉。
+
+pagehide 使用 suspended/page epoch 使保留 DOM 的工作失效並清除 frame；pageshow 重試仍有來源的未完成圖，不重畫已完成圖。`tests/unit/mermaid-plugin-lifecycle.test.mjs` 轉譯真正的 plugin 並替換瀏覽器邊界依賴，沒有鏡射 production 邏輯；瀏覽器案例另測合成的 page transition。實際 BFCache 命中與舊版 Chrome 仍是另行驗證的範圍。
 
 永久情境與截圖規格見 [Mermaid Style Test Plan](superpowers/plans/2026-10-22-mermaid-styles.md#permanent-test-plan)。執行：
 
@@ -111,6 +118,8 @@ Mermaid 本體只載入本機 `mermaid-frame.html`。它和主程式使用獨立
     node --test tests/e2e/mermaid-styles.e2e.mjs
 
 截圖保存在忽略追蹤的 `dist/qa/mermaid-styles/`。瀏覽器不可用或測試被 skip 時，不能將 UI／視覺驗收記為通過。
+
+升級的完整矩陣、安全、生命週期與效能規格以 [modernization plan](superpowers/plans/2026-10-23-mermaid-modernization.md) 為準。可重跑的 benchmark 與 baseline 建置方式在 [tests/perf/README.md](../tests/perf/README.md)，會保留原始樣本與 asset digest；五次冷啟動／十次暖重繪只報 median/max，不外推 p95。
 
 ### 圖種相容性
 
@@ -126,6 +135,8 @@ ZenUML 外掛本身的 parser 是 no-op。`src/core/mermaid/zenuml.js` 以固定
 [MV3 probe report](research/mermaid12-probe.md) 保留 raw strict 四個失敗及 A4 confined 25/25 通過證據。Probe 與產品共用 `src/core/mermaid/` 政策，仍保有獨立 lockfile 與 raw 對照。永久重測指令位於 probe README。TypeScript 固定 5.0.4 以解析新增 d3 const type parameters；`ignoreDeprecations: '5.0'` 僅相容既有 Svelte 3 base config，不代表已遷移整個工具鏈。
 
 ## CSS 客製化與搜尋歷史
+
+自訂寬度的新／缺少設定與 Reset 預設為 **85%**。`resolveCustomWidthDefaults` 將 `customWidth`／`customWidthUnit` 一起解析：已儲存的百分比、像素與 null 關閉狀態保留；舊版只有數值而沒有單位時視為 px，避免 900px 變成百分比。讀取不寫回 storage；`settings.test.mjs`、`settings-theme.e2e.mjs` 與 Mermaid reset 案例共同把關。
 
 CSS 客製化與導覽搜尋歷史皆只存於 `chrome.storage.local`，不會增加網路請求。CSS 有兩個唯讀 preset（`editorial`、`developer`）與兩個可編輯欄位（`user1`、`user2`）。`customCssEnabled` 是實際注入 CSS 的開關；切換 preset 或編輯草稿本身不改變頁面，使用者按「套用」後才寫入 `customCss` 並生效。
 

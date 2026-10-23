@@ -68,6 +68,7 @@ import '@/style/index.less'
 
 function main(data: Data) {
   const configData = getDefaultData(data)
+  let cancelReadingRestore = () => {}
   const actions = {
     reload() {
       window.location.reload()
@@ -139,7 +140,7 @@ function main(data: Data) {
             resolveMermaidStyle(_oldValue?.Mermaid?.style)
           const restore = styleChanged ? captureReadingPosition() : null
           actions.updateMdPlugins()
-          if (restore) requestAnimationFrame(restore)
+          if (restore) restoreAfterDiagrams(restore)
           break
         }
         case 'plantumlEnabled':
@@ -293,6 +294,7 @@ function main(data: Data) {
   const mdRenderer =
     (target: HTMLElement | Ele) =>
     (code: string = '', options?: MdOptions) => {
+      cancelReadingRestore()
       target.innerHTML = mdRender(code, {
         theme: toTheme(configData.pageTheme),
         plugins: configData.mdPlugins,
@@ -338,6 +340,59 @@ function main(data: Data) {
           : scrollY,
       )
     }
+  }
+
+  function restoreAfterDiagrams(restore: () => void) {
+    const target = mdContent.ele
+    const generation = target.dataset.mermaidGeneration
+    let cancelled = false
+    const inputs = [
+      'wheel',
+      'touchmove',
+      'keydown',
+      'pointerdown',
+      'mousedown',
+      'hashchange',
+      'pagehide',
+    ]
+    const onInput = e => {
+      if (
+        e.type === 'keydown' &&
+        ![
+          'ArrowUp',
+          'ArrowDown',
+          'PageUp',
+          'PageDown',
+          'Home',
+          'End',
+          ' ',
+        ].includes(e.key)
+      )
+        return
+      cancel()
+    }
+    const cleanup = () => {
+      globalEvent.off('diagramsRendered', completed)
+      inputs.forEach(type => window.removeEventListener(type, onInput))
+    }
+    const cancel = () => {
+      cancelled = true
+      cleanup()
+    }
+    const completed = ({ container, generation: finished }) => {
+      if (container !== target || String(finished) !== generation) return
+      globalEvent.off('diagramsRendered', completed)
+      requestAnimationFrame(() => {
+        cleanup()
+        if (!cancelled && target.dataset.mermaidGeneration === generation)
+          restore()
+      })
+    }
+    inputs.forEach(type =>
+      window.addEventListener(type, onInput, { passive: true }),
+    )
+    globalEvent.on('diagramsRendered', completed)
+    cancelReadingRestore = cancel
   }
 
   mdContent.on(

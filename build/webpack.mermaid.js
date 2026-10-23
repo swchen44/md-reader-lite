@@ -13,6 +13,18 @@ module.exports = mode => ({
     publicPath: './',
   },
   resolve: { extensions: ['.js', '.mjs', '.ts', '.json'] },
+  module: {
+    rules: [
+      {
+        test: /\.ts$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'esbuild-loader',
+          options: { loader: 'ts', target: 'esnext' },
+        },
+      },
+    ],
+  },
   optimization: { minimize: false },
   plugins: [
     new optimize.LimitChunkCountPlugin({ maxChunks: 1 }),

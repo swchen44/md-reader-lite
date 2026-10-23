@@ -66,6 +66,7 @@ async function run({
         if (result.syntax) section.dataset.syntax = result.syntax
         section.dataset.violations = JSON.stringify(result.violations || [])
         section.dataset.frameResiduals = String(result.residuals || 0)
+        section.dataset.preflightPassed = String(!!result.preflightPassed)
         section.dataset.securityLevel = result.securityLevel
         if (result.status !== 'ready') {
           section.dataset.error = result.error

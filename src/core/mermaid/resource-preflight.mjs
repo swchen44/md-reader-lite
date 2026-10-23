@@ -93,7 +93,7 @@ export function checkMarkup(source) {
 
 export function checkConfig(config) {
   const seen = new Set()
-  const visit = value => {
+  const visit = (value, parentKey = '') => {
     if (!value || typeof value !== 'object' || seen.has(value)) return
     seen.add(value)
     for (const [key, item] of Object.entries(value)) {
@@ -102,7 +102,13 @@ export function checkConfig(config) {
         if (key.toLowerCase().endsWith('css')) checkCSS([item])
         if (key.toLowerCase().endsWith('fontfamily'))
           checkCSS([], [`font-family:${item}`])
-      } else visit(item)
+        if (
+          parentKey === 'nodeColors' ||
+          /(?:color|fill|stroke|background|bkg)$/i.test(key) ||
+          /^(?:cScale|git|pie|venn)\d+$/.test(key)
+        )
+          checkCSS([], [`color:${item}`])
+      } else visit(item, key)
     }
   }
   visit(config)
@@ -118,21 +124,48 @@ export function checkVertices(vertices) {
 }
 
 export function checkDiagram(diagram) {
+  if (typeof diagram.db.getC4ShapeArray === 'function')
+    checkConfig(diagram.db.getC4ShapeArray())
+  if (typeof diagram.db.getBoundaries === 'function')
+    checkConfig(diagram.db.getBoundaries())
+  if (typeof diagram.db.getRels === 'function')
+    checkConfig(diagram.db.getRels())
   if (typeof diagram.db.getVertices === 'function')
     checkVertices(diagram.db.getVertices())
-  if (typeof diagram.db.getClasses === 'function') {
-    const classes = diagram.db.getClasses()
-    for (const item of classes.values()) {
-      for (const field of ['styles', 'textStyles'])
-        if (Array.isArray(item[field])) checkCSS([], [item[field].join(';')])
+  const seen = new Set()
+  const styleFields = new Set([
+    'style',
+    'styles',
+    'textStyles',
+    'cssStyles',
+    'cssCompiledStyles',
+    'labelStyle',
+    'defaultStyle',
+  ])
+  const visit = value => {
+    if (!value || typeof value !== 'object' || seen.has(value)) return
+    seen.add(value)
+    if (value instanceof Map) {
+      for (const item of value.values()) visit(item)
+      return
+    }
+    for (const [key, item] of Object.entries(value)) {
+      if (styleFields.has(key) && typeof item === 'string') checkCSS([], [item])
+      else if (styleFields.has(key) && Array.isArray(item))
+        checkCSS([], [item.join(';')])
+      else visit(item)
     }
   }
-  if (typeof diagram.db.getEdges === 'function') {
-    const edges = diagram.db.getEdges()
-    if (Array.isArray(edges.defaultStyle))
-      checkCSS([], [edges.defaultStyle.join(';')])
-    for (const edge of edges.values()) {
-      if (Array.isArray(edge.style)) checkCSS([], [edge.style.join(';')])
-    }
-  }
+  for (const method of [
+    'getVertices',
+    'getClasses',
+    'getEdges',
+    'getStates',
+    'getEntities',
+    'getRequirements',
+    'getElements',
+    'getBlocksFlat',
+    'getNodes',
+  ])
+    if (typeof diagram.db[method] === 'function') visit(diagram.db[method]())
 }

@@ -131,7 +131,7 @@ const PAINT_ATTRS = new Set([
   'cursor',
 ])
 
-export function sanitizeSVG(source) {
+export function sanitizeSVG(source, css) {
   const fragment = DOMPurify.sanitize(source, {
     ALLOWED_TAGS: TAGS,
     ADD_ATTR: ['xmlns', 'xmlns:xlink', 'dominant-baseline', 'xml:space'],
@@ -153,6 +153,14 @@ export function sanitizeSVG(source) {
   const svg = fragment.firstElementChild
   if (!svg || svg.localName !== 'svg' || fragment.children.length !== 1)
     throw blocked('invalid SVG root')
+  if (css) {
+    const style = document.createElementNS(
+      'http://www.w3.org/2000/svg',
+      'style',
+    )
+    style.textContent = css
+    svg.append(style)
+  }
   const elements = [svg, ...svg.querySelectorAll('*')]
   const ids = new Set(elements.filter(el => el.id).map(el => el.id))
   const sheets = elements.filter(el => el.localName === 'style')
@@ -189,5 +197,42 @@ export function sanitizeSVG(source) {
       }
     }
   }
-  return new XMLSerializer().serializeToString(svg)
+  // Snapshot HTML label typography before host article CSS can override it.
+  // Only mount after resource validation, and never copy resource-bearing styles.
+  const mount = document.createElement('div')
+  mount.append(svg)
+  document.body.append(mount)
+  try {
+    const properties = [
+      'font-family',
+      'font-size',
+      'font-weight',
+      'font-style',
+      'line-height',
+      'color',
+      'text-align',
+      'text-decoration',
+      'white-space',
+      'word-break',
+      'overflow-wrap',
+      'margin',
+      'padding',
+      'letter-spacing',
+    ]
+    const labels = [...svg.querySelectorAll('foreignObject *')].map(element => {
+      const computed = getComputedStyle(element)
+      return {
+        element,
+        values: properties.map(name => computed.getPropertyValue(name)),
+      }
+    })
+    for (const { element, values } of labels)
+      properties.forEach((name, index) => {
+        if (values[index])
+          element.style.setProperty(name, values[index], 'important')
+      })
+    return new XMLSerializer().serializeToString(svg)
+  } finally {
+    mount.remove()
+  }
 }

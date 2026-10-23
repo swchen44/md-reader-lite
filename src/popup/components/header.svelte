@@ -16,7 +16,9 @@
     padding: 0 0 22px;
     margin: 0;
     font-size: 18px;
-    color: #35363a;
+    font-family: var(--settings-heading-font);
+    font-weight: 600;
+    color: var(--settings-ink);
   }
   h1 a {
     display: flex;

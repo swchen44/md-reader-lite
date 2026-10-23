@@ -1,7 +1,7 @@
 import { before, after, test } from 'node:test'
 import assert from 'node:assert/strict'
 import http from 'node:http'
-import { mkdir } from 'node:fs/promises'
+import { mkdir, writeFile } from 'node:fs/promises'
 import { launchExtension } from './_harness.mjs'
 
 const QA = new URL('../../dist/qa/mermaid-zenuml/', import.meta.url)
@@ -10,25 +10,18 @@ const nested =
   'zenuml\n A as Alice\n B as Backend\n A.Load() {\n if(ready) {\n B.Load() {\n return result\n }\n } else {\n B.Retry()\n }\n while(pending) {\n B.Poll()\n }\n }'
 const broken = 'zenuml\n A.Load() {'
 const fence = source => '```mermaid\n' + source + '\n```'
+const markdown =
+  '# Local ZenUML\n\n' +
+  [alias, nested, broken, 'flowchart LR\n A[Recovered] --> B[Readable]']
+    .map(fence)
+    .join('\n\n')
 let server, ctx, page, base, setStorage
 const requests = []
 
 before(async () => {
   server = http.createServer((req, res) => {
     res.setHeader('Content-Type', 'text/plain; charset=utf-8')
-    res.end(
-      req.url.endsWith('.mmd')
-        ? nested
-        : '# Local ZenUML\n\n' +
-            [
-              alias,
-              nested,
-              broken,
-              'flowchart LR\n A[Recovered] --> B[Readable]',
-            ]
-              .map(fence)
-              .join('\n\n'),
-    )
+    res.end(req.url.endsWith('.mmd') ? nested : markdown)
   })
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
   base = `http://127.0.0.1:${server.address().port}`
@@ -45,19 +38,26 @@ before(async () => {
     route.abort(),
   )
   await mkdir(QA, { recursive: true })
+  await writeFile(new URL('local.md', QA), markdown)
+  await writeFile(new URL('local.mmd', QA), nested)
 })
 after(async () => {
   if (ctx) await ctx.close()
   if (server) await new Promise(resolve => server.close(resolve))
 })
 for (const style of ['original', 'anthropic-blog']) {
-  test(`ZenUML ${style}: aliases, nested branches/loops, failure recovery and standalone mmd`, async () => {
+  test(`ZenUML ${style}: aliases, nesting, recovery and standalone mmd on HTTP/file`, async () => {
     await setStorage({
       mdPluginOptions: { Mermaid: { style } },
       offlineMode: true,
     })
-    for (const path of ['/zen.md', '/zen.mmd']) {
-      await page.goto(base + path)
+    for (const path of [
+      '/zen.md',
+      '/zen.mmd',
+      new URL('local.md', QA).href,
+      new URL('local.mmd', QA).href,
+    ]) {
+      await page.goto(path.startsWith('file:') ? path : base + path)
       await page.waitForFunction(
         () => {
           const article = document.querySelector('.md-reader__markdown-content')
@@ -103,8 +103,12 @@ for (const style of ['original', 'anthropic-blog']) {
       }))
       assert.ok(size.width > 0 && size.height > 0)
       await nestedBlock.screenshot({
-        path: new URL(`${style}-${standalone ? 'mmd' : 'nested'}.png`, QA)
-          .pathname,
+        path: new URL(
+          `${style}-${path.startsWith('file:') ? 'file-' : ''}${
+            standalone ? 'mmd' : 'nested'
+          }.png`,
+          QA,
+        ).pathname,
       })
     }
     assert.deepEqual(requests, [])

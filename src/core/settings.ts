@@ -183,6 +183,23 @@ export function resolveCodeTheme(
 
 export const CUSTOM_WIDTH_PERCENT_MIN = 20
 export const CUSTOM_WIDTH_PERCENT_MAX = 100
+export const DEFAULT_CUSTOM_WIDTH_PERCENT = 85
+
+export function resolveCustomWidthDefaults(
+  data: Pick<Data, 'customWidth' | 'customWidthUnit'> = {},
+): Required<Pick<Data, 'customWidth' | 'customWidthUnit'>> {
+  if (data.customWidth === undefined && data.customWidthUnit === undefined) {
+    return {
+      customWidth: DEFAULT_CUSTOM_WIDTH_PERCENT,
+      customWidthUnit: 'percent',
+    }
+  }
+  // Widths saved before units were introduced are pixels, including disabled null.
+  return {
+    customWidth: data.customWidth ?? null,
+    customWidthUnit: data.customWidthUnit === 'percent' ? 'percent' : 'px',
+  }
+}
 
 export function clampCustomWidthPercent(v: unknown): number | null {
   if (v === null || v === undefined || v === '') return null

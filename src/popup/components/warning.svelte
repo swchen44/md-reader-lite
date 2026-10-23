@@ -13,8 +13,8 @@
     border: 1px solid currentColor;
     border-radius: 4px;
     margin: -10px 0px 15px;
-    background: #fff1f0;
-    color: #ff493c;
+    background: var(--settings-warning-paper);
+    color: var(--settings-danger);
   }
   .warning p {
     margin: 0;

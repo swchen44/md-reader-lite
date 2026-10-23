@@ -1,6 +1,12 @@
 # Mermaid 圖種相容性測試
 
-## 結論
+## 目前產品：Mermaid 12
+
+2026-10-23 產品已固定 Mermaid 12.2.0／ZenUML 1.0.1，C 階段逐項及完整混合頁驗證 **31/31**，兩種風格均可渲染。新預設為 Anthropic blog style，已儲存的 Original 保留；設定面板採固定編輯風格。D/D2 與 E 的字型、372-output matrix、效能及安全驗收以 [migration checklist/ledger](../superpowers/plans/2026-10-23-mermaid-modernization.md) 為準，不把單純可渲染等同整體升級完成。
+
+下文是 **2026-10-22、Mermaid 9.1.6 的歷史 baseline**，保留原始失敗與當時邊界，不能當成現在的支援清單。
+
+## 歷史結論：Mermaid 9.1.6
 
 以目前 md-reader、內含的 **Mermaid 9.1.6** 與真實 headed Chromium 擴充功能實測。Original 與 Anthropic blog style 的結果相同：**11/31 種可以產生圖表，20/31 種目前不支援**。不支援的圖之後仍能正常渲染其他圖表。
 

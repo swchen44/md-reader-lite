@@ -28,6 +28,13 @@ describe('Mermaid async lifecycle (e2e)', () => {
         )
       }
       const many = req.url.startsWith('/many')
+      if (req.url.startsWith('/reading'))
+        return res.end(
+          '# Reading position\n\n' +
+            Array.from({ length: 20 }, () => fence(flow)).join('\n\n') +
+            '\n\n## Reading anchor\n\n' +
+            'Reading paragraph. '.repeat(1200),
+        )
       res.end(
         '# Async document\n\n' +
           (many
@@ -199,6 +206,106 @@ describe('Mermaid async lifecycle (e2e)', () => {
     assert.equal(
       await page.locator('pre.mermaid[data-mermaid-status="ready"]').count(),
       70,
+    )
+  })
+  test('pagehide stops retained-DOM work and pageshow retries unfinished diagrams', async () => {
+    await page.goto(base + '/many.md')
+    await page.waitForFunction(
+      () =>
+        document.querySelector('pre.mermaid[data-mermaid-status="ready"]') &&
+        document.querySelector('pre.mermaid[data-mermaid-status="rendering"]'),
+    )
+    await page.evaluate(() =>
+      window.dispatchEvent(
+        new PageTransitionEvent('pagehide', { persisted: true }),
+      ),
+    )
+    await page.waitForFunction(
+      () => !document.querySelector('iframe[src$="mermaid-frame.html"]'),
+    )
+    await page.waitForTimeout(100)
+    assert.equal(
+      await page.locator('pre.mermaid[data-mermaid-status="error"]').count(),
+      0,
+    )
+    assert.equal(
+      await page.locator('iframe[src$="mermaid-frame.html"]').count(),
+      0,
+    )
+    assert.equal(
+      await page
+        .locator('.md-reader__markdown-content')
+        .getAttribute('data-mermaid-complete'),
+      null,
+    )
+    await page.evaluate(() =>
+      window.dispatchEvent(
+        new PageTransitionEvent('pageshow', { persisted: true }),
+      ),
+    )
+    await settled()
+    assert.equal(
+      await page.locator('pre.mermaid[data-mermaid-status="ready"]').count(),
+      70,
+    )
+    const generation = await page
+      .locator('.md-reader__markdown-content')
+      .getAttribute('data-mermaid-generation')
+    await page.evaluate(() =>
+      window.dispatchEvent(
+        new PageTransitionEvent('pageshow', { persisted: true }),
+      ),
+    )
+    await page.waitForTimeout(50)
+    assert.equal(
+      await page
+        .locator('.md-reader__markdown-content')
+        .getAttribute('data-mermaid-generation'),
+      generation,
+    )
+    assert.deepEqual(requests, [])
+  })
+  test('reading restoration waits for current diagrams and respects a new user scroll', async () => {
+    await setStorage({ mdPluginOptions: options('original') })
+    await page.goto(base + '/reading.md')
+    await settled()
+    await page.addStyleTag({ content: 'html,body { overflow-anchor: none; }' })
+    const anchor = page.locator('h2').filter({ hasText: 'Reading anchor' })
+    await anchor.evaluate(el =>
+      window.scrollTo(0, scrollY + el.getBoundingClientRect().top - 100),
+    )
+    await style('anthropic-blog')
+    await settled()
+    await page.waitForFunction(
+      () => {
+        const el = [...document.querySelectorAll('h2')].find(el =>
+          el.textContent.includes('Reading anchor'),
+        )
+        return Math.abs(el.getBoundingClientRect().top - 100) < 8
+      },
+      undefined,
+      { timeout: 3000 },
+    )
+    await style('original')
+    await page.mouse.wheel(0, 50)
+    await page.evaluate(() => window.scrollTo(0, 200))
+    await settled()
+    await page.waitForTimeout(50)
+    assert.ok(
+      await page.evaluate(() => scrollY < 400),
+      'Late diagram completion must not pull the user back',
+    )
+    await anchor.evaluate(el =>
+      window.scrollTo(0, scrollY + el.getBoundingClientRect().top - 100),
+    )
+    await style('anthropic-blog')
+    await page.mouse.click(12, 350)
+    await page.evaluate(() => window.scrollTo(0, 200))
+    await settled()
+    await page.waitForTimeout(50)
+    assert.ok(
+      await page.evaluate(() => scrollY < 400),
+      'Pointer navigation must cancel late restoration too',
     )
   })
 })

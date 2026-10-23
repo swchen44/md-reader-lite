@@ -3,7 +3,10 @@ import type { CustomCssChoice } from '@/config/custom-css-presets'
 import type PAGE_THEMES from '@/config/page-themes'
 import i18n from '@/config/i18n'
 import { getDefaultPluginOptions } from './plugin-options'
-import { resolveCustomCssDefaults } from './settings'
+import {
+  resolveCustomCssDefaults,
+  resolveCustomWidthDefaults,
+} from './settings'
 
 export interface Data {
   enable?: boolean
@@ -49,6 +52,8 @@ export function getDefaultData(mergeData: Data = {}): Data {
     customCssUser1,
     customCssUser2,
     customCssDefaultPreset,
+    customWidth,
+    customWidthUnit,
     ...restData
   } = mergeData
   const customCssDefaults = resolveCustomCssDefaults({
@@ -77,13 +82,12 @@ export function getDefaultData(mergeData: Data = {}): Data {
     txtAsMd: false,
     outlineCollapse: false,
     breaks: false,
-    customWidth: null,
+    ...resolveCustomWidthDefaults({ customWidth, customWidthUnit }),
     customCssDefaultPreset: customCssDefaultPreset || 'developer',
     ...customCssDefaults,
     searchHistory: [],
     searchHistoryLimit: 10,
     mdPluginOptions: getDefaultPluginOptions(),
-    customWidthUnit: 'px',
     charsetCompat: false,
     offlineMode: true,
     plantumlEnabled: false,

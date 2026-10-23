@@ -213,6 +213,7 @@ async function probe(
             syntax: element.dataset.syntax,
             violations: JSON.parse(element.dataset.violations || '[]'),
             frameResiduals: Number(element.dataset.frameResiduals || 0),
+            preflightPassed: element.dataset.preflightPassed === 'true',
             nodeFills: svg
               ? [...svg.querySelectorAll('.node rect')].map(
                   node => getComputedStyle(node).fill,
@@ -425,6 +426,38 @@ for (const item of negatives) {
 }
 
 if (report.policy === 'confined') {
+  for (const item of [
+    {
+      name: 'source-size-limit',
+      source: 'flowchart LR\n A-->B\n%%' + 'x'.repeat(50000),
+    },
+    {
+      name: 'edge-limit',
+      source:
+        '%%{init: {"maxEdges":99999,"securityLevel":"loose","secure":[]}}%%\nflowchart LR\n' +
+        Array.from(
+          { length: 501 },
+          (_, index) => `A${index}-->A${index + 1}`,
+        ).join('\n'),
+    },
+  ])
+    gate(`protected rendering limit: ${item.name}`, async () => {
+      const result = await probe(item.name, [item, sentinel], {
+        config: {
+          maxEdges: 99999,
+          maxTextSize: 999999,
+          secure: [],
+          securityLevel: 'loose',
+        },
+      })
+      assert.ok(['blocked', 'error'].includes(result.diagrams[0].status))
+      assert.match(result.diagrams[0].error, /limit|edge|maximum/i)
+      assert.equal(result.diagrams[0].securityLevel, 'strict')
+      assert.equal(result.diagrams[0].source, item.source)
+      assert.deepEqual(result.requests, [])
+      assert.deepEqual(result.diagrams[0].violations, [])
+      assertRenders({ ...result, diagrams: result.diagrams.slice(1) }, 1)
+    })
   const graph = 'flowchart LR\n A --> B'
   const themed = css =>
     '%%{init: ' + JSON.stringify({ themeCSS: css }) + '}%%\n' + graph
@@ -454,7 +487,66 @@ if (report.policy === 'confined') {
     assert.ok(result.diagrams[0].nodeFills.includes('rgb(18, 52, 86)'))
     assert.deepEqual(result.requests, [])
   })
+  gate(
+    'Sankey filters authored URL paints and rejects unsafe caller configuration',
+    async () => {
+      const item = {
+        name: 'sankey-node-paint',
+        source:
+          '---\nconfig:\n  sankey:\n    nodeColors:\n      Documents: "url(https://mermaid-probe.invalid/sankey.svg)"\n---\nsankey\nDocuments,Text,55',
+      }
+      // Pinned v12 sanitizes dictionary colors during public parse, before our check.
+      for (const policy of ['raw', 'confined']) {
+        const result = await probe(
+          `native-filter-${policy}-sankey`,
+          [item, sentinel],
+          { policy },
+        )
+        assertRenders(result, 2)
+        assert.deepEqual(result.requests, [])
+        assert.deepEqual(result.diagrams[0].violations, [])
+      }
+      const caller = await probe('caller-sankey-node-paint', [sentinel], {
+        config: {
+          sankey: {
+            nodeColors: {
+              Documents: 'url(https://mermaid-probe.invalid/caller.svg)',
+            },
+          },
+        },
+      })
+      assert.equal(caller.diagrams[0].status, 'blocked')
+      assert.match(caller.diagrams[0].error, /^Blocked resource policy:/)
+      assert.deepEqual(caller.diagrams[0].violations, [])
+      assert.deepEqual(caller.requests, [])
+    },
+  )
   const attacks = [
+    {
+      name: 'state-class-resource',
+      source:
+        'stateDiagram-v2\n A --> B\n classDef remote background-image:url(https://mermaid-probe.invalid/state.png)\n class A remote',
+    },
+    {
+      name: 'state-inline-resource',
+      source:
+        'stateDiagram-v2\n A --> B\n style A background-image:url(https://mermaid-probe.invalid/state-inline.png)',
+    },
+    {
+      name: 'c4-relation-paint',
+      source:
+        'C4Context\n Person(reader, "Reader")\n System(app, "Application")\n Rel(reader, app, "Reads")\n UpdateRelStyle(reader, app, $lineColor="url(https://mermaid-probe.invalid/c4-rel.svg)")',
+    },
+    {
+      name: 'swimlane-image-node',
+      source:
+        'swimlane-beta LR\n subgraph Reader\n A@{img: "https://mermaid-probe.invalid/swimlane.png",label: "Private",h:60}\n end\n A --> B',
+    },
+    {
+      name: 'c4-element-paint',
+      source:
+        'C4Context\n Person(reader, "Reader")\n UpdateElementStyle(reader, $bgColor="url(https://mermaid-probe.invalid/c4.svg)")',
+    },
     {
       name: 'entity-image',
       source:
@@ -533,6 +625,11 @@ if (report.policy === 'confined') {
         assert.equal(result.diagrams[0].status, 'blocked')
         assert.match(result.diagrams[0].error, /^Blocked resource policy:/)
         assert.equal(result.diagrams[0].source, attack.source)
+        assert.equal(
+          result.diagrams[0].preflightPassed,
+          false,
+          'Reject before entering Mermaid render',
+        )
         assert.deepEqual(result.diagrams[0].violations, [])
         assertRenders({ ...result, diagrams: result.diagrams.slice(1) }, 1)
       },

@@ -11,8 +11,10 @@ A lightweight, **privacy-first** Chrome extension that renders local and online 
 - Outline (TOC) side panel, light/dark/auto themes, custom plugins toggle, per-plugin options
 - Folder tree side panel for browsing sibling markdown files — **on by default** (http/https autoindex, `file://` via folder picker, GitHub raw pages); the listing itself is still lazy-loaded, only fetched when you open the Files tab
 - CSS customization: Developer styling is applied by default on new installs; choose the read-only Developer or Editorial presets, or edit either of two local user slots, then explicitly Apply
+- Custom content width defaults to 85% on new/reset settings; saved pixel/percent widths and disabled choices are preserved
 - Persistent navigation-search history stored locally: configurable limit (default 10), suggestions while typing, keyboard selection, Tab completion, and a clear control
-- Mermaid styles: choose Original or Anthropic blog style in Settings > Plugins. Original is the default; the editorial preset uses local serif fonts and a light paper surface, independently of custom page CSS
+- Mermaid styles: choose Original or Anthropic blog style in Settings > Plugins. Anthropic is the default for new or missing preferences; saved Original choices are preserved. The Anthropic preset uses local fonts and a light paper surface independently of custom page CSS. All three settings tabs share the editorial appearance
+- Mermaid 12.2.0 with locally bundled ZenUML: all [31 diagram fixtures](example/mermaid-compatibility.md) render in both styles. External diagram resources are rejected; [test plan and limits](docs/superpowers/plans/2026-10-23-mermaid-modernization.md)
 - PlantUML diagrams via a configurable server — **opt-in, off by default, and disabled whenever offline mode is on** (self-hostable; `.puml`/`.plantuml` files render whole as one diagram — [self-host guide](docs/plantuml-server-setup.md))
 - Recognizes `.md` / `.markdown` / `.mkd` / `.mdx` / `.mdc` / `.txt` (opt-in) / `.puml` / `.plantuml` / `.mmd`
 - Works on `file://`, intranet servers, and raw URLs

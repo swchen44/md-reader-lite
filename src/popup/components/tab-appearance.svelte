@@ -13,6 +13,7 @@
     CUSTOM_WIDTH_MAX,
     CUSTOM_WIDTH_PERCENT_MIN,
     CUSTOM_WIDTH_PERCENT_MAX,
+    DEFAULT_CUSTOM_WIDTH_PERCENT,
     textSizeIndex,
     clampCustomWidthValue,
     resolveCustomCssChoice,
@@ -75,7 +76,7 @@
   }
 
   function defaultCustomWidthForUnit(unit: 'px' | 'percent'): number {
-    return unit === 'percent' ? 100 : DEFAULT_CUSTOM_WIDTH
+    return unit === 'percent' ? DEFAULT_CUSTOM_WIDTH_PERCENT : DEFAULT_CUSTOM_WIDTH
   }
 
   function onCustomWidthToggle(e: Event) {
@@ -242,9 +243,10 @@
     </FormField>
   </div>
   {#if data.customWidth != null}
-    <div class="form-item inline">
+    <div class="form-item width-controls">
       <input
         type="number"
+        aria-label={localize('label_custom-width')}
         min={widthMin}
         max={widthMax}
         disabled={!data.enable}
@@ -252,17 +254,19 @@
         on:blur={onCustomWidthBlur}
       />
       <span class="unit-label">{localize('label_width-unit')}:</span>
-      {#each WIDTH_UNITS as unit}
-        <FormField>
-          <span slot="label"> {localize(`unit_${unit}`)} </span>
-          <Radio
-            disabled={!data.enable}
-            bind:group={data.customWidthUnit}
-            bind:value={unit}
-            on:change={() => onWidthUnitChange(unit)}
-          />
-        </FormField>
-      {/each}
+      <div class="width-units">
+        {#each WIDTH_UNITS as unit}
+          <FormField>
+            <span slot="label"> {localize(`unit_${unit}`)} </span>
+            <Radio
+              disabled={!data.enable}
+              bind:group={data.customWidthUnit}
+              bind:value={unit}
+              on:change={() => onWidthUnitChange(unit)}
+            />
+          </FormField>
+        {/each}
+      </div>
     </div>
   {/if}
 {/if}
@@ -319,11 +323,21 @@
   .range-value {
     margin-left: 8px;
     font-size: 12px;
-    color: #243158a3;
+    color: var(--settings-muted);
   }
   .unit-label {
-    margin-left: 10px;
     font-size: 12px;
-    color: #243158a3;
+    color: var(--settings-muted);
+  }
+  .width-controls {
+    display: grid;
+    grid-template-columns: 70px minmax(0, 1fr);
+    align-items: center;
+    gap: 0 10px;
+  }
+  .width-units {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
   }
 </style>

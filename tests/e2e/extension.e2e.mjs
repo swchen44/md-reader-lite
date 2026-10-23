@@ -548,6 +548,15 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
       tab && tab.click()
     })
     await frame.waitForTimeout(200)
+    // Default width controls can push this switch below the scrollable panel.
+    await frame
+      .locator('.form-item.inline')
+      .filter({
+        hasText:
+          /啟用 CSS 客製化|Enable Custom CSS|启用 CSS 自定义|사용자 지정 CSS 사용|カスタム CSS を有効/,
+      })
+      .locator('.mdc-switch')
+      .scrollIntoViewIfNeeded()
     const switchPoint = await frame.evaluate(() => {
       const row = [...document.querySelectorAll('.form-item.inline')].find(
         item =>
