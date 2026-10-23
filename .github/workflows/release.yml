@@ -47,6 +47,7 @@ jobs:
         run: |
           node ./scripts/manifest.mjs
           node_modules/.bin/webpack --config ./build/webpack.prod.js
+          node ./scripts/notices.mjs
           node ./scripts/zip.mjs
           ls -la dist/
 

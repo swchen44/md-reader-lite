@@ -54,7 +54,7 @@
     node ./scripts/zip.mjs        # 產出 dist/md-reader-lite-<version>.zip
 
 未壓縮輸出在 extension/。
-坑：`corepack pnpm build` 的 deps 檢查在部分環境會失敗，直接用上面四步。`npm run build` 也包含 notices；zip 需包含 `THIRD_PARTY_NOTICES.txt` 與 `third-party-licenses.json`，不能只保留 minifier 的短版 legal comments。notices 是 production inventory 的授權文件集合，部分套件會被 tree-shake；這不是法律認證。缺少文件會使 build 失敗，勿跳過。
+坑：`corepack pnpm build` 的 deps 檢查在部分環境會失敗，直接用上面四步。`npm run build` 與 `.github/workflows/release.yml` 都包含 notices；zip 需包含 `THIRD_PARTY_NOTICES.txt` 與 `third-party-licenses.json`，不能只保留 minifier 的短版 legal comments。notices 是 production inventory 的授權文件集合，部分套件會被 tree-shake；這不是法律認證。缺少文件會使 build 失敗，勿跳過。`tests/unit/notices.test.mjs` 使用既有 lint-staged 工具鏈的 YAML parser 驗證 release 指令順序；本機建置／zip 已驗證，GitHub hosted workflow 本輪未觸發。
 
 ## 測試
 

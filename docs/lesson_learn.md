@@ -30,3 +30,4 @@
 23. 寬度與單位必須一起解析預設（2026-10-23）：單獨把單位改 percent 會把舊版 900px 當百分比 → 只有兩欄都缺少才用新預設 85%；舊數字無單位仍視為 px，null 仍關閉，不在讀取時寫回。新安裝、舊像素、百分比、關閉與 Reset 各自有永久測試。
 24. legal comments 不等於完整 notices（2026-10-23）：bundle 的短版授權註記不能代替 ELK 等套件完整文本 → build 在 zip 前從已安裝 production inventory 收集原始 LICENSE／COPYING／NOTICE，沒有獨立檔時保留原始 README；缺檔就失敗。保留來源與版本，不把本機路徑打包。
 25. 新預設展開控制列會改變測試座標（2026-10-23）：85% 寬度列讓 CSS 開關落在可捲動面板可視範圍外，舊固定座標點擊沒有切換 storage → 點擊前先用真實控制項 scrollIntoViewIfNeeded，再量座標與實際滑鼠點擊；保留原本開關／草稿／套用斷言，不以放寬檢查掩蓋失敗。
+26. npm build 與 CI 有兩套打包入口（2026-10-23）：本機加了 notices，但 release workflow 直接執行 manifest／webpack／zip，會漏掉新步驟 → 同步 CI，使用現有工具鏈的 YAML parser 寫順序 regression，先紅後綠；本機打包通過仍不能宣稱 hosted release 已跑過。
