@@ -199,9 +199,24 @@ test('matchSearchHistory: suggests case-insensitive matches only when enabled', 
     matchSearchHistory(['Open Path', 'Find Heading', 'copy path'], 'path', 10),
     ['Open Path', 'copy path'],
   )
-  assert.deepEqual(matchSearchHistory(['alpha', 'beta'], '', 10), [])
+  assert.deepEqual(matchSearchHistory(['alpha', 'beta'], '', 10), [
+    'alpha',
+    'beta',
+  ])
+  assert.deepEqual(
+    matchSearchHistory([' beta ', 'BETA', '', 'alpha'], '  ', 1),
+    ['beta'],
+  )
   assert.deepEqual(matchSearchHistory(['alpha', 'beta'], 'a', 1), ['alpha'])
   assert.deepEqual(matchSearchHistory(['alpha'], 'a', 0), [])
+})
+
+test('recordSearchHistory: reusing a case-insensitive match moves it to the front', async () => {
+  const { recordSearchHistory } = await load()
+  assert.deepEqual(
+    recordSearchHistory(['alpha', 'Beta', 'gamma'], ' BETA ', 3),
+    ['BETA', 'alpha', 'gamma'],
+  )
 })
 
 test('resolveCustomCssChoice: built-in choices are readonly', async () => {

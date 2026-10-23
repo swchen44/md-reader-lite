@@ -2,6 +2,15 @@ import storage from '@/core/storage'
 import commands from '@/core/commands'
 import { canBgFetch } from '@/core/charset'
 import { installOffscreenBroker } from '@/core/mermaid/offscreen-broker'
+import { clampSearchHistoryLimit, recordSearchHistory } from '@/core/settings'
+
+// Only history mutations share this queue; unrelated settings remain independent.
+let searchHistoryQueue: Promise<void> = Promise.resolve()
+function queueSearchHistory(write: () => Promise<void>): Promise<void> {
+  const pending = searchHistoryQueue.then(write)
+  searchHistoryQueue = pending.catch(() => {})
+  return pending
+}
 
 installOffscreenBroker()
 
@@ -33,6 +42,24 @@ async function messageHandler(
   callback?: (response?: any) => void,
 ) {
   switch (action) {
+    case 'recordSearchQuery': {
+      const query = String(data?.query ?? '').trim()
+      if (query) {
+        await queueSearchHistory(async () => {
+          const { searchHistory, searchHistoryLimit } = await storage.get([
+            'searchHistory',
+            'searchHistoryLimit',
+          ])
+          const limit = clampSearchHistoryLimit(searchHistoryLimit)
+          if (!limit) return
+          await storage.set({
+            searchHistory: recordSearchHistory(searchHistory, query, limit),
+          })
+        })
+      }
+      callback?.()
+      break
+    }
     case 'storage': {
       // Content settings belong to their sender; popup settings pin the active
       // tab now, before storage can yield and the user can switch tabs.
@@ -95,7 +122,15 @@ async function persistSetting(
   tabId: number | undefined,
   toggleSide = false,
 ) {
-  await storage.set({ [data.key]: data.value })
+  const write = async () => {
+    await storage.set({ [data.key]: data.value })
+  }
+  if (data.key === 'searchHistory' || data.key === 'searchHistoryLimit') {
+    // Clear/limit updates must not race with a query that read the old history.
+    await queueSearchHistory(write)
+  } else {
+    await write()
+  }
   updatePage(data.key, data.value, tabId, toggleSide)
 }
 

@@ -154,6 +154,10 @@ FileTreeHandle.closeMenus 由側欄收起及 raw 切換呼叫，確保 portal �
 
 CSS 客製化與導覽搜尋歷史皆只存於 `chrome.storage.local`，不會增加網路請求。CSS 有兩個唯讀 preset（`editorial`、`developer`）與兩個可編輯欄位（`user1`、`user2`）。`customCssEnabled` 是實際注入 CSS 的開關；切換 preset 或編輯草稿本身不改變頁面，使用者按「套用」後才寫入 `customCss` 並生效。
 
+左側浮動欄固定採用與設定面板一致的 Anthropic 紙色、棕色強調色及本機字型，tokens 與 scoped aliases 在 `src/style/sidebar.less`，最後由 index.less 匯入。大綱、Files、搜尋、FSA 及移到 body 的排序子選單都要涵蓋；只覆寫導覽節點的舊色彩變數，不能污染文章或改動寬度／拖曳幾何。dark 文章與關閉 CSS 客製化時，導覽仍維持此風格。
+
+搜尋歷史預設 10 筆，範圍 0–100；Enter／NumpadEnter、Tab 或點選歷史候選才記錄，單純輸入只即時搜尋。IME 確認不記錄半成品；Shift+Tab 保留反向焦點。空白開啟顯示最近紀錄，輸入後篩選。0 停用新增／候選但保留舊紀錄，清除按鈕才刪除。background 的 history queue 對最新 storage 逐筆合併搜尋詞，並與 clear／limit 共用序列，不能由各 content script 回寫自己的舊陣列。原生 storage.onChanged 批次同步所有已開文件與可見候選。永久單元、瀏覽器案例與操作說明見 [導覽風格與搜尋歷史 Test Plan](testing/sidebar-theme-search-history.md)。
+
 新安裝由 `src/background.ts` 的 `chrome.runtime.onInstalled` 寫入 `customCssDefaultPreset: 'developer'`，因此預設啟用並套用 Developer CSS。既有安裝若還沒有這個 marker，則寫入 `'legacy'`；`src/core/settings.ts` 依 marker 保留舊版的 CSS、選擇與開關狀態，避免升級時改變既有頁面外觀。`src/core/data.ts` 中 `searchHistory` 的預設為空陣列，`searchHistoryLimit` 預設為 `10`。
 
 這些行為由 `tests/unit/settings.test.mjs` 的預設／舊版相容測試，以及 `tests/e2e/extension.e2e.mjs` 的新設定檔、preset、啟用開關、套用與搜尋建議流程持續驗證；完整情境見 `docs/superpowers/plans/2026-09-06-css-slots-search-history.md` 的 Test Plan。

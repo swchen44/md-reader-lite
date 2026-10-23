@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
+import * as settings from '#core/settings'
 
 const flush = () => new Promise(resolve => setImmediate(resolve))
 function deferred() {
@@ -11,7 +12,7 @@ function deferred() {
 }
 
 // Execute the real background and commands modules; replace only Chrome/storage.
-function background() {
+function background(initial = {}) {
   let message, command
   const writes = [],
     sends = [],
@@ -19,15 +20,21 @@ function background() {
     queries = []
   const writeGate = deferred(),
     readGate = deferred()
+  const state = { ...initial }
   const storage = {
     async set(data) {
       writes.push(data)
       await writeGate.promise
+      Object.assign(state, data)
     },
     async get(key) {
       reads.push(key)
+      const keys = Array.isArray(key) ? key : [key]
+      const snapshot = Object.fromEntries(
+        keys.filter(k => k in state).map(k => [k, state[k]]),
+      )
       await readGate.promise
-      return { [key]: false }
+      return snapshot
     },
   }
   const chrome = {
@@ -87,6 +94,7 @@ function background() {
     '@/core/commands': { default: commands },
     '@/core/charset': { canBgFetch: () => false },
     '@/core/mermaid/offscreen-broker': { installOffscreenBroker() {} },
+    '@/core/settings': settings,
   })
   return {
     writes,
@@ -95,11 +103,19 @@ function background() {
     queries,
     writeGate,
     readGate,
+    state,
     activate(id) {
       activeTab = id
     },
     message(data, sender = {}) {
       message({ action: 'storage', data }, sender, () => {})
+    },
+    record(query, tabId = 11) {
+      message(
+        { action: 'recordSearchQuery', data: { query } },
+        { tab: { id: tabId } },
+        () => {},
+      )
     },
     command(name) {
       command(name)
@@ -160,4 +176,74 @@ test('no target at ingress must not send a delayed update to a newly active tab'
   await flush()
   assert.deepEqual(bg.writes, [{ hiddenSide: true }])
   assert.deepEqual(bg.sends, [])
+})
+
+test('concurrent query commits from two pages retain prior entries and move reused queries to MRU', async () => {
+  const bg = background({
+    searchHistory: ['older', 'Beta'],
+    searchHistoryLimit: 3,
+  })
+  bg.record(' alpha ', 11)
+  bg.record('BETA', 22)
+  await flush()
+  bg.readGate.resolve()
+  await flush()
+  bg.writeGate.resolve()
+  await flush()
+  assert.deepEqual(bg.state.searchHistory, ['BETA', 'alpha', 'older'])
+  assert.deepEqual(
+    bg.writes.map(write => write.searchHistory),
+    [
+      ['alpha', 'older', 'Beta'],
+      ['BETA', 'alpha', 'older'],
+    ],
+  )
+})
+
+test('queued clear discards older commits and the next commit cannot resurrect them', async () => {
+  const bg = background({ searchHistory: ['older'], searchHistoryLimit: 10 })
+  bg.readGate.resolve()
+  bg.record('before')
+  await flush()
+  bg.message({ key: 'searchHistory', value: [] }, { tab: { id: 22 } })
+  bg.record('after', 22)
+  bg.writeGate.resolve()
+  await flush()
+  assert.deepEqual(
+    bg.writes.map(write => write.searchHistory),
+    [['before', 'older'], [], ['after']],
+  )
+  assert.deepEqual(bg.state.searchHistory, ['after'])
+})
+
+test('queued limit changes apply to later commits, including zero disabling writes', async () => {
+  const bg = background({
+    searchHistory: ['older', 'oldest'],
+    searchHistoryLimit: 10,
+  })
+  bg.readGate.resolve()
+  bg.record('before')
+  await flush()
+  bg.message({ key: 'searchHistoryLimit', value: 1 }, { tab: { id: 22 } })
+  bg.record('after')
+  bg.writeGate.resolve()
+  await flush()
+  assert.deepEqual(bg.state.searchHistory, ['after'])
+  bg.message({ key: 'searchHistoryLimit', value: 0 }, { tab: { id: 22 } })
+  bg.record('disabled')
+  await flush()
+  assert.deepEqual(bg.state.searchHistory, ['after'])
+  assert.equal(bg.state.searchHistoryLimit, 0)
+})
+
+test('blank query commits leave retained history untouched and missing limits default to ten', async () => {
+  const bg = background({ searchHistory: ['old'] })
+  bg.readGate.resolve()
+  bg.writeGate.resolve()
+  bg.record('   ')
+  await flush()
+  assert.deepEqual(bg.writes, [])
+  bg.record('new')
+  await flush()
+  assert.deepEqual(bg.state.searchHistory, ['new', 'old'])
 })

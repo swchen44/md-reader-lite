@@ -45,3 +45,8 @@
 38. 嚴格 CSP 與 sandbox 必須分別驗證：正常 HTTP/file:// 的 31 圖種通過，仍漏掉 GitHub raw 的 `sandbox`；本機 iframe 也繼承禁用 scripts 的限制 → 同一份內容分別測無 CSP、嚴格 CSP、嚴格 CSP 加 sandbox，後者透過私有 offscreen host 使用同一個 renderer。套件內嵌不代表可忽略網頁的子瀏覽環境限制；加 CDN 或降低 Mermaid strict 都不能修正這個原因。
 39. Offscreen DOM 需要獨立生命週期：跨分頁同時建立、最後工作結束與新工作到達會競爭 → background 序列化 create/close，工作計數在 finally 釋放、閒置關閉；只有渲染期間送 heartbeat。把本機執行權限與 host permission 分開揭露，測試必須觀察真實沙盒頁面與資源請求，不能只用 parser 成功當驗收。
 40. 沙盒也會阻止測試工具的等待 callback：三張 SVG 已 ready，waitForFunction 的頁面世界 RAF 仍無法執行，造成假失敗 → 由 Node 輪詢 isolated locator 讀取，不放寬 host CSP；修好測試後回原 commit 重跑 RED，保留舊程式的實際 handshake 錯誤作對照。計算圖數時只算 pre 的直接 SVG 子節點，避免把圖示內嵌 SVG 算成新圖。
+41. 有保存與看得到歷史是不同驗收：Enter 已寫入 storage，空白重開仍顯示空白，容易被誤認沒有記錄 → focus 時列出最近紀錄，另測重開／重載；NumpadEnter 的 code 與主鍵盤不同，按 Enter 語意須涵蓋兩者，保留 IME 確認 guard。
+42. 各頁回寫歷史快照會互相覆寫：已開頁 B 尚未知道 A 的新紀錄，提交 B 時抹去 A → content script 只送確認的詞，background 對最新資料序列合併；clear／limit 走同一佇列，storage 事件同步候選。既有單頁成功測試不能外推成多頁正確。
+43. 提示選單開放空白最近紀錄後，Tab 的方向修飾鍵更重要：原本的補完 handler 連 Shift+Tab 也攔截 → 只攔截正向 Tab，測原生反向焦點與無提交副作用；候選選取恢復 focus 後須再次關閉選單，避免 focus 事件重開。
+44. 導覽換風格須包含 portal 與局部變數：只改側欄父元素會漏掉 body 上的排序子選單，直接改全域變數又會污染文章 → 導覽根節點統一 scoped aliases，樣式最後匯入，實測 dark／CSS 關閉／窄頁與 portal；測試頁面各自隔離，避免前例搜尋 session 造成假失敗。
+45. 即時歷史同步不能任意重設選取：另一頁更新 MRU 後，仍存在的候選位置改變；清掉 active index 會使 Enter 提交前綴、Tab 選到另一詞 → 以大小寫不敏感的候選值保留選取，只有該值消失才取消。原生 storage 事件已是共享狀態來源時，忽略可能遲到的單頁 setting echo，避免新值又被舊快照蓋回。

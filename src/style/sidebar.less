@@ -1,0 +1,123 @@
+// Navigation uses the same fixed paper palette as the settings panel.
+// Scope existing color aliases to these surfaces so article themes stay independent.
+body.md-reader {
+  --md-reader-nav-paper: #faf9f5;
+  --md-reader-nav-surface: #f1eadf;
+  --md-reader-nav-ink: #24231f;
+  --md-reader-nav-muted: #656259;
+  --md-reader-nav-accent: #a34f37;
+  --md-reader-nav-rule: #d9d3c8;
+  --md-reader-nav-mark: #edd9c5;
+  --md-reader-nav-heading: Georgia, 'Times New Roman', 'Noto Serif TC', serif;
+
+  .md-reader {
+    &__side,
+    &__side-tabs,
+    &__file-tree,
+    &__fsa-panel,
+    &__search-panel,
+    &__tree-settings-submenu,
+    &__side-resizer {
+      --color-side-bg: var(--md-reader-nav-paper);
+      --color-side: var(--md-reader-nav-ink);
+      --color-side-border: var(--md-reader-nav-rule);
+      --color-primary: var(--md-reader-nav-accent);
+      --color-side-shadow: 0 6px 24px rgba(36, 35, 31, 0.14);
+      --color-scrollbar-thumb: rgba(101, 98, 89, 0.3);
+      --color-scrollbar-thumb-hover: rgba(101, 98, 89, 0.5);
+      color-scheme: light;
+      color: var(--color-side);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        'Helvetica Neue', sans-serif;
+    }
+
+    &__side,
+    &__file-tree,
+    &__fsa-panel,
+    &__search-panel {
+      border-radius: 0 12px 12px 0;
+    }
+
+    &__side-tabs {
+      border-top-right-radius: 12px;
+      .md-reader__side-tab {
+        color: var(--md-reader-nav-muted);
+        font-family: var(--md-reader-nav-heading);
+        border-radius: 8px 8px 0 0;
+        &:hover {
+          background: var(--md-reader-nav-surface);
+        }
+      }
+      .md-reader__side-tab--active {
+        color: var(--md-reader-nav-accent);
+      }
+      .md-reader__search-bar {
+        .md-reader__search-input {
+          border-radius: 6px;
+          background: #fffdf8;
+        }
+        .md-reader__search-suggestions {
+          border-radius: 6px;
+          box-shadow: 0 6px 18px rgba(36, 35, 31, 0.14);
+        }
+        .md-reader__search-suggestion:hover,
+        .md-reader__search-suggestion--active {
+          background: var(--md-reader-nav-surface);
+        }
+      }
+    }
+
+    &__side .md-reader__side-h1 > a,
+    &__side .md-reader__side-h2 > a,
+    &__search-group-title {
+      font-family: var(--md-reader-nav-heading);
+    }
+    &__side li.md-reader__side-li--active > a,
+    &__file-tree .md-reader__tree-file--active > a {
+      border-radius: 6px;
+      background: var(--md-reader-nav-surface);
+    }
+    &__search-panel .md-reader__search-item:hover,
+    &__file-tree .md-reader__tree-settings-item:hover,
+    &__file-tree .md-reader__tree-settings-submenu-trigger:hover,
+    &__tree-settings-check-option:hover {
+      background: var(--md-reader-nav-surface);
+    }
+    &__search-panel .md-reader__search-hit,
+    &__file-tree .md-reader__tree-name-hit {
+      color: var(--md-reader-nav-ink);
+      background: var(--md-reader-nav-mark);
+    }
+    &__search-panel .md-reader__search-item--context {
+      color: var(--md-reader-nav-muted);
+      font-weight: 400;
+      opacity: 1;
+    }
+    &__file-tree .md-reader__tree-msg {
+      color: var(--md-reader-nav-muted);
+      opacity: 1;
+    }
+    &__file-tree .md-reader__tree-settings-menu,
+    &__tree-settings-submenu {
+      box-shadow: 0 6px 18px rgba(36, 35, 31, 0.14);
+    }
+
+    &__side-tabs button:focus-visible,
+    &__file-tree button:focus-visible,
+    &__tree-settings-submenu button:focus-visible {
+      outline: 2px solid var(--md-reader-nav-accent);
+      outline-offset: -3px;
+    }
+    &__btn--side-expand {
+      color: var(--md-reader-nav-accent);
+      background: var(--md-reader-nav-paper);
+      border: 1px solid var(--md-reader-nav-rule);
+      border-radius: 6px;
+      text-shadow: none;
+      &:hover {
+        color: var(--md-reader-nav-accent);
+        background: var(--md-reader-nav-surface);
+      }
+    }
+  }
+}

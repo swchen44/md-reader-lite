@@ -66,7 +66,6 @@ export function matchSearchHistory(
   const normalizedQuery = String(query ?? '')
     .trim()
     .toLowerCase()
-  if (!normalizedQuery) return []
   return normalizeSearchHistory(history, max).filter(item =>
     item.toLowerCase().includes(normalizedQuery),
   )

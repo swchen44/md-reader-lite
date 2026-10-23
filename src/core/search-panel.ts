@@ -1,6 +1,6 @@
 import Ele from '@/core/ele'
 import className from '@/config/class-name'
-import { matchSearchHistory, recordSearchHistory } from '@/core/settings'
+import { matchSearchHistory } from '@/core/settings'
 import {
   buildIndex,
   makeSnippet,
@@ -46,7 +46,7 @@ interface Options {
   onFilesQuery: (q: string) => void
   getSearchHistory: () => string[]
   getSearchHistoryLimit: () => number
-  onSearchHistoryChange: (history: string[]) => void
+  onRecordSearchQuery: (query: string) => void
 }
 
 export interface SearchPanel {
@@ -56,6 +56,7 @@ export interface SearchPanel {
   focus(): void
   clear(): void
   rebuild(): void
+  refreshHistory(): void
   /** 只設定輸入框顯示的文字，不觸發過濾／搜尋——用於換頁後還原查詢字串
    *  時，讓後續 focus()/route() 依照這個值運作。 */
   setQuery(value: string): void
@@ -71,7 +72,7 @@ export function createSearchPanel(opts: Options): SearchPanel {
     onFilesQuery,
     getSearchHistory,
     getSearchHistoryLimit,
-    onSearchHistoryChange,
+    onRecordSearchQuery,
   } = opts
 
   const button = new Ele<HTMLElement>('button', {
@@ -114,6 +115,7 @@ export function createSearchPanel(opts: Options): SearchPanel {
   let flashTimer = 0
   let suggestionItems: string[] = []
   let activeSuggestion = -1
+  let suggestionsOpen = false
 
   function collect(): SearchEntry[] {
     const heads = getHeads()
@@ -165,6 +167,7 @@ export function createSearchPanel(opts: Options): SearchPanel {
   }
 
   function hideSuggestions() {
+    suggestionsOpen = false
     suggestionItems = []
     activeSuggestion = -1
     suggestions.innerHTML = null
@@ -184,12 +187,8 @@ export function createSearchPanel(opts: Options): SearchPanel {
   }
 
   function recordQuery(value: string) {
-    const history = recordSearchHistory(
-      getSearchHistory(),
-      value,
-      getSearchHistoryLimit(),
-    )
-    onSearchHistoryChange(history)
+    const query = value.trim()
+    if (query && getSearchHistoryLimit() > 0) onRecordSearchQuery(query)
   }
 
   function selectSuggestion(value: string) {
@@ -199,9 +198,12 @@ export function createSearchPanel(opts: Options): SearchPanel {
     route(value)
     recordQuery(value)
     input.ele.focus()
+    // Restoring focus can render candidates again; selection always closes them.
+    hideSuggestions()
   }
 
   function renderSuggestions(query: string) {
+    suggestionsOpen = true
     suggestionItems = matchSearchHistory(
       getSearchHistory(),
       query,
@@ -403,6 +405,7 @@ export function createSearchPanel(opts: Options): SearchPanel {
     return null
   }
 
+  input.on('focus', () => renderSuggestions(input.ele.value))
   input.on('input', () => {
     renderSuggestions(input.ele.value)
     clearTimeout(debounceTimer)
@@ -430,14 +433,14 @@ export function createSearchPanel(opts: Options): SearchPanel {
       )
       return
     }
-    if (e.code === 'Tab' && suggestionItems.length) {
+    if (e.code === 'Tab' && !e.shiftKey && suggestionItems.length) {
       e.preventDefault()
       selectSuggestion(
         suggestionItems[activeSuggestion < 0 ? 0 : activeSuggestion],
       )
       return
     }
-    if (e.code === 'Enter') {
+    if (e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter') {
       e.preventDefault()
       if (activeSuggestion >= 0) {
         selectSuggestion(suggestionItems[activeSuggestion])
@@ -457,7 +460,20 @@ export function createSearchPanel(opts: Options): SearchPanel {
     panel,
     focus() {
       input.ele.focus()
+      renderSuggestions(input.ele.value)
       route(input.ele.value)
+    },
+    refreshHistory() {
+      if (!suggestionsOpen) return
+      const selected = suggestionItems[activeSuggestion]
+      renderSuggestions(input.ele.value)
+      if (selected !== undefined) {
+        setActiveSuggestion(
+          suggestionItems.findIndex(
+            item => item.toLowerCase() === selected.toLowerCase(),
+          ),
+        )
+      }
     },
     clear() {
       if (getMode() === 'files') onFilesQuery('')

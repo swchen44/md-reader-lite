@@ -158,6 +158,9 @@ function main(data: Data) {
     },
   }
   chrome.runtime.onMessage.addListener(({ action, data: { key, value } }) => {
+    // Native storage events are authoritative for shared history. A delayed
+    // per-tab settings echo must not replace a newer cross-document value.
+    if (key === 'searchHistory' || key === 'searchHistoryLimit') return
     const oldValue = configData[key]
     configData[key] = value
     actions[action]?.(value, oldValue, key)
@@ -675,13 +678,26 @@ function main(data: Data) {
     onFilesQuery: q => fileTree?.applyFilter(q),
     getSearchHistory: () => configData.searchHistory || [],
     getSearchHistoryLimit: () => configData.searchHistoryLimit ?? 10,
-    onSearchHistoryChange: history => {
-      configData.searchHistory = history
+    onRecordSearchQuery: query => {
       chrome.runtime.sendMessage({
-        action: 'storage',
-        data: { key: 'searchHistory', value: history },
+        action: 'recordSearchQuery',
+        data: { query },
       })
     },
+  })
+  // History is shared across documents and the settings panel. Apply the whole
+  // change batch before rendering so a simultaneous clear/limit change is atomic.
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== 'local') return
+    if (!('searchHistory' in changes) && !('searchHistoryLimit' in changes))
+      return
+    if ('searchHistory' in changes) {
+      configData.searchHistory = changes.searchHistory.newValue
+    }
+    if ('searchHistoryLimit' in changes) {
+      configData.searchHistoryLimit = changes.searchHistoryLimit.newValue
+    }
+    if (searchOpen) searchPanel.refreshHistory()
   })
   searchPanel.button.on('click', () => openSearch())
   // Registered here (after searchPanel exists), not right after

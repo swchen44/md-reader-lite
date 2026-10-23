@@ -1,5 +1,7 @@
 # 實作計畫索引
 
+2026-10-24：既有導覽風格與搜尋歷史修正的 checklist、RED／GREEN 與回歸 receipt，見 [Sidebar Theme and Search History](testing/sidebar-theme-search-history.md)。
+
 | 日期       | 案                                                    | 計畫                                                                                                                             | 狀態                |
 | ---------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
 | 2026-08-29 | 資料夾目錄樹 + Obsidian 語法                          | [superpowers/plans/2026-08-29-folder-tree-obsidian.md](superpowers/plans/2026-08-29-folder-tree-obsidian.md)                     | 完成（已合併 main） |
