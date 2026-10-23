@@ -134,6 +134,16 @@ ZenUML 外掛本身的 parser 是 no-op。`src/core/mermaid/zenuml.js` 以固定
 
 [MV3 probe report](research/mermaid12-probe.md) 保留 raw strict 四個失敗及 A4 confined 25/25 通過證據。Probe 與產品共用 `src/core/mermaid/` 政策，仍保有獨立 lockfile 與 raw 對照。永久重測指令位於 probe README。TypeScript 固定 5.0.4 以解析新增 d3 const type parameters；`ignoreDeprecations: '5.0'` 僅相容既有 Svelte 3 base config，不代表已遷移整個工具鏈。
 
+## 浮動側欄
+
+側欄改為 overlay，文章不保留 sidebar padding；文章 `customWidth` 與側欄 `sideWidth` 互不影響。`setSideOpen` 統一桌面／手機開關、aria-expanded 與 inert，沿用 hiddenSide；窄頁首次載入仍收合。outside click 保留原事件，Escape 由搜尋先處理，不能在非 Escape 按鍵後遺失監聽。
+
+把手使用 pointer capture、col-resize 游標及 touch-action:none，放開且寬度確實改變才記錄 sideWidth；只按放、拖曳及緊接的 click 不得觸發 dismiss 或覆寫桌面偏好。取消／失去 capture／blur／pagehide 復原原寬度及 selection/cursor。clampSideWidth 接受可選 viewport，實際顯示保留 112px 外部空間，避免側欄開關與 Menu 重疊；視窗縮小不改寫偏好。raw／print／收合必須關閉把手 hit area。五語 separator 支援方向鍵／Home／End，IME/defaultPrevented Escape 不關閉側欄。
+
+FileTreeHandle.closeMenus 由側欄收起及 raw 切換呼叫，確保 portal 到 body 的排序子選單也移除；不能只對原側欄加 inert。背景快捷鍵於拖曳中到達時不切換浮層，並回存真正的開關狀態，避免畫面與下次載入不一致。
+
+完整核准行為、永久 Test Plan、RED/GREEN／回歸 receipt 與交接位置見 [Floating Sidebar Test Plan](testing/floating-sidebar.md)。
+
 ## CSS 客製化與搜尋歷史
 
 自訂寬度的新／缺少設定與 Reset 預設為 **85%**。`resolveCustomWidthDefaults` 將 `customWidth`／`customWidthUnit` 一起解析：已儲存的百分比、像素與 null 關閉狀態保留；舊版只有數值而沒有單位時視為 px，避免 900px 變成百分比。讀取不寫回 storage；`settings.test.mjs`、`settings-theme.e2e.mjs` 與 Mermaid reset 案例共同把關。

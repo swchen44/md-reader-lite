@@ -21,6 +21,7 @@ export interface FileTreeHandle {
   tree: Ele<HTMLElement>
   applyFilter(query: string): void
   clearFilter(): void
+  closeMenus(): void
 }
 
 interface NodeRecord {
@@ -420,6 +421,7 @@ export function createFileTree({
   // to the right, mirroring the store CRX's nested sort/filter menu.
   // Sort-by and order are radio-like (only one checked at a time);
   // folders-first and show-hidden are independent checked toggles.
+  let closeMenus: () => void
   function buildToolbar(): Ele<HTMLElement> {
     const settingsBtn = new Ele<HTMLElement>(
       'button',
@@ -465,6 +467,7 @@ export function createFileTree({
       onClose: () => closeSubmenu(),
       extraContains: target => submenu.ele.contains(target),
     })
+    closeMenus = () => dismissable.close()
 
     const checkOptions: {
       check: Ele<HTMLElement>
@@ -596,7 +599,7 @@ export function createFileTree({
     // 零 fetch：不掛 listDir、不呼叫 loadDir/fetchDirListing，直接顯示訊息
     // （離線封鎖等場景，樹本身不得觸發任何目錄請求）。
     renderMessage(container, rootMessage)
-    return { tree: container, applyFilter, clearFilter }
+    return { tree: container, applyFilter, clearFilter, closeMenus }
   }
   const rootMsgEle = renderMessage(container, '…')
   loadDir(rootDir)
@@ -623,5 +626,5 @@ export function createFileTree({
       onRootStatus?.('error')
     })
 
-  return { tree: container, applyFilter, clearFilter }
+  return { tree: container, applyFilter, clearFilter, closeMenus }
 }

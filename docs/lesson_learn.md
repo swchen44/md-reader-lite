@@ -31,3 +31,8 @@
 24. legal comments 不等於完整 notices（2026-10-23）：bundle 的短版授權註記不能代替 ELK 等套件完整文本 → build 在 zip 前從已安裝 production inventory 收集原始 LICENSE／COPYING／NOTICE，沒有獨立檔時保留原始 README；缺檔就失敗。保留來源與版本，不把本機路徑打包。
 25. 新預設展開控制列會改變測試座標（2026-10-23）：85% 寬度列讓 CSS 開關落在可捲動面板可視範圍外，舊固定座標點擊沒有切換 storage → 點擊前先用真實控制項 scrollIntoViewIfNeeded，再量座標與實際滑鼠點擊；保留原本開關／草稿／套用斷言，不以放寬檢查掩蓋失敗。
 26. npm build 與 CI 有兩套打包入口（2026-10-23）：本機加了 notices，但 release workflow 直接執行 manifest／webpack／zip，會漏掉新步驟 → 同步 CI，使用現有工具鏈的 YAML parser 寫順序 regression，先紅後綠；本機打包通過仍不能宣稱 hosted release 已跑過。
+27. fixed 側欄仍會讓文章重排：真正原因是文章外層保留 sideWidth padding，收合又移除 → overlay 模式讓文章完全不依賴 sideWidth，以實際幾何、Range 行數與 scrollY 驗證開關及拖寬前後不變。
+28. 調整浮層寬度不可被當成 dismiss：pointerup 後還可能產生 click，cancel／lostcapture 也不能把事件座標當寬度 → pointer capture、拖曳尾端 click guard、明確 cleanup／復原；只按放且寬度未變不覆寫桌面偏好，背景 toggle 被忽略時也須回存真正狀態。
+29. 祖先 inert 管不到 portal：檔案排序子選單在 body，收合側欄後仍會殘留 → FileTreeHandle 提供正式 closeMenus，由側欄收合／raw 切換呼叫，不靠測試專用清理方法。
+30. 動畫起點的幾何斷言可能 false green：IME Escape 已開始收合，但第一幀仍在原位 → 等 transition 完成再判斷；組字中的 Escape 與已處理的事件必須忽略，搜尋自己先處理一般 Escape。
+31. 窄頁浮層須驗證真實 hit-test：只留 64px 雖未超出 viewport，側欄開關仍與 Menu 重疊 → 保留 112px，測 elementFromPoint 命中正確按鈕；暫時縮窄不改寫儲存寬度。

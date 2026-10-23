@@ -60,6 +60,24 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
     await page.waitForTimeout(600)
   }
 
+  async function openSidebar() {
+    if (
+      await page
+        .locator('body')
+        .evaluate(el => el.classList.contains('side-collapsed'))
+    ) {
+      await page.locator('.md-reader__btn--side-expand').click()
+      await page.waitForFunction(
+        () =>
+          Math.abs(
+            document
+              .querySelector('.md-reader__side-tabs')
+              .getBoundingClientRect().left,
+          ) < 1,
+      )
+    }
+  }
+
   test('content script renders the markdown', t => {
     if (unavailable) return t.skip(unavailable)
     // waitForSelector in before() already asserted this; a positive check here
@@ -190,6 +208,7 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
 
   test('側欄: 拖曳分隔線可改寬並持久化 (180–560)', async t => {
     if (unavailable) return t.skip(unavailable)
+    await openSidebar()
     const varOf = () =>
       page.evaluate(() =>
         getComputedStyle(document.documentElement)
@@ -654,6 +673,7 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
     await page.waitForSelector('.md-reader__markdown-content', {
       timeout: 12000,
     })
+    await openSidebar()
     await page.click('.md-reader__side-search-btn')
 
     await page.fill('.md-reader__search-input', 'pla')
@@ -732,6 +752,7 @@ describe('extension in-page UI (e2e)', { timeout: 120000 }, () => {
     await page.mouse.click(600, 850)
     await page.waitForTimeout(200)
 
+    await openSidebar()
     await page.click('.md-reader__side-search-btn')
     await page.fill('.md-reader__search-input', 'pla')
     assert.equal(

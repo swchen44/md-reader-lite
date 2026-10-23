@@ -9,6 +9,7 @@ A lightweight, **privacy-first** Chrome extension that renders local and online 
 - CommonMark + GFM-style rendering (tables, task lists, footnotes, KaTeX, Mermaid, Graphviz); `.mmd` files render whole as one Mermaid diagram — client-side only, no server, unaffected by offline mode
 - Obsidian syntax: `![[image|300]]` embeds, `[[wikilinks|alias]]`, `%%comments%%`, callouts, front matter table
 - Outline (TOC) side panel, light/dark/auto themes, custom plugins toggle, per-plugin options
+- Floating sidebar overlays the article without reflow; drag its resize edge to adjust the locally remembered width. [Permanent test plan](docs/testing/floating-sidebar.md)
 - Folder tree side panel for browsing sibling markdown files — **on by default** (http/https autoindex, `file://` via folder picker, GitHub raw pages); the listing itself is still lazy-loaded, only fetched when you open the Files tab
 - CSS customization: Developer styling is applied by default on new installs; choose the read-only Developer or Editorial presets, or edit either of two local user slots, then explicitly Apply
 - Custom content width defaults to 85% on new/reset settings; saved pixel/percent widths and disabled choices are preserved

@@ -151,10 +151,16 @@ export const SIDE_WIDTH_MIN = 180
 export const SIDE_WIDTH_MAX = 560
 export const SIDE_WIDTH_DEFAULT = 260
 
-export function clampSideWidth(v: unknown): number {
+export function clampSideWidth(v: unknown, viewportWidth = Infinity): number {
   const n = typeof v === 'number' ? v : parseFloat(String(v))
-  if (!isFinite(n)) return SIDE_WIDTH_DEFAULT
-  return Math.round(Math.min(SIDE_WIDTH_MAX, Math.max(SIDE_WIDTH_MIN, n)))
+  // Keep the sidebar toggle separate from Menu, with an outside-click area.
+  const max = isFinite(viewportWidth)
+    ? Math.max(1, Math.min(SIDE_WIDTH_MAX, Math.floor(viewportWidth - 112)))
+    : SIDE_WIDTH_MAX
+  const min = Math.min(SIDE_WIDTH_MIN, max)
+  return Math.round(
+    Math.min(max, Math.max(min, isFinite(n) ? n : SIDE_WIDTH_DEFAULT)),
+  )
 }
 
 export function textSizeIndex(px: unknown): number {

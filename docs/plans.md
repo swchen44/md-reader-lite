@@ -21,3 +21,5 @@
 | 2026-10-23 | Mermaid 12、31 圖種、Anthropic 預設／設定面板、85% 寬度與永久交接 checklist | [superpowers/plans/2026-10-23-mermaid-modernization.md](superpowers/plans/2026-10-23-mermaid-modernization.md) | A–E 已驗收；未 release；最後 push receipt 見計畫 |
 
 新計畫請放 docs/superpowers/plans/ 並在此登錄。
+
+浮動側欄屬既有流程的 bounded 修改，依核准聊天短設計執行，未另建 implementation-plan 文件。永久情境、失敗與驗收 receipt 在 [Floating Sidebar Test Plan](testing/floating-sidebar.md)。

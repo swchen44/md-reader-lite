@@ -19,3 +19,5 @@
 | 2026-10-22 | Mermaid 12.2.0、31 圖種、Anthropic 預設／設定面板、85% 寬度與永久 Test Plan | [superpowers/specs/2026-10-22-mermaid-modernization-design.md](superpowers/specs/2026-10-22-mermaid-modernization-design.md) | A–E 已驗收；未 release；取捨與限制見驗收報告 |
 
 新設計請放 docs/superpowers/specs/ 並在此登錄。
+
+2026-10-23 bounded in-chat 核准追加：[浮動側欄短設計與永久 Test Plan](testing/floating-sidebar.md)。保留文章排版，側欄邊緣拖寬並記憶；不新增模式選單或獨立視窗。

@@ -33,6 +33,12 @@
 - application 與 renderer 是獨立 webpack compilations，不共用跨世界 chunk。沒有 Mermaid 的文章不載入 engine frame；正常 Mermaid 不需網路。31 圖種與安全負例的產品驗收以 migration plan 為準。
 - popup 全部分頁共用 `src/popup/index.css` tokens 與現有 SMUI 元件，固定 Anthropic 編輯風格；它不隨文章 CSS 或 Mermaid Original 切換。儲存 schema 未變，明確選擇 Original 的使用者不被預設值遷移覆蓋。
 
+## 浮動側欄
+
+`src/main.ts` 是 overlay shell：管理開關、焦點、pointer capture、取消與儲存；文章容器不再以 sideWidth 保留 padding。`src/core/settings.ts` 的 viewport-aware clamp 保持純函式，畫面縮窄只限制顯示值，不修改偏好。
+
+FileTreeHandle.closeMenus 是 production lifecycle 介面，由 shell 在側欄收合與 raw 切換呼叫，清理移到 body 的排序子選單；不能依賴祖先 inert 控制 portal。側欄寬度與文章寬度是獨立設定。核准行為及永久回歸見 [Floating Sidebar Test Plan](testing/floating-sidebar.md)。
+
 ## 驗收檢查
 
     grep -n "chrome" src/core/markdown.ts src/core/graphviz.ts src/core/dir-listing.ts src/plugins/obsidian.ts src/plugins/alert.ts src/plugins/graphviz-block.ts src/config/md-plugins.ts   # 必須零命中
