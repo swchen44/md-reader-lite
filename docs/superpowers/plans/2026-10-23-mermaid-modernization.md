@@ -14,12 +14,12 @@
 
 - Updated: 2026-10-23, Asia/Taipei.
 - Product baseline: `5df0a82`, version 1.8.2, wrapper 0.5.1 / Mermaid 9.1.6.
-- GitHub: C `35b4294` is pushed; D `4eea56a`, CI notices `1065b21` and E receipt await the final authorized push/remote verification.
+- GitHub: D `4eea56a`, CI notices `1065b21` and E receipt `1d608e8` are pushed. Observed `HEAD == origin/main == git ls-remote` at `1d608e83e116d946a444cc9df47323774c73e918`, with clean worktree. This documentation-only follow-up preserves that receipt; final HEAD is checked again after its push.
 - Probe checkpoint: expanded shared confined suite **33/33** pass; raw strict resource counterexamples remain as comparison evidence. See [probe report](../../research/mermaid12-probe.md).
 - Product migration: A–E runtime accepted. Root Mermaid 12.2.0, TypeScript 5.0.4, ZenUML plugin 1.0.1/core 3.50.1. Both styles cover 31 fixtures and all 372 matrix outputs.
 - Final checks: **239 unit, 146 serial e2e, 33 confined probe**, zero fail/cancel/skip/TODO; evidence helpers 3/3, compiler/build/zip checks pass. Width is 85% for new/reset settings; saved pixel/percent/disabled choices remain unchanged. Full notices ship in the zip.
 - Performance/audit: final clean-source raw JSON and [acceptance/handoff report](../../research/2026-10-23-mermaid12-acceptance.md) are saved under docs. Shared-11 cold median is 3.05/3.11× baseline, warm 4.37/3.60×; zip 2.33×. Tradeoff explicitly reviewed below. No new audit advisory IDs; four existing high advisories remain.
-- Next task after resume: commit E documentation/receipts, push authorized main and verify SHA/clean status. The clean owned baseline worktree has been removed after preserving its raw measurements; do not remove other worktrees. No remaining feature implementation; do not restart A–C, release, bump version or claim hosted CI ran.
+- Remaining A–E work: none. On handoff, verify live HEAD/origin/remote/status rather than treating an older SHA as current. The clean owned baseline worktree has been removed after preserving its raw measurements; do not remove other worktrees. Do not restart A–C, release, bump version or claim hosted CI ran; release requires a new request.
 
 ## Global Constraints
 
@@ -57,7 +57,7 @@
 - [x] D2: Default Mermaid to Anthropic without overwriting saved Original; restyle all settings tabs and preserve controls/accessibility (user approved 2026-10-23).
 - [x] D3: Default new/reset custom width to 85 percent; preserve existing pixel/percent/disabled settings (user approved 2026-10-23).
 - [x] E: Run full matrix/regression, update documentation and record final review.
-- [ ] Commit all completed stages, push authorized verified changes and verify remote SHA / clean worktree.
+- [x] Commit all completed stages, push authorized verified changes and verify remote SHA / clean worktree.
 
 ## Task A: Reproducible MV3 Probe
 
@@ -164,7 +164,7 @@ This additive bounded change was explicitly approved in chat. It does not author
 - [x] Check production dependency audit/license and record newly introduced issues separately from existing ones.
 - [x] Run the regression commands below; remove the old GitGraph TODO only after its real assertion passes. Record skips as unverified.
 - [x] Review the whole change against the spec and fix material findings; preserve final receipts in the E documentation commit.
-- [ ] Push completed verified commits within the user's authorization; verify `HEAD`, `origin/main`, `git ls-remote origin refs/heads/main` and clean status. A release requires a separate version/tag request.
+- [x] Push completed verified commits within the user's authorization; verify `HEAD`, `origin/main`, `git ls-remote origin refs/heads/main` and clean status. A release requires a separate version/tag request.
 
 ```sh
 corepack pnpm install --frozen-lockfile
@@ -323,3 +323,9 @@ Append each task's actual outcome here before stopping or handing off. Update Cu
 - Six committed JSON receipts under `docs/research/data/` preserve samples, matrix, audit comparison, source/bundle fingerprints and zip/notices digests. [Final acceptance/handoff](../../research/2026-10-23-mermaid12-acceptance.md) includes permanent commands, failures, all residual verification limits and agent entry points. Hosted CI, release and actual BFCache hit rate remain not-performed.
 - Final minor findings deferred: none reported by the fresh reviewer. Native limitations and unrelated existing vulnerabilities remain disclosed boundaries, not silently removed tests.
 - Removed only `/tmp/md-reader-mermaid9-baseline-20261023` after checking clean status and exact `3b785a2` HEAD; `git worktree list` now contains only the original main workspace. No owned test browser/dev-server processes remain. Source/CI commits use multiline Why/What/How/Boundary; the E receipt commit follows.
+
+### Publication Receipt
+
+- E committed as `1d608e83e116d946a444cc9df47323774c73e918`; authorized `git push origin main` exited 0, advancing main from `35b4294` to `1d608e8`.
+- Verified local HEAD, origin/main and live `git ls-remote origin refs/heads/main` all equal that exact SHA; `git status --porcelain` is empty. Runtime source/asset hashes remain unchanged from `4eea56a`.
+- This final docs-only receipt records observed publication, not a release. Its own HEAD is rechecked after push and reported in the final response. Version 1.8.2, no tag, no hosted workflow, no store upload.

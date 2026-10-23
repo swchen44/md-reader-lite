@@ -2,6 +2,8 @@
 
 日期：2026-10-23，Asia/Taipei。產品版號仍為 **1.8.2**；本輪未打 tag、未發布 release、未上傳商店。
 
+發布紀錄：runtime、CI 與本報告已推 `main` 至 `1d608e83e116d946a444cc9df47323774c73e918`，本機／tracking／live remote SHA 一致且 worktree 乾淨。後續僅有記錄此 receipt 的文件提交；目前 HEAD 以 Git 即時查詢為準。
+
 ## 結果
 
 - Mermaid **12.2.0**、本機 ZenUML plugin **1.0.1**／core **3.50.1**，31 種共用 fixture 在 Original／Anthropic 皆可渲染。
