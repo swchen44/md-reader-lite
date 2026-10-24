@@ -1,0 +1,1 @@
+Creates a bundled offscreen document to parse and sanitize Mermaid SVG when a page’s CSP sandbox blocks the embedded renderer. All renderer code is packaged with the extension. Diagram source is processed locally, is not sent to a server or persisted, and the document closes after idle.

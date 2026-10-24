@@ -52,3 +52,4 @@
 45. 即時歷史同步不能任意重設選取：另一頁更新 MRU 後，仍存在的候選位置改變；清掉 active index 會使 Enter 提交前綴、Tab 選到另一詞 → 以大小寫不敏感的候選值保留選取，只有該值消失才取消。原生 storage 事件已是共享狀態來源時，忽略可能遲到的單頁 setting echo，避免新值又被舊快照蓋回。
 46. 數字版號更新不代表顯示版號更新（2026-10-24）：`version` 已是 1.8.2，舊 `version_name: 1.0.4` 仍讓商店顯示舊版 → 移除過時顯示名稱，核對 package、source manifest、ZIP manifest 與 tag；商店更新仍以數字 version 比較，不能只改 version_name。
 47. 本機 ZIP 不等於 GitHub 正式附件（2026-10-24）：macOS／Linux 的 notices 包含不同平台套件，Viz bundle 也含各自建置根目錄的 file URL → 下載附件核對 GitHub digest／CRC／manifest，再比較解壓內容。本輪 JS 差異只有建置根目錄字串，但仍以正式附件重跑完整 serial headed e2e；不要把壓縮檔大小不同直接視為壞檔，也不要只憑本機測試就聲稱正式附件已驗證。
+48. 商店圖片須同時驗證規格與來源（2026-10-24）：漂亮的 PNG 不代表符合 24 位元無透明層，概念圖也不能替代實際 UI → 從正式插件取景、以自寫示範文件編排，再檢查 PNG IHDR／透明色／完整解碼、每組五張、實際 Enter 歷史與側欄不重排。預覽頁另驗證窄版與下載連結；宣傳影片選填，使用者決定留空就不交付影片或虛構網址。永久產生及驗收腳本見 `docs/store-assets/README.md`。

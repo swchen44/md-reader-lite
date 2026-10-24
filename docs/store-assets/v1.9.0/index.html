@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>MD Reader Lite · 商店圖片</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #faf9f5;
+        color: #141413;
+        font: 17px/1.7 'Helvetica Neue', 'PingFang TC', sans-serif;
+      }
+      main {
+        max-width: 1280px;
+        margin: auto;
+        padding: 44px 28px;
+      }
+      h1,
+      h2 {
+        font-family: Georgia, 'Songti TC', serif;
+        font-weight: 400;
+      }
+      h1 {
+        font-size: 48px;
+        line-height: 1.2;
+        margin: 10px 0 20px;
+      }
+      h2 {
+        font-size: 32px;
+        margin-top: 64px;
+      }
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+      }
+      a {
+        color: #a94f34;
+        text-underline-offset: 4px;
+      }
+      a:focus-visible {
+        outline: 2px solid #a94f34;
+        outline-offset: 5px;
+      }
+      pre {
+        white-space: pre-wrap;
+        background: #eeeae0;
+        padding: 22px;
+        border-radius: 10px;
+        font: 15px/1.7 ui-monospace, monospace;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 28px;
+      }
+      .shot {
+        text-decoration: none;
+        min-width: 0;
+      }
+      .shot img {
+        display: block;
+        width: 100%;
+        border: 1px solid #dedbd2;
+      }
+      .shot span {
+        font-size: 14px;
+        display: block;
+        margin-top: 8px;
+      }
+      footer {
+        border-top: 1px solid #dedbd2;
+        margin-top: 48px;
+        padding-top: 20px;
+        color: #68665e;
+      }
+      @media (max-width: 720px) {
+        main {
+          padding: 24px 16px;
+        }
+        h1 {
+          font-size: 36px;
+        }
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p>MD Reader Lite · 1.9.0</p>
+      <h1>讓 Markdown，回到閱讀。</h1>
+      <p>
+        以現有產品的 Anthropic 編輯風格，呈現五個值得安裝的理由。每張圖都含
+        1.9.0 插件的真實畫面。
+      </p>
+      <nav>
+        <a href="#zh-TW">繁中在地化</a><a href="#common">英文通用</a
+        ><a href="#permission">offscreen 權限理由</a
+        ><a href="receipt.json">規格與驗證紀錄</a>
+      </nav>
+      <section id="zh-TW">
+        <h2>繁體中文：在地化資產</h2>
+        <p>依序上傳下方 5 張 PNG。點圖片可取得原始檔。宣傳影片欄位留空。</p>
+        <div class="grid">
+          <a class="shot" href="zh-TW/01-reading.png" download
+            ><img
+              src="zh-TW/01-reading.png"
+              alt="讓筆記， 值得細讀。"
+              loading="lazy"
+            /><span>01-reading.png · 1280 × 800 · RGB PNG</span></a
+          >
+          <a class="shot" href="zh-TW/02-diagrams.png" download
+            ><img
+              src="zh-TW/02-diagrams.png"
+              alt="讓複雜想法，一眼就懂。"
+              loading="lazy"
+            /><span>02-diagrams.png · 1280 × 800 · RGB PNG</span></a
+          >
+          <a class="shot" href="zh-TW/03-navigation.png" download
+            ><img
+              src="zh-TW/03-navigation.png"
+              alt="你的筆記， 隨手可及。"
+              loading="lazy"
+            /><span>03-navigation.png · 1280 × 800 · RGB PNG</span></a
+          >
+          <a class="shot" href="zh-TW/04-search-history.png" download
+            ><img
+              src="zh-TW/04-search-history.png"
+              alt="找過的， 下次更快找到。"
+              loading="lazy"
+            /><span>04-search-history.png · 1280 × 800 · RGB PNG</span></a
+          >
+          <a class="shot" href="zh-TW/05-personalize.png" download
+            ><img
+              src="zh-TW/05-personalize.png"
+              alt="把閱讀， 調成你的樣子。"
+              loading="lazy"
+            /><span>05-personalize.png · 1280 × 800 · RGB PNG</span></a
+          >
+        </div>
+      </section>
+      <section id="common">
+        <h2>English：通用資產</h2>
+        <p>依序上傳下方 5 張 PNG。點圖片可取得原始檔。宣傳影片欄位留空。</p>
+        <div class="grid">
+          <a class="shot" href="common/01-reading.png" download
+            ><img
+              src="common/01-reading.png"
+              alt="Markdown. Made to read."
+              loading="lazy"
+            /><span>01-reading.png · 1280 × 800 · RGB PNG</span></a
+          >
+          <a class="shot" href="common/02-diagrams.png" download
+            ><img
+              src="common/02-diagrams.png"
+              alt="Give your ideas a clearer shape."
+              loading="lazy"
+            /><span>02-diagrams.png · 1280 × 800 · RGB PNG</span></a
+          >
+          <a class="shot" href="common/03-navigation.png" download
+            ><img
+              src="common/03-navigation.png"
+              alt="Your notes. Within reach."
+              loading="lazy"
+            /><span>03-navigation.png · 1280 × 800 · RGB PNG</span></a
+          >
+          <a class="shot" href="common/04-search-history.png" download
+            ><img
+              src="common/04-search-history.png"
+              alt="Find it once. Find it faster."
+              loading="lazy"
+            /><span>04-search-history.png · 1280 × 800 · RGB PNG</span></a
+          >
+          <a class="shot" href="common/05-personalize.png" download
+            ><img
+              src="common/05-personalize.png"
+              alt="A reader that feels like yours."
+              loading="lazy"
+            /><span>05-personalize.png · 1280 × 800 · RGB PNG</span></a
+          >
+        </div>
+      </section>
+      <section id="permission">
+        <h2>offscreen 權限理由</h2>
+        <p>後台可直接貼上英文；中文供確認用途。</p>
+        <pre>
+Creates a bundled offscreen document to parse and sanitize Mermaid SVG when a page’s CSP sandbox blocks the embedded renderer. All renderer code is packaged with the extension. Diagram source is processed locally, is not sent to a server or persisted, and the document closes after idle.</pre
+        >
+        <p>
+          網站的 CSP sandbox 阻止嵌入式 renderer
+          執行時，以插件內建的隱藏文件在本機解析、清理並繪製 Mermaid
+          SVG。所有繪圖程式均隨插件封裝，不外送或儲存圖表原碼，工作閒置後關閉隱藏文件。
+        </p>
+        <p><a href="offscreen-permission-en.txt" download>下載英文純文字</a></p>
+      </section>
+      <footer>
+        圖片均為 1280 × 800、24 位元 RGB PNG，無
+        alpha。依本次需求，兩個宣傳影片欄位都留空。Google 商店尚未上傳。
+      </footer>
+    </main>
+  </body>
+</html>

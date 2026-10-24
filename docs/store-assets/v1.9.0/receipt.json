@@ -1,0 +1,244 @@
+{
+  "version": "1.9.0",
+  "createdAt": "2026-10-24T10:33:53.504Z",
+  "actualExtensionCaptures": true,
+  "files": [
+    {
+      "path": "docs/store-assets/v1.9.0/zh-TW/01-reading.png",
+      "width": 1280,
+      "height": 800,
+      "mode": "RGB",
+      "bytes": 139436,
+      "sha256": "8339d9b6caaf59ff045ec524e6eb6c71c3a67a3370b0970c7e9dafad7afc8f66"
+    },
+    {
+      "path": "docs/store-assets/v1.9.0/zh-TW/02-diagrams.png",
+      "width": 1280,
+      "height": 800,
+      "mode": "RGB",
+      "bytes": 110586,
+      "sha256": "6403fc9332f2170fd78780190b88fe46596445cffdfba79427150a4d94d21580"
+    },
+    {
+      "path": "docs/store-assets/v1.9.0/zh-TW/03-navigation.png",
+      "width": 1280,
+      "height": 800,
+      "mode": "RGB",
+      "bytes": 145455,
+      "sha256": "13032809a1a9a753a669e599be73b1c0a3d01b6dede286688b5d8904dd197711"
+    },
+    {
+      "path": "docs/store-assets/v1.9.0/zh-TW/04-search-history.png",
+      "width": 1280,
+      "height": 800,
+      "mode": "RGB",
+      "bytes": 143176,
+      "sha256": "4ce18ee202577b516a65321206dbefee08716dead3b42a9bc155beef55c624a9"
+    },
+    {
+      "path": "docs/store-assets/v1.9.0/zh-TW/05-personalize.png",
+      "width": 1280,
+      "height": 800,
+      "mode": "RGB",
+      "bytes": 159751,
+      "sha256": "d3092c93ef4f2873ff5e25872693cbb12478cff2d3b55279ab73a3fc1bc8c098"
+    },
+    {
+      "path": "docs/store-assets/v1.9.0/common/01-reading.png",
+      "width": 1280,
+      "height": 800,
+      "mode": "RGB",
+      "bytes": 132968,
+      "sha256": "52e6cedf1466898a30178ad7aa2a2c5bff5a39debc15fe74147497ab4dab63eb"
+    },
+    {
+      "path": "docs/store-assets/v1.9.0/common/02-diagrams.png",
+      "width": 1280,
+      "height": 800,
+      "mode": "RGB",
+      "bytes": 99423,
+      "sha256": "3abe9741b3f52de079d5cf2506344e824552e1fff2f8e73d619832e8bb45cb2c"
+    },
+    {
+      "path": "docs/store-assets/v1.9.0/common/03-navigation.png",
+      "width": 1280,
+      "height": 800,
+      "mode": "RGB",
+      "bytes": 132653,
+      "sha256": "abee57f90cbf7836b74a592b9017ce92fb758e56b372c22dd472348b14726f94"
+    },
+    {
+      "path": "docs/store-assets/v1.9.0/common/04-search-history.png",
+      "width": 1280,
+      "height": 800,
+      "mode": "RGB",
+      "bytes": 125334,
+      "sha256": "fc7b152db088ed62f755d1cafb9666a4d33822528b6b7943f5d5c1a851a1857b"
+    },
+    {
+      "path": "docs/store-assets/v1.9.0/common/05-personalize.png",
+      "width": 1280,
+      "height": 800,
+      "mode": "RGB",
+      "bytes": 154060,
+      "sha256": "294e905374a25fb7db200284265a264d80ad69d81869966454f832fd583a92fb"
+    }
+  ],
+  "observations": [
+    {
+      "lang": "zh-TW",
+      "sidebarArticleBoundsUnchanged": true
+    },
+    {
+      "lang": "zh-TW",
+      "historySavedThroughRealEnter": ["設計決策", "Mermaid", "知識庫"]
+    },
+    {
+      "lang": "zh-TW",
+      "shot": "reading",
+      "brand": {
+        "text": "MD Reader Lite",
+        "top": 35,
+        "visible": "visible",
+        "display": "flex"
+      }
+    },
+    {
+      "lang": "zh-TW",
+      "shot": "diagrams",
+      "brand": {
+        "text": "MD Reader Lite",
+        "top": 35,
+        "visible": "visible",
+        "display": "flex"
+      }
+    },
+    {
+      "lang": "zh-TW",
+      "shot": "navigation",
+      "brand": {
+        "text": "MD Reader Lite",
+        "top": 35,
+        "visible": "visible",
+        "display": "flex"
+      }
+    },
+    {
+      "lang": "zh-TW",
+      "shot": "search",
+      "brand": {
+        "text": "MD Reader Lite",
+        "top": 35,
+        "visible": "visible",
+        "display": "flex"
+      }
+    },
+    {
+      "lang": "zh-TW",
+      "shot": "settings",
+      "brand": {
+        "text": "MD Reader Lite",
+        "top": 35,
+        "visible": "visible",
+        "display": "flex"
+      }
+    },
+    {
+      "lang": "en",
+      "sidebarArticleBoundsUnchanged": true
+    },
+    {
+      "lang": "en",
+      "historySavedThroughRealEnter": [
+        "Design decisions",
+        "Mermaid",
+        "Knowledge base"
+      ]
+    },
+    {
+      "lang": "en",
+      "shot": "reading",
+      "brand": {
+        "text": "MD Reader Lite",
+        "top": 35,
+        "visible": "visible",
+        "display": "flex"
+      }
+    },
+    {
+      "lang": "en",
+      "shot": "diagrams",
+      "brand": {
+        "text": "MD Reader Lite",
+        "top": 35,
+        "visible": "visible",
+        "display": "flex"
+      }
+    },
+    {
+      "lang": "en",
+      "shot": "navigation",
+      "brand": {
+        "text": "MD Reader Lite",
+        "top": 35,
+        "visible": "visible",
+        "display": "flex"
+      }
+    },
+    {
+      "lang": "en",
+      "shot": "search",
+      "brand": {
+        "text": "MD Reader Lite",
+        "top": 35,
+        "visible": "visible",
+        "display": "flex"
+      }
+    },
+    {
+      "lang": "en",
+      "shot": "settings",
+      "brand": {
+        "text": "MD Reader Lite",
+        "top": 35,
+        "visible": "visible",
+        "display": "flex"
+      }
+    }
+  ],
+  "browser": "147.0.7727.15",
+  "pageErrors": [],
+  "youtubeUpload": "not performed; video fields intentionally empty",
+  "storeUpload": "not performed",
+  "promoVideoFields": {
+    "localized": "leave empty",
+    "global": "leave empty",
+    "reason": "User requested screenshots only."
+  },
+  "acceptance": {
+    "verifiedAt": "2026-10-24T10:47:25.130Z",
+    "browser": "147.0.7727.15",
+    "pngsDecoded": 10,
+    "gallery": [
+      {
+        "width": 1280,
+        "contentWidth": 1280,
+        "loadedImages": 10
+      },
+      {
+        "width": 640,
+        "contentWidth": 640,
+        "loadedImages": 10
+      },
+      {
+        "width": 320,
+        "contentWidth": 320,
+        "loadedImages": 10
+      }
+    ],
+    "pageErrors": [],
+    "consoleErrors": [],
+    "promoVideoFields": "both intentionally empty",
+    "storeUpload": "not performed"
+  }
+}

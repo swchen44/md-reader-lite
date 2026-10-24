@@ -1,0 +1,70 @@
+{
+  "zh-TW": {
+    "reading": {
+      "title": "讓筆記，<br>值得細讀。",
+      "body": "打開 Markdown，直接進入閱讀。<br>表格、公式與重點，都有清楚的樣子。",
+      "detail": "本機渲染・沒有追蹤後端",
+      "file": "01-reading.png"
+    },
+    "diagrams": {
+      "title": "讓複雜想法，一眼就懂。",
+      "body": "Mermaid 圖表，和文章一樣好讀。",
+      "detail": "31 種圖表・兩種風格・內建 ZenUML",
+      "file": "02-diagrams.png"
+    },
+    "navigation": {
+      "title": "你的筆記，<br>隨手可及。",
+      "body": "從大綱走到資料夾。<br>浮動導覽，讓文章留在原位。",
+      "detail": "拖曳調寬・記住偏好・文章不重排",
+      "file": "03-navigation.png"
+    },
+    "search": {
+      "title": "找過的，<br>下次更快找到。",
+      "body": "最近的搜尋，隨手就能接續。<br>方向鍵選取，Tab 一鍵補完。",
+      "detail": "Enter 記錄・預設 10 筆・可調整或清除",
+      "file": "04-search-history.png"
+    },
+    "settings": {
+      "title": "把閱讀，<br>調成你的樣子。",
+      "body": "字體、寬度與 CSS，自己決定。<br>替每一篇筆記，留出舒服的空間。",
+      "detail": "自訂閱讀寬度・兩款 CSS 預設・兩個自訂欄位",
+      "file": "05-personalize.png"
+    },
+    "footer": "你的文件，在你的瀏覽器裡。",
+    "cta": "在 Chrome 開始閱讀"
+  },
+  "en": {
+    "reading": {
+      "title": "Markdown.<br>Made to read.",
+      "body": "Open your notes. Settle into the page.<br>Tables, equations and callouts, beautifully clear.",
+      "detail": "Local rendering. No tracking backend.",
+      "file": "01-reading.png"
+    },
+    "diagrams": {
+      "title": "Give your ideas a clearer shape.",
+      "body": "Mermaid diagrams that feel at home on the page.",
+      "detail": "31 diagram types. Two styles. Bundled ZenUML.",
+      "file": "02-diagrams.png"
+    },
+    "navigation": {
+      "title": "Your notes.<br>Within reach.",
+      "body": "Move through outlines and folders.<br>Floating navigation keeps your article in place.",
+      "detail": "Drag to resize. Remember your width. Keep your place.",
+      "file": "03-navigation.png"
+    },
+    "search": {
+      "title": "Find it once.<br>Find it faster.",
+      "body": "Pick up a recent search.<br>Arrow keys to choose. Tab to complete.",
+      "detail": "Enter to save. Keep 10 by default. Adjust or clear.",
+      "file": "04-search-history.png"
+    },
+    "settings": {
+      "title": "A reader that<br>feels like yours.",
+      "body": "Choose your type, width and CSS.<br>Give every note room to breathe.",
+      "detail": "Adjustable width. Two CSS presets. Two custom slots.",
+      "file": "05-personalize.png"
+    },
+    "footer": "Your documents. Your browser.",
+    "cta": "Start reading in Chrome"
+  }
+}

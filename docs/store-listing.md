@@ -44,7 +44,7 @@ ZH: 離線零追蹤的 Markdown 閱讀器：Obsidian 語法、資料夾目錄樹
 ## 素材
 
 - 圖示 128×128：自 src/images/logo-stroke.png 縮出（sips -z 128 128）
-- 截圖 1280×800 ×3+：存 docs/store-assets/（亮色渲染、目錄樹、popup 設定；Task 9 產出）
+- 1.9.0 新素材：繁中／英文各五張 1280×800 RGB PNG，見 [預覽](store-assets/v1.9.0/index.html) 與 [欄位對照](store-assets/README.md)。兩個宣傳影片欄位均留空；原有三張截圖保留為歷史素材。
 
 ## 送審前檢查清單
 

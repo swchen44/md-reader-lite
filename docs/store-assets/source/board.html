@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MD Reader Lite · Store artwork</title>
+    <style>
+      :root {
+        --paper: #faf9f5;
+        --ink: #141413;
+        --accent: #c56d4c;
+        --muted: #68665e;
+        --line: #dedbd2;
+        --tint: #ece8dd;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1280px;
+        height: 800px;
+        overflow: hidden;
+        background: var(--paper);
+        color: var(--ink);
+      }
+      body {
+        font-family: 'Helvetica Neue', 'PingFang TC', sans-serif;
+      }
+      .brand {
+        position: fixed;
+        z-index: 4;
+        left: 48px;
+        top: 35px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font: 24px Georgia, 'Songti TC', serif;
+      }
+      .brand img {
+        width: 30px;
+        height: 30px;
+      }
+      .edition {
+        position: fixed;
+        z-index: 4;
+        right: 48px;
+        top: 43px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .copy {
+        position: absolute;
+        top: 192px;
+        left: 48px;
+        width: 360px;
+        z-index: 2;
+      }
+      h1 {
+        margin: 0 0 28px;
+        font: 400 59px/1.09 Georgia, 'Songti TC', serif;
+        letter-spacing: -2px;
+        text-wrap: balance;
+      }
+      .body {
+        font-size: 20px;
+        line-height: 1.7;
+        color: var(--muted);
+        margin: 0;
+        text-wrap: pretty;
+      }
+      .detail {
+        margin-top: 30px;
+        padding-top: 19px;
+        border-top: 1px solid var(--line);
+        font-size: 15px;
+        line-height: 1.65;
+        color: var(--accent);
+      }
+      .visual {
+        position: absolute;
+        top: 108px;
+        left: 440px;
+        width: 792px;
+        height: 602px;
+        border: 1px solid #d8d3c8;
+        border-radius: 14px;
+        overflow: hidden;
+        background: var(--paper);
+        box-shadow: 0 12px 34px #302b2115;
+      }
+      .visual img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: fill;
+      }
+      .footer {
+        position: absolute;
+        bottom: 28px;
+        left: 48px;
+        right: 48px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .footer .cta {
+        color: var(--accent);
+      }
+      .halo {
+        position: absolute;
+        width: 730px;
+        height: 730px;
+        border-radius: 50%;
+        left: 626px;
+        top: 124px;
+        background: var(--tint);
+      }
+      body[data-shot='diagrams'] .copy {
+        top: 108px;
+        width: 1184px;
+      }
+      body[data-shot='diagrams'] h1 {
+        font-size: 51px;
+        margin-bottom: 10px;
+      }
+      body[data-shot='diagrams'] .body {
+        font-size: 20px;
+      }
+      body[data-shot='diagrams'] .detail {
+        position: absolute;
+        top: 68px;
+        right: 0;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        font-size: 15px;
+      }
+      body[data-shot='diagrams'] .visual {
+        top: 232px;
+        left: 48px;
+        width: 1184px;
+        height: 492px;
+      }
+      body[data-shot='diagrams'] .halo {
+        display: none;
+      }
+      body[data-shot='search'] h1,
+      body[data-shot='settings'] h1 {
+        font-size: 51px;
+      }
+      html[lang='zh-TW'] h1 {
+        letter-spacing: -1.5px;
+        line-height: 1.2;
+      }
+      html[lang='zh-TW'] .copy {
+        top: 180px;
+      }
+      html[lang='zh-TW'] .body {
+        font-size: 20px;
+      }
+      html[lang='zh-TW'] body[data-shot='diagrams'] .copy {
+        top: 108px;
+      }
+      html[lang='zh-TW'] body[data-shot='settings'] h1 {
+        font-size: 48px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="halo" aria-hidden="true"></div>
+    <div class="brand"><img src="../icon-128.png" alt="" />MD Reader Lite</div>
+    <div class="edition">Markdown, thoughtfully rendered.</div>
+    <main>
+      <section class="copy">
+        <h1></h1>
+        <p class="body"></p>
+        <p class="detail"></p>
+      </section>
+      <figure class="visual" style="margin: 0">
+        <img id="product" alt="MD Reader Lite actual product screenshot" />
+      </figure>
+    </main>
+    <footer class="footer">
+      <span id="footer"></span><span class="cta"></span>
+    </footer>
+    <script type="module">
+      const params = new URLSearchParams(location.search)
+      const lang = params.get('lang') || 'en'
+      const shot = params.get('shot') || 'reading'
+      const copy = (await (await fetch('./copy.json')).json())[lang]
+      document.documentElement.lang = lang
+      if (lang === 'zh-TW')
+        document.querySelector('.edition').textContent =
+          '讓 Markdown，回到閱讀。'
+      document.body.dataset.shot = shot
+      document.querySelector('h1').innerHTML = copy[shot].title
+      document.querySelector('.body').innerHTML = copy[shot].body
+      document.querySelector('.detail').textContent = copy[shot].detail
+      document.querySelector('#footer').textContent = copy.footer
+      document.querySelector('.cta').textContent = copy.cta
+      const product = document.querySelector('#product')
+      product.src = `../v1.9.0/captures/${lang}/${shot}.png`
+      await product.decode()
+      await document.fonts.ready
+      document.body.dataset.ready = 'true'
+    </script>
+  </body>
+</html>

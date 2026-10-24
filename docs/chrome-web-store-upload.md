@@ -27,7 +27,7 @@
 
 - 英文文案：[chrome-store-description-en.md](chrome-store-description-en.md)。
 - 繁體中文文案：[chrome-store-description-zh-tw.md](chrome-store-description-zh-tw.md)。
-- 素材目錄：`docs/store-assets/`。
+- 新素材：[Anthropic 風格圖片預覽](store-assets/v1.9.0/index.html)；繁中與英文各五張。依本次決定，在地化與通用宣傳影片欄位均留空。[欄位對照與永久重製方式](store-assets/README.md)。
 - 隱私權政策：`https://github.com/swchen44/md-reader-lite/blob/main/PRIVACY.md`。
 
 本次重點為 Mermaid 12／31 種圖、Anthropic 圖表與操作介面、可拖寬且不重排文章的浮動欄、GitHub raw 沙盒繪圖，以及可靠的搜尋歷史。
@@ -38,7 +38,7 @@ Google 要求解釋 manifest 中每項權限，並讓資料使用申報與隱私
 
 本版新增 **offscreen**，用途僅限本機 Mermaid 繪圖。可貼入下列英文理由：
 
-> Creates a bundled offscreen document to parse and sanitize Mermaid SVG using local DOM APIs when a page's CSP sandbox blocks an embedded renderer. All renderer scripts are packaged with the extension. No diagram source is sent to a server or persisted; the document closes after idle.
+> Creates a bundled offscreen document to parse and sanitize Mermaid SVG when a page’s CSP sandbox blocks the embedded renderer. All renderer code is packaged with the extension. Diagram source is processed locally, is not sent to a server or persisted, and the document closes after idle.
 
 既有權限理由：
 
