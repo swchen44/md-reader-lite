@@ -1,0 +1,150 @@
+{
+  "observedOn": "2026-10-24T13:55:14.235687+08:00",
+  "command": "corepack pnpm audit --prod --json",
+  "exitCode": 1,
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 2,
+      "moderate": 15,
+      "high": 4,
+      "critical": 0
+    },
+    "dependencies": 237,
+    "devDependencies": 0,
+    "optionalDependencies": 13,
+    "totalDependencies": 250
+  },
+  "advisories": [
+    {
+      "id": "GHSA-22p9-wv53-3rq4",
+      "module": "linkify-it",
+      "severity": "high",
+      "url": "https://github.com/advisories/GHSA-22p9-wv53-3rq4"
+    },
+    {
+      "id": "GHSA-238p-pmpm-9mq7",
+      "module": "katex",
+      "severity": "low",
+      "url": "https://github.com/advisories/GHSA-238p-pmpm-9mq7"
+    },
+    {
+      "id": "GHSA-253c-mchw-3w2r",
+      "module": "markdown-it",
+      "severity": "moderate",
+      "url": "https://github.com/advisories/GHSA-253c-mchw-3w2r"
+    },
+    {
+      "id": "GHSA-38c4-r59v-3vqw",
+      "module": "markdown-it",
+      "severity": "moderate",
+      "url": "https://github.com/advisories/GHSA-38c4-r59v-3vqw"
+    },
+    {
+      "id": "GHSA-3wc5-fcw2-2329",
+      "module": "katex",
+      "severity": "moderate",
+      "url": "https://github.com/advisories/GHSA-3wc5-fcw2-2329"
+    },
+    {
+      "id": "GHSA-64fm-8hw2-v72w",
+      "module": "katex",
+      "severity": "moderate",
+      "url": "https://github.com/advisories/GHSA-64fm-8hw2-v72w"
+    },
+    {
+      "id": "GHSA-6v5v-wf23-fmfq",
+      "module": "markdown-it",
+      "severity": "moderate",
+      "url": "https://github.com/advisories/GHSA-6v5v-wf23-fmfq"
+    },
+    {
+      "id": "GHSA-8266-84wp-wv5c",
+      "module": "svelte",
+      "severity": "moderate",
+      "url": "https://github.com/advisories/GHSA-8266-84wp-wv5c"
+    },
+    {
+      "id": "GHSA-cg87-wmx4-v546",
+      "module": "katex",
+      "severity": "moderate",
+      "url": "https://github.com/advisories/GHSA-cg87-wmx4-v546"
+    },
+    {
+      "id": "GHSA-crpf-4hrx-3jrp",
+      "module": "svelte",
+      "severity": "moderate",
+      "url": "https://github.com/advisories/GHSA-crpf-4hrx-3jrp"
+    },
+    {
+      "id": "GHSA-cvr6-37gx-v8wc",
+      "module": "katex",
+      "severity": "moderate",
+      "url": "https://github.com/advisories/GHSA-cvr6-37gx-v8wc"
+    },
+    {
+      "id": "GHSA-f7gr-6p89-r883",
+      "module": "svelte",
+      "severity": "moderate",
+      "url": "https://github.com/advisories/GHSA-f7gr-6p89-r883"
+    },
+    {
+      "id": "GHSA-f98w-7cxr-ff2h",
+      "module": "katex",
+      "severity": "moderate",
+      "url": "https://github.com/advisories/GHSA-f98w-7cxr-ff2h"
+    },
+    {
+      "id": "GHSA-gw32-9rmw-qwww",
+      "module": "svelte",
+      "severity": "high",
+      "url": "https://github.com/advisories/GHSA-gw32-9rmw-qwww"
+    },
+    {
+      "id": "GHSA-m56q-vw4c-c2cp",
+      "module": "svelte",
+      "severity": "moderate",
+      "url": "https://github.com/advisories/GHSA-m56q-vw4c-c2cp"
+    },
+    {
+      "id": "GHSA-phwv-c562-gvmh",
+      "module": "svelte",
+      "severity": "moderate",
+      "url": "https://github.com/advisories/GHSA-phwv-c562-gvmh"
+    },
+    {
+      "id": "GHSA-pr6f-5x2q-rwfp",
+      "module": "svelte",
+      "severity": "moderate",
+      "url": "https://github.com/advisories/GHSA-pr6f-5x2q-rwfp"
+    },
+    {
+      "id": "GHSA-r7fv-28h4-cvq7",
+      "module": "markdown-it",
+      "severity": "high",
+      "url": "https://github.com/advisories/GHSA-r7fv-28h4-cvq7"
+    },
+    {
+      "id": "GHSA-rcqx-6q8c-2c42",
+      "module": "svelte",
+      "severity": "moderate",
+      "url": "https://github.com/advisories/GHSA-rcqx-6q8c-2c42"
+    },
+    {
+      "id": "GHSA-v245-v573-v5vm",
+      "module": "linkify-it",
+      "severity": "high",
+      "url": "https://github.com/advisories/GHSA-v245-v573-v5vm"
+    },
+    {
+      "id": "GHSA-vfgh-jcmw-g37q",
+      "module": "markdown-it",
+      "severity": "low",
+      "url": "https://github.com/advisories/GHSA-vfgh-jcmw-g37q"
+    }
+  ],
+  "comparison": "docs/research/data/2026-10-23-mermaid12-audit.json candidate",
+  "newAdvisoryIds": [],
+  "removedAdvisoryIds": [],
+  "boundary": "Registry inventory only, not runtime exploitability validation. Existing advisories remain unresolved; no dependency upgrade in release preparation."
+}

@@ -1,5 +1,7 @@
 # Chrome Web Store 上架材料
 
+現有項目更新流程、正式 ZIP 與可貼上的權限理由見 [Chrome 商店更新指南](chrome-web-store-upload.md)。本次版本為 1.9.0；GitHub 發布狀態與驗證見 [release receipt](releases/1.9.0.md)，商店狀態以後台為準。
+
 ## 基本
 
 - 名稱：MD Reader Lite（備援：MD Lite Reader、Markdown Lite Viewer——僅改 locales ext_name 一個 commit 可換）
@@ -17,44 +19,27 @@ ZH: 離線零追蹤的 Markdown 閱讀器：Obsidian 語法、資料夾目錄樹
 
 ## 詳述
 
-EN:
-MD Reader Lite turns .md files into clean, readable pages. Open a local file or any URL ending in .md and it renders instantly — fully offline, with zero data collection.
-• GFM-style rendering: tables, task lists, footnotes, KaTeX math, Mermaid & Graphviz diagrams
-• Obsidian syntax: ![[image|300]] embeds, [[wikilinks|alias]], %%comments%%, callouts, front matter table
-• Folder tree side panel to browse sibling documents on http servers
-• Navigation search history with local suggestions, keyboard selection, Tab completion, configurable limit, and clear control
-• Outline panel, light/dark/auto themes, per-plugin toggles
-• Mermaid styles: Original or Anthropic blog style, with local serif fonts and a light editorial palette
-• CSS customization: Developer styling is active by default on new installs; select two read-only presets or edit either of two local CSS slots, then Apply
-• Optional: render .txt files as Markdown
-• Works on intranets and air-gapped machines — no external requests, with one documented exception: an anonymous, tokenless call to GitHub's public API to list a folder when the file tree is used on raw.githubusercontent.com pages
-Forked from the open-source md-reader (MIT) with new features; not affiliated with the original store listing.
-ZH:
-MD Reader Lite 將 .md 檔轉換成簡潔易讀的網頁。開啟本機檔案或任何以 .md 結尾的網址，即時渲染——完全離線，零資料蒐集。
-• GFM 標準渲染：表格、工作清單、注腳、KaTeX 數學、Mermaid 與 Graphviz 圖表
-• Obsidian 語法：![[image|300]] 嵌入、[[wikilinks|別名]]、%%備註%%、callout 標註框、front matter 屬性表
-• 資料夾目錄樹邊欄，瀏覽 HTTP 伺服器上的相鄰文件
-• 導覽搜尋歷史：輸入時顯示本機建議，可用鍵盤選取與 Tab 補完；筆數上限可調整，也可清除
-• 大綱邊欄、淺色／深色／自動佈景主題、按外掛的開關
-• Mermaid 風格可選原始風格或 Anthropic blog style，採用本機襯線字型與淺色紙面
-• CSS 客製化：新安裝預設套用 Developer 風格；可選兩個唯讀內建風格或編輯兩個本機 CSS 欄位，按「套用」後才生效
-• .txt 檔案可選擇性當 Markdown 渲染
-• 適用於內網與隔離機器——不發出外部請求，僅一項跨域例外：於 GitHub raw 頁面使用檔案樹時，匿名呼叫 GitHub 公開 API 列目錄
-源自開源 md-reader（MIT）並加入新功能；與原版上架清單無關。
+完整文案集中維護，避免不同副本漂移：
+
+- 英文：[chrome-store-description-en.md](chrome-store-description-en.md)。
+- 繁體中文：[chrome-store-description-zh-tw.md](chrome-store-description-zh-tw.md)。
+
+  1.9.0 包含 Mermaid 12／31 種圖、預設 Anthropic 風格、GitHub raw 沙盒繪圖、可記憶寬度的浮動側欄，以及可靠的本機搜尋歷史。隱私文案須保留文件媒體與 opt-in PlantUML 的網路邊界，不使用「所有情況都零網路」等絕對敘述。
 
 ## 權限理由（審核申報用）
 
-| 權限                              | 理由                             |
-| --------------------------------- | -------------------------------- |
-| `storage`                         | 儲存主題、插件開關等設定於本機。 |
-| `activeTab`                       | 設定變更時通知目前分頁即時套用。 |
-| file URL access（使用者自行開啟） | 渲染本機 .md 檔。                |
+| 權限                              | 理由                                                                                                     |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `storage`                         | 儲存主題、插件開關等設定於本機。                                                                         |
+| `activeTab`                       | 設定變更時通知目前分頁即時套用。                                                                         |
+| `offscreen`                       | 在 GitHub raw 等沙盒頁面，以插件私有隱藏文件執行本機 Mermaid DOM／SVG 處理；不外送或儲存原碼，閒置關閉。 |
+| file URL access（使用者自行開啟） | 渲染本機 .md 檔。                                                                                        |
 
 自此版本起不再申請 host 權限：同源請求由頁面情境發出。
 
 ## 資料使用申報（Data usage disclosure）
 
-全部項目勾「不蒐集」。
+依 [PRIVACY.md](../PRIVACY.md) 與後台目前的欄位逐項核對。設定／確認的搜尋詞只存本機、沒有追蹤後端；使用者主動啟用 PlantUML 並關閉離線模式時，圖表原碼會送往指定伺服器。資料申報須反映這些實際行為；Remote code 與一般圖片／渲染資源應分開判斷。具體操作見更新指南。
 
 ## 素材
 

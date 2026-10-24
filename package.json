@@ -1,6 +1,6 @@
 {
   "name": "md-reader-lite",
-  "version": "1.8.2",
+  "version": "1.9.0",
   "author": "swchen44",
   "license": "MIT",
   "description": "Privacy-first Markdown reader for Chrome — offline by default, zero tracking",

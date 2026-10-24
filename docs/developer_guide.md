@@ -10,13 +10,13 @@
 | `refresh`       | `false` | 定時重新抓取目前這份文件的同一 URL，偵測內容變更                                                                                                                                                                                                                                                  |
 | `charsetCompat` | `false` | 僅 file://；由 background Service Worker 重新 fetch 同一本機檔並強制 UTF-8 解碼                                                                                                                                                                                                                   |
 
-程式實際會發出的網路請求就只有以上三種，沒有第四種。**`folderTree` 2026-09-03 起預設 `true`**：先前預設 `false` 是把「檔案」頁籤的可見性也當成隱私閘門，但頁籤可見與否從不影響是否發出請求（`ensureFilesPanel()` 只在 `activateTab('files')`——也就是使用者真的點擊頁籤——時才呼叫 `initFilesContent()`），所以隱藏頁籤對隱私沒有保護作用，只是徒增摩擦（尤其 `file://` 場景：本機讀檔本就零網路，卡在「先去設定裡開開關」純屬多餘的一層阻礙，使用者已透過瀏覽器原生 FSA 授權把關過一次）。`refresh`／`charsetCompat` 兩者是「使用者尚未表態就會主動發出請求／重讀檔案」的行為，維持 opt-in 預設關閉。
+上表只列導覽與刷新設定，不是完整的瀏覽器網路清單：PlantUML opt-in 與文件媒體另見下文。`folderTree` 預設 `true` 只讓頁籤可見，實際列表仍由開啟「檔案」頁籤觸發；`refresh`／`charsetCompat` 維持預設關閉。
 
 擴充功能沒有任何後端伺服器、不做分析／遙測／錯誤回報、不產生或傳送裝置 ID 或任何識別碼。新增功能或修改預設值前，先確認是否會影響這張表；若某功能會發出網路請求，預設必須為關閉，並同步更新 README.md 的「Privacy — our defining feature」段與 PRIVACY.md。
 
 ### 離線模式（offlineMode）——四處 egress 閘門
 
-`offlineMode`（`src/core/data.ts` `getDefaultData()`）**預設 `true`**，是凌駕上表個別開關之上的總開關：開啟時強制封鎖擴充自身可能發出的所有對外請求，不管上表三個設定個別是否被使用者打開。落點：
+`offlineMode`（`src/core/data.ts` `getDefaultData()`）**預設 `true`**，統一控制下表四處防護。它不是瀏覽器層級網路防火牆；同伺服器目錄列表、網頁中的相對媒體網址與 CSS 等已知邊界見下方及 PRIVACY.md。
 
 | #   | 站點              | 檔案                                                    | 閘門機制                                                                                                                                                                                                                                                                                                 |
 | --- | ----------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -27,7 +27,7 @@
 
 `isNetworkAllowed(offlineMode)`（`src/core/network.ts`）是站點 1-3 的共用純函式（`!offlineMode`）。站點 4 掃的是渲染後 DOM 而非 markdown 源，故同時涵蓋 image rule 產生的 `<img>` 與 raw HTML。**本機 `file://` 功能不受離線模式影響**（本機目錄列表 frame-probe／FSA 備援、`charsetCompat`、dir-fetch 的 `file://` XHR 分支）——讀本機磁碟本就是零 egress，離線模式故意不封鎖。`offlineMode` 屬 reload 類設定（`background.ts` actionMap 映射 `'applySetting'`，切換後 `main.ts` 重整頁面套用四處閘門）。**同伺服器 http(s) 目錄列表（`initFilesContent` 的非 GitHub、非 file:// 分支）2026-09-03 起不受離線模式限制**，因此不在本表：載入目前文件本身已是對該伺服器的一次請求，使用者主動瀏覽同伺服器目錄清單是既有信任關係的延伸，不是新增暴露面（見 `docs/superpowers/specs/2026-09-03-file-tree-browsing-design.md` 項目 4）。**`content_scripts` 的 file:// 目錄頁注入範圍（同日起）**：`manifest.json` 新增一則 `{ matches: ["file://*/*/","file:///"], all_frames: true }` 條目，讓我們的程式碼會被 Chrome 注入到**使用者瀏覽的任何本機 file:// 資料夾頁面**（不限含 markdown 檔的資料夾），供隱藏 iframe 探測 Chrome 原生目錄列表格式所用（取代 File System Access 授權彈窗）。這是「程式碼在哪裡執行」的實質擴大，但不是新增權限；既有的 `main()` content-type 閘門保證除了我們自己建立、帶特定 URL hash 標記的探測 iframe 外，一律 no-op（無 UI、無副作用）。**已知殘留風險（最終審查發現，2026-09-03）**：這個 `all_frames` 條目會在**任何**符合 pattern 的 file:// frame 內執行，不限本擴充自己建立的 iframe。不受信任的本機 HTML 檔可自建 iframe 指向使用者的任意資料夾（帶我們的探測 hash），我們的內容腳本會如常解析並 `postMessage` 回其 `window.parent`——若該 parent 是惡意頁面而非我們自己的頁面，等於替它取得目錄清單（檔名/大小/mtime，不含檔案內容，不經網路）。因 file:// 頁面的 `event.origin` 恆為 `"null"`，無法用 origin 做來源限制；random nonce 也無法解決，因為攻擊者頁面能直接複製我們公開原始碼裡的 hash 樣式自建 iframe，不需要猜任何祕密。目前僅能誠實揭露（已寫入 `PRIVACY.md`/`README.md`），無乾淨的技術修法；徹底解決需要另一種完全不同的機制（不用 `all_frames`），屬未來架構題目，不在本次範圍。
 
-**誠實揭露的殘留缺口**：站點 4 的清掃鎖定元素屬性，不掃 CSS——inline `style="background-image:url(http)"`、`<style>`/`@import url()`、`<use xlink:href>`、legacy `background` 屬性不在涵蓋範圍（markdown 內容中極罕見）。對外文案（README/PRIVACY）措辭須為「封鎖文件內遠端圖片與媒體」，不可宣稱「封鎖一切遠端引用」。
+**誠實揭露的殘留缺口**：站點 4 以原始屬性判斷絕對 HTTP(S)／protocol-relative URL，不會先依頁面 URL 解析相對路徑。因此 HTTP(S) 文件的 `images/chart.png`、`/image.png` 仍可能連網，即使離線模式開啟。它也不掃 CSS：inline `style="background-image:url(http)"`、`<style>`／`@import`、`<use xlink:href>`、legacy `background` 不在涵蓋範圍。對外文案應描述支援的引用及限制，不可宣稱所有文件都零網路。Mermaid renderer 的獨立資源政策不受此文件媒體缺口影響。
 
 ### PlantUML——唯一的網路 opt-in 內容外送功能
 
@@ -198,11 +198,11 @@ CSS 客製化與導覽搜尋歷史皆只存於 `chrome.storage.local`，不會�
 
 ## 發佈（Release）
 
-打 tag 即自動發佈：`git tag -a vX.Y.Z -m "..." && git push origin vX.Y.Z` → GitHub Actions（.github/workflows/release.yml）建置、跑測試、打包並建立附 zip 的 Release。手動觸發（workflow_dispatch）為乾跑：只建置與上傳 artifact，不發佈。tag 版本號（去掉 v）會寫入 manifest；打 tag 前記得同步 package.json 的 version。
+打 tag 即自動發佈：`git tag -a vX.Y.Z -m "..." && git push origin vX.Y.Z` → GitHub Actions（.github/workflows/release.yml）建置、跑測試、打包並建立附 zip 的 Release。手動觸發（workflow_dispatch）為乾跑：只建置與上傳 artifact，不發佈。tag 版本號（去掉 v）會寫入 manifest；打 tag 前記得同步 package.json 的 version。manifest 不保留過時的 `version_name`，讓顯示版本跟隨數字 version。實際商店更新另依 [既有項目上傳指南](chrome-web-store-upload.md) 執行。
 
 打 tag 前在本機執行完整 release gate：
 
-    npm run lint
+    npm run lint -- <本次變更檔案路徑>
     npm run test:unit
     npm run typecheck
     npm run build
@@ -211,3 +211,5 @@ CSS 客製化與導覽搜尋歷史皆只存於 `chrome.storage.local`，不會�
     git status --short
 
 最後一項必須沒有輸出；版本調整、文件更新與 release commit 均應先提交，再建立 tag。GitHub Actions 會重跑 unit test 與 typecheck，但不跑 lint 或 headed e2e，兩者須由本機 gate 保證。
+
+每次發布在 `docs/releases/<version>.md` 記下測試筆數與 skip、Chrome 版本、release commit／tag、workflow URL、正式 ZIP digest 與解壓檢查結果。推送後核對 main 的 local／remote SHA；下載 GitHub asset 驗證，不能只憑本機 build 或 workflow 啟動就宣稱發布成功。ZIP 內 `manifest.json` 必須位於最外層。Google 商店上傳／送審狀態另記，不能由 GitHub Release 推論。
