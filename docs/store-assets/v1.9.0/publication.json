@@ -1,0 +1,29 @@
+{
+  "verifiedAt": "2026-10-24T18:51:31.794825+08:00",
+  "sourceCommit": "6b39035330b03ab8fb26ada4d728ca409b21bfe2",
+  "release": "https://github.com/swchen44/md-reader-lite/releases/tag/v1.9.0",
+  "assetId": 672011474,
+  "assetName": "md-reader-lite-store-images-1.9.0.zip",
+  "url": "https://github.com/swchen44/md-reader-lite/releases/download/v1.9.0/md-reader-lite-store-images-1.9.0.zip",
+  "bytes": 1306541,
+  "sha256": "16beffab39a987669c5f0440d23ecf32238fff1bf95e30607f67af9054c4f344",
+  "githubDigestMatched": true,
+  "zipEntries": 15,
+  "screenshots": {
+    "zh-TW": 5,
+    "common": 5,
+    "width": 1280,
+    "height": 800,
+    "color": "24-bit RGB PNG without alpha or tRNS"
+  },
+  "videoFiles": 0,
+  "promotionalVideoFields": "both empty",
+  "extensionReleaseAssetDigestUnchanged": "sha256:4a7b0f6d1eaed3aceac941fc03a3b3eceb278cde539b5cfeb67a1ca65b6f41d5",
+  "storeUpload": "not performed",
+  "downloadedAssetVerified": {
+    "sha256Match": true,
+    "crc": "pass",
+    "all15EntriesMatchSources": true,
+    "videoFiles": 0
+  }
+}

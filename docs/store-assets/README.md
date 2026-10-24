@@ -2,6 +2,8 @@
 
 本次套件：**1.9.0**。先開啟 [預覽與下載頁](v1.9.0/index.html)，再依後台欄位上傳。
 
+[下載完整圖片包](https://github.com/swchen44/md-reader-lite/releases/download/v1.9.0/md-reader-lite-store-images-1.9.0.zip)。解壓後依下表拖入 PNG；[publication receipt](v1.9.0/publication.json) 保存 GitHub asset ID、SHA-256 及下載驗證。此素材包不包含影片。
+
 ## 欄位對照
 
 | 後台欄位                 | 使用檔案／填法                                                                                        |
