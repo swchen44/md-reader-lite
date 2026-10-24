@@ -45,6 +45,8 @@ Full policy: [PRIVACY.md](PRIVACY.md).
 
 [Install MD Reader Lite from the Chrome Web Store](https://chromewebstore.google.com/detail/md-reader-lite/dllkoapplbnpedjjhodcaogiegbhdkdj?authuser=0&hl=zh-TW)
 
+Maintainers: [update the existing Chrome Web Store item](docs/chrome-web-store-upload.md).
+
 ### Unpacked / intranet
 
 1. Build or download `dist/md-reader-lite-<version>.zip`, unzip to a fixed folder

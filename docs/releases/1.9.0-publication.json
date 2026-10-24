@@ -1,0 +1,37 @@
+{
+  "verifiedOn": "2026-10-24T14:03:02.894192+08:00",
+  "release": "https://github.com/swchen44/md-reader-lite/releases/tag/v1.9.0",
+  "releaseCommit": "8f55c25023baddfb8272f9d29e7048ede0055211",
+  "tagObject": "c6e1a3031060112956dae83dbd9d0c9b0d3319ba",
+  "workflow": "https://github.com/swchen44/md-reader-lite/actions/runs/40068262769",
+  "workflowConclusion": "success",
+  "assetId": 671424523,
+  "assetName": "md-reader-lite-1.9.0.zip",
+  "bytes": 3998683,
+  "sha256": "4a7b0f6d1eaed3aceac941fc03a3b3eceb278cde539b5cfeb67a1ca65b6f41d5",
+  "githubApiDigestMatched": true,
+  "entries": 62,
+  "files": 49,
+  "crc": "pass",
+  "manifestVersion": "1.9.0",
+  "permissions": ["activeTab", "storage", "offscreen"],
+  "privateOffscreenNotWebAccessible": true,
+  "localCiDifference": [
+    "Viz build-root file URL in js/content.js",
+    "platform-specific @napi-rs/canvas notice inventory"
+  ],
+  "boundary": "Runtime receipt covers the downloaded official asset on the recorded Chrome/macOS environment. Chrome Web Store upload/submission not performed.",
+  "officialArtifactE2E": {
+    "command": "npm run test:e2e",
+    "exitCode": 0,
+    "tests": 194,
+    "passed": 194,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "durationMs": 238308.53825,
+    "browser": "Google Chrome for Testing 147.0.7727.15",
+    "directlyExtractedNoRebuild": true
+  }
+}

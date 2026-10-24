@@ -4,7 +4,9 @@
 
 ## 1. 取得正式 ZIP
 
-從 [GitHub Release v1.9.0](https://github.com/swchen44/md-reader-lite/releases/tag/v1.9.0) 的 Assets 下載 **`md-reader-lite-1.9.0.zip`**。本機對應檔案為 `dist/md-reader-lite-1.9.0.zip`。
+從 [GitHub Release v1.9.0](https://github.com/swchen44/md-reader-lite/releases/tag/v1.9.0) 的 Assets 下載 **`md-reader-lite-1.9.0.zip`**。本機已下載的正式附件位於 `dist/release-download-1.9.0/md-reader-lite-1.9.0.zip`；`dist/md-reader-lite-1.9.0.zip` 是本機建置，建議上傳前者以對應發布 receipt。
+
+正式附件大小 **3,998,683 B**，SHA-256：`4a7b0f6d1eaed3aceac941fc03a3b3eceb278cde539b5cfeb67a1ca65b6f41d5`。
 
 這個 ZIP 包含完整建置成品，`manifest.json` 位於最外層，版本為 1.9.0。直接上傳此 ZIP；GitHub 自動產生的 Source code 壓縮檔是原始碼，與商店套件不同。Google 要求新套件的 version 大於既有版本，並包含變更及未變更的全部檔案。[官方套件規格](https://developer.chrome.com/docs/webstore/prepare)
 

@@ -50,3 +50,5 @@
 43. 提示選單開放空白最近紀錄後，Tab 的方向修飾鍵更重要：原本的補完 handler 連 Shift+Tab 也攔截 → 只攔截正向 Tab，測原生反向焦點與無提交副作用；候選選取恢復 focus 後須再次關閉選單，避免 focus 事件重開。
 44. 導覽換風格須包含 portal 與局部變數：只改側欄父元素會漏掉 body 上的排序子選單，直接改全域變數又會污染文章 → 導覽根節點統一 scoped aliases，樣式最後匯入，實測 dark／CSS 關閉／窄頁與 portal；測試頁面各自隔離，避免前例搜尋 session 造成假失敗。
 45. 即時歷史同步不能任意重設選取：另一頁更新 MRU 後，仍存在的候選位置改變；清掉 active index 會使 Enter 提交前綴、Tab 選到另一詞 → 以大小寫不敏感的候選值保留選取，只有該值消失才取消。原生 storage 事件已是共享狀態來源時，忽略可能遲到的單頁 setting echo，避免新值又被舊快照蓋回。
+46. 數字版號更新不代表顯示版號更新（2026-10-24）：`version` 已是 1.8.2，舊 `version_name: 1.0.4` 仍讓商店顯示舊版 → 移除過時顯示名稱，核對 package、source manifest、ZIP manifest 與 tag；商店更新仍以數字 version 比較，不能只改 version_name。
+47. 本機 ZIP 不等於 GitHub 正式附件（2026-10-24）：macOS／Linux 的 notices 包含不同平台套件，Viz bundle 也含各自建置根目錄的 file URL → 下載附件核對 GitHub digest／CRC／manifest，再比較解壓內容。本輪 JS 差異只有建置根目錄字串，但仍以正式附件重跑完整 serial headed e2e；不要把壓縮檔大小不同直接視為壞檔，也不要只憑本機測試就聲稱正式附件已驗證。
